@@ -6,9 +6,14 @@
 ;*                     *
 ;***********************
 
+                .include "equates_system_c256.asm"
                 .include "equates_system_atari8.asm"
                 .include "equates_zeropage.asm"
                 .include "equates_game.asm"
+
+                .include "macros_65816.asm"
+                .include "macros_frs_graphic.asm"
+                .include "macros_frs_mouse.asm"
 
 
             .enc "atari-screen"
@@ -18,6 +23,23 @@
                 .cdef " Z",$80
                 .cdef "az",$E1
             .enc "none"
+
+
+;--------------------------------------
+;--------------------------------------
+                * = INIT-40
+;--------------------------------------
+                .text "PGX"
+                .byte $01
+                .dword BOOT
+
+BOOT            clc
+                xce
+                .m8i8
+                .setdp $0000
+                .setbank $00
+
+                jmp INIT
 
 
 ;--------------------------------------
@@ -1062,11 +1084,3 @@ _next1          sta PL0,Y               ; clear all players
 ;--------------------------------------
 
                 .include "data.asm"
-
-
-;--------------------------------------
-;--------------------------------------
-                *=  $02E0
-;--------------------------------------
-
-                .addr INIT              ; run address
