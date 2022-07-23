@@ -15,15 +15,6 @@
                 .include "macros_frs_mouse.asm"
 
 
-            .enc "atari-screen"
-                .cdef " Z",$00
-                .cdef "az",$61
-            .enc "atari-screen-inverse"
-                .cdef " Z",$80
-                .cdef "az",$E1
-            .enc "none"
-
-
 ;--------------------------------------
 ;--------------------------------------
                 * = INIT-40

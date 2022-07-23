@@ -2,9 +2,7 @@
 ; player 2/computer messages
 ;
 
-            .enc "atari-screen-inverse"
 P2COMPT         .text "RETUPMOC2 REYALP"
-            .enc "none"
 
 ;
 ; misc data
@@ -70,13 +68,10 @@ DLIST2          ;.byte AEMPTY8,AEMPTY8,AEMPTY8
 ;
 
 TITLE
-            .enc "atari-screen-inverse"
                 .text "  boulder "
                 .text " bombers  "
-            .enc "atari-screen"
                 .text "   by  mark price   "
                 .text "     PLAYERS: "
-            .enc "none"
 
 SCNOPLR         .byte $11,0,0,0,0,0
 
@@ -84,10 +79,8 @@ SCNOPLR         .byte $11,0,0,0,0,0
 ; bottom of game screen
 ;
 
-            .enc "atari-screen"
 GAME            .text "     HIGH: "
 HISCOR          .text "   0      PLAYER 1   "
-            .enc "none"
 
 P2MSG           .byte 0,0,0,0,0,0,0,0,0,0
 SCORE1          .byte 0,0,0,0,0
