@@ -16,54 +16,54 @@ MASKS           .byte 1,3
 ; title screen display list
 ;
 
-DLIST1          .byte AEMPTY8,AEMPTY8,AEMPTY8
+DLIST1          ;.byte AEMPTY8,AEMPTY8,AEMPTY8
 
-                .byte $06+ALMS
-                    .addr GAME
+                ;.byte $06+ALMS
+                ;    .addr GAME
 
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
 
-                .byte $04+ALMS
-                    .addr CANYON+40
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-                .byte $04,$04,$04
+                ;.byte $04+ALMS
+                ;    .addr CANYON+40
+                ;.byte $04,$04,$04
+                ;.byte $04,$04,$04
+                ;.byte $04,$04,$04
 
-                .byte $07+ALMS
-                    .addr TITLE
+                ;.byte $07+ALMS
+                ;    .addr TITLE
 
-                .byte $06,$06
+                ;.byte $06,$06
 
-                .byte AVB+AJMP
-                    .addr DLIST1
+                ;.byte AVB+AJMP
+                ;    .addr DLIST1
 
 ;
 ; game display list
 ;
 
-DLIST2          .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8
+DLIST2          ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8,AEMPTY8,AEMPTY8
+                ;.byte AEMPTY8
 
-                .byte $04+ALMS
-                    .word CANYON+40
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-                .byte $04,$04,$04
+                ;.byte $04+ALMS
+                ;    .word CANYON+40
+                ;.byte $04,$04,$04
+                ;.byte $04,$04,$04
+                ;.byte $04,$04,$04
 
-                .byte $06+ALMS
-                    .addr GAME
+                ;.byte $06+ALMS
+                ;    .addr GAME
 
-                .byte AEMPTY8
+                ;.byte AEMPTY8
 
-                .byte $06,$06
+                ;.byte $06,$06
 
-                .byte AVB+AJMP
-                    .addr DLIST2
+                ;.byte AVB+AJMP
+                ;    .addr DLIST2
 
 ;
 ; titles
