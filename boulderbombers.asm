@@ -25,13 +25,20 @@
                 * = $2000
 ;--------------------------------------
 
-INIT            ldx #111                ; copy my chars
-MYCHRS          lda MYCHARS,X
+
+;--------------------------------------
+;
+;--------------------------------------
+INIT            .proc
+                ldx #111                ; copy my chars
+_next1          lda MYCHARS,X
                 sta CharsetCustom,X
                 dex
-                bpl MYCHRS
+                bpl _next1
+
                 lda #0                  ; disable vbi
                 sta NMIEN
+
                 lda #$34                ; set colors
                 sta COLPF0
                 lda #$28
@@ -42,10 +49,12 @@ MYCHRS          lda MYCHARS,X
                 sta COLPF3
                 lda #0
                 sta COLBAK
+
                 ldx #3                  ; init players
-STWIDTH         sta SIZEP0,X
+_next2          sta SIZEP0,X
                 dex
-                bpl STWIDTH
+                bpl _next2
+
                 lda #$28
                 sta COLPM0
                 lda #$84
@@ -54,183 +63,274 @@ STWIDTH         sta SIZEP0,X
                 sta COLPM2
                 lda #$C8
                 sta COLPM3
+
                 lda #>PMAREA
                 sta PMBASE
+
                 lda #$3E
                 sta DMACTL
+
                 lda #3
                 sta GRACTL
+
                 ldy #112                ; init chr set
-SETCH1          lda CharsetNorm,Y
+_next3          lda CharsetNorm,Y
                 sta CharsetCustom,Y
                 iny
-                bne SETCH1
-SETCH2          lda CharsetNorm+256,Y
+                bne _next3
+
+_next4          lda CharsetNorm+256,Y
                 sta CharsetCustom+256,Y
                 iny
-                bne SETCH2
+                bne _next4
+
                 lda #>CharsetCustom
                 sta CHBASE
 
                 lda #0                  ; init vars
                 ldy #SCRPTR+1-CLOCK
-ZEROVAR         sta CLOCK,Y
+_next5          sta CLOCK,Y
                 dey
-                bpl ZEROVAR
+                bpl _next5
+
                 ldy #$27                ; set screen disp
-CLRTOP          sta CANYON,Y
+_next6          sta CANYON,Y
                 dey
-                bpl CLRTOP
-                jsr SETSCRN
+                bpl _next6
+
+                jsr DrawScreen
+
                 lda #0                  ; init sound
                 sta AUDCTL
+
                 lda #3
                 sta SKCTL
+
                 lda #56                 ; set player
                 sta PLYRY               ;  lanes
                 lda #72
                 sta PLYRY+1
 
-RESTART         lda #44                 ; set player
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+RESTART         .proc
+                lda #44                 ; set player
                 sta PLYRX               ; start
                 lda #204                ; positions
                 sta PLYRX+1
+
                 lda #0                  ; turn off screen
                 sta DMACTL
                 sta AUDC3               ; explosions,
                 sta EXPLODE
                 sta AUDC4               ; and bkg sound
-                jsr PMCLR               ; clear players
+
+                jsr ClearPlayer         ; clear players
+
                 lda #<dlist1            ;set title
                 sta DLIST               ; screen
                 lda #>dlist1
                 sta DLIST+1
+
                 lda #$FF                ; set game speed
                 sta DELYVAL             ; for titles
+
                 lda #1                  ; set start dir
                 sta DIR
                 sta PLAY                ; set play false
+
                 lda #0                  ; players not
                 sta ONSCR               ; on screen
+
                 lda #$3E                ; turn screen
                 sta DMACTL              ; back on
+
                 lda #3                  ; init clock
                 sta CLOCK
-GTCNSL          lda CONSOL              ; check consol
+
+_next1          lda CONSOL              ; check consol
                 and #3                  ; switches
                 cmp #1                  ; select pressed?
-                bne CHKSTRT             ; no, try start
-SELECT          lda CONSOL              ; yes, wait for
+                bne _chkSTART           ;   no, try start
+
+_wait1          lda CONSOL              ; yes, wait for
                 and #2                  ; key release
-                beq SELECT
+                beq _wait1
+
                 lda PLAYERS             ; change # of
                 eor #1                  ; players
                 sta PLAYERS
                 clc
                 adc #$11                ; & set on screen
                 sta SCNOPLR
-                bne MOVET               ; (move players)
-CHKSTRT         cmp #2                  ; if start then
+                bne _moveT               ; (move players)
+
+_chkSTART       cmp #2                  ; if start then
                 beq START               ; start game
-MOVET           lda ONSCR               ; if on screen,
-                bne MOVIT               ; then move
+
+_moveT          lda ONSCR               ; if on screen,
+                bne _moveIt             ; then move
+
                 lda RANDOM              ; else, pick out
                 and #1                  ; new ship type
                 tax
                 lda MASKS,X
                 sta MASK                ; & set it
-MOVIT           jsr MOVEPLR             ; move players
-                jmp GTCNSL              ; do check again
+_moveIt         jsr MovePlayer          ; move players
 
-START           lda CONSOL              ; wait for key
+                jmp _next1              ; do check again
+
+                .endproc
+
+
+;--------------------------------------
+;
+;--------------------------------------
+START           .proc
+                lda CONSOL              ; wait for key
                 and #1                  ; release
                 beq START
+
                 lda #3                  ; set game speed
                 sta DELYVAL             ; to $ff+$04
+
                 lda #0                  ; set play true
                 sta PLAY
                 sta DMACTL              ; turn off screen
+
                 ldx #2                  ; set scores to
-ZEROSCR         sta SCORE1,X            ; zero
+_next1          sta SCORE1,X            ; zero
                 sta SCORE2,X
                 dex
-                bpl ZEROSCR
+                bpl _next1
+
                 lda #$10
                 sta SCORE1+3
                 sta SCORE2+3
+
                 ldx #2                  ; set bombs left
                 lda #$CD                ; to three
-STBMBC          sta BOMB1,X
+_next2          sta BOMB1,X
                 sta BOMB2,X
                 dex
-                bpl STBMBC
+                bpl _next2
+
                 lda #3
                 sta BOMBS
                 sta BOMBS+1
+
                 lda #$11                ; set next free
                 sta FREMEN              ; bomb at 1000
                 sta FREMEN+1
+
                 lda PLAYERS             ; set second
                 asl A                   ; player message
                 asl A                   ; to 'player 2'
                 asl A                   ; or 'computer'
+
                 ldx #7
                 tay
-STP2MS          lda P2COMPT,Y
+_next3          lda P2COMPT,Y
                 sta P2MSG,X
                 iny
                 dex
-                bpl STP2MS
+                bpl _next3
+
                 lda #<DLIST2            ; set dlist
                 sta DLIST               ; to game
                 lda #>DLIST2            ; screen
                 sta DLIST+1
+
                 lda #$3E                ; turn on screen
                 sta DMACTL
 
-NEWSCRN         jsr SETSCRN             ; set canyon
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+NewScreen       .proc
+                jsr DrawScreen          ; set canyon
+
                 lda #3                  ; set type to
                 sta MASK                ; balloon
                 sta CLOCK               ; and begin clock
+
                 lda #1
                 sta DIR                 ; dir = right
+
                 sta ROCKS+1             ; rocks in
                 lda #42                 ; canyon=298
                 sta ROCKS
-                jsr PMCLR               ; clear players
+                jsr ClearPlayer         ; clear players
+
                 lda #0                  ; set players on
                 sta ONSCR               ; screen=false
                 sta AUDF4
+
                 lda #44                 ; set start
                 sta PLYRX               ; positions
                 lda #204                ; of players
                 sta PLYRX+1
+
                 sta HITCLR              ; clear hits
+
                 lda #8                  ; #rocks per bomb
                 sta RKILL               ; (max) =8
+
                 lda DELYVAL             ; speed up the
                 cmp #$AF                ; game just a bit
                 beq BMBLOOP             ; (unless already
+
                 sec                     ; at max speed)
                 sbc #4
                 sta DELYVAL
 
-;
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
 ; bomb movement, hit checks,
 ; score and highscore set
-;
+;--------------------------------------
+BMBLOOP         .proc
+                ldx #1                  ; get player index
+                .endproc
 
-BMBLOOP         ldx #1                  ; get player index
-BMBNLOP         lda BMBDRP,X            ; if bomb not
-                bne CHKHITS             ; dropped
-                jmp CHKDRP              ; check trig
-CHKHITS         lda PL2PF,X             ; bomb hit
-                bne CKHROK              ; anything?
-                jmp LWRBMB              ; no,move bomb
-CKHROK          and #7                  ; if hit only
-                bne BHITRK              ; color 3, it
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+BMBNLOP         .proc
+                lda BMBDRP,X            ; if bomb not
+                bne _chkHits            ; dropped
+
+                jmp CheckDrop           ; check trig
+
+_chkHits        lda PL2PF,X             ; bomb hit
+                bne _chkRockOK          ; anything?
+
+                jmp LowerBomb           ;   no, move bomb
+
+_chkRockOK      and #7                  ; if hit only
+                bne _chkHitRock         ; color 3, it
+
                 jmp KILLBMB             ; gets erased
-BHITRK          lda #0                  ; set pointer
+
+_chkHitRock     lda #0                  ; set pointer
                 sta SCRPTR+1            ; into screen
                 lda BMBDRP,X            ; ram where the
                 sec                     ; rock hit is.
@@ -243,9 +343,10 @@ BHITRK          lda #0                  ; set pointer
                 clc
                 adc SCRPTR
                 sta SCRPTR
-                bcc GTP0
+                bcc _gtp0
+
                 inc SCRPTR+1
-GTP0            lda PLYRX,X             ; then, change
+_gtp0           lda PLYRX,X             ; then, change
                 sec                     ; x-pos into the
                 sbc #47                 ; column number
                 lsr A
@@ -253,9 +354,10 @@ GTP0            lda PLYRX,X             ; then, change
                 clc                     ; and add it on
                 adc SCRPTR
                 sta SCRPTR
-                bcc GTPA
+                bcc _gtpA
+
                 inc SCRPTR+1
-GTPA            clc                     ; add screen
+_gtpA           clc                     ; add screen
                 adc #<CANYON            ; start
                 sta SCRPTR              ; address
                 lda SCRPTR+1
@@ -263,27 +365,37 @@ GTPA            clc                     ; add screen
                 sta SCRPTR+1
                 ldy #0                  ; clear index
                 lda (SCRPTR),Y          ; & get char
-                beq GTP1                ; if it's blank
+                beq _gtp1               ; if it's blank
+
                 cmp #4                  ; or above 4
-                bcc GOTCHR              ; this isn't it.
-GTP1            iny                     ; try again,one
+                bcc _gotChr             ; this isn't it.
+
+_gtp1           iny                     ; try again,one
                 lda (SCRPTR),Y          ; right
-                beq GTP2
+                beq _gtp2
+
                 cmp #4
-                bcc GOTCHR
-GTP2            ldy #$28                ; if we still
+                bcc _gotChr
+
+_gtp2           ldy #$28                ; if we still
                 lda (SCRPTR),Y          ; don't get it
-                beq GTP3                ; try 1 down
+                beq _gtp3               ; try 1 down
+
                 cmp #4
-                bcc GOTCHR
-GTP3            iny                     ; then, both at
+                bcc _gotChr
+
+_gtp3           iny                     ; then, both at
                 lda (SCRPTR),Y          ; once
-                bne GCKRCK
-                jmp LWRBMB              ; if by this
-GCKRCK          cmp #4                  ; time, we dont
-                bcc GOTCHR              ; have it, then
-                jmp LWRBMB              ; give up
-GOTCHR          asl A                   ; hold score=
+                bne _gckrck
+
+                jmp LowerBomb           ; if by this
+
+_gckrck         cmp #4                  ; time, we dont
+                bcc _gotChr             ; have it, then
+
+                jmp LowerBomb           ; give up
+
+_gotChr         asl A                   ; hold score=
                 sta HOLDIT              ; char * 2
                 lda #0                  ; erase rock on
                 sta (SCRPTR),Y          ; screen
@@ -291,14 +403,13 @@ GOTCHR          asl A                   ; hold score=
                 sec                     ; rocks left
                 sbc #1
                 sta ROCKS
-                bcs GOT1
+                bcs _got1
+
                 dec ROCKS+1
-GOT1            lda #$FE                ; start explosion
+_got1           lda #$FE                ; start explosion
                 sta EXPLODE             ; sound
 
-;
 ; add on to score
-;
 
                 ldy SCRNDX,X            ; get base index
                 lda HOLDIT              ; to scores,and
@@ -307,99 +418,149 @@ GOT1            lda #$FE                ; start explosion
                 sta SCORE1,Y
                 lda #3                  ; set digit # for
                 sta HOLDIT              ; rollover prot.
-ADDSCR          lda SCORE1,Y            ; done?
-                beq CHKHI               ; yes, check high
+_next1          lda SCORE1,Y            ; done?
+                beq CheckHiScore        ;   yes, check high
+
                 cmp #26                 ; digit >10?
-                bcc SCUNDX              ; no, go right
+                bcc _scundx             ; no, go right
+
                 sec                     ; sub 10 from
                 sbc #10                 ; this digit
                 sta SCORE1,Y
                 dey                     ; point to next
                 dec HOLDIT
-                bmi CHKHI               ; rollover! leave
+                bmi CheckHiScore        ; rollover! leave
+
                 lda SCORE1,Y            ; get digit
-                bne SCBRK               ; if blank, set
+                bne _scbrk               ; if blank, set
+
                 lda #$10                ; to zero
-SCBRK           clc                     ; add 1
+_scbrk          clc                     ; add 1
                 adc #1
                 sta SCORE1,Y            ; and save it
-                bne ADDSCR              ; check this digit
-SCUNDX          iny                     ; go right one
+                bne _next1              ; check this digit
+
+_scundx         iny                     ; go right one
                 inc HOLDIT              ; digit
-                bne ADDSCR
+                bne _next1
 
-;
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
 ; check for high score
-;
-
-CHKHI           lda #<SCORE1
+;--------------------------------------
+CheckHiScore    .proc
+                lda #<SCORE1
                 sta SCRPTR              ; set pointer
                 lda #>SCORE1            ; to score for
                 sta SCRPTR+1            ; player 1
+
                 txa                     ; if it isn't
-                beq CHKSCR              ; player 1, then
+                beq _chkScore           ; player 1, then
+
                 lda #10                 ; add to get
                 clc                     ; pointer for
                 adc SCRPTR              ; player 2
                 sta SCRPTR
-                bcc CHKSCR
+                bcc _chkScore
+
                 inc SCRPTR+1
-CHKSCR          ldy #0                  ; begin at hi end
-CHECKSC         lda (SCRPTR),Y
+_chkScore       ldy #0                  ; begin at hi end
+_next1          lda (SCRPTR),Y
                 cmp HISCOR,Y            ; compare 'em
-                beq CKNXDG              ; if same,do next
-                bcs STHISC              ; if player > set
+                beq _chkNxtDgt          ; if same, do next
+
+                bcs SetHiScore          ; if player > set
+
                 bcc CHKFRM              ; if high > skip
-CKNXDG          iny                     ; do next digit
+
+_chkNxtDgt      iny                     ; do next digit
                 cpy #4                  ; if all done,
-                bne CHECKSC             ; then it's the
+                bne _next1              ; then it's the
+
                 beq CHKFRM              ; same, skip
 
-;
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
 ; set high score
-;
+;--------------------------------------
+SetHiScore      .proc
+                ldy #3                  ; copy the new high score into HISCOR
+_next1          lda (SCRPTR),Y
+                sta HISCOR,Y
+                dey
+                bpl _next1
 
-STHISC          ldy #3                  ; copy the
-SETDIGT         lda (SCRPTR),Y          ; new high
-                sta HISCOR,Y            ; score into
-                dey                     ; hiscor
-                bpl SETDIGT
+                .endproc
 
-;
+                ;[fall-through]
+
+
+;======================================
 ; check for getting extra bombs
-;
-
-CHKFRM          ldy SCRNDX,X            ; get score
+;======================================
+CHKFRM          .proc
+                ldy SCRNDX,X            ; get score
                 lda SCORE1-3,Y          ; in thousands
                 cmp FREMEN,X            ; if not free
-                bne STRKHT              ; bomb yet,skip.
+                bne _STRKHT             ; bomb yet,skip.
+
                 inc BOMBS,X             ; else, up bombs
                 lda BOMBS,X             ; by 1
                 cmp #4                  ; if bombs>=4,
-                bcs UPDTFM              ; keep in reserve
+                bcs _UPDTFM             ; keep in reserve
+
                 clc                     ; if bombs less
                 adc SCRNDX,X            ; than 4, then
                 tay                     ; set extra
                 lda #$CD                ; on screen
                 sta BOMB1-4,Y
-UPDTFM          inc FREMEN,X            ; set for next
-;
-STRKHT          inc RCKHIT,X            ; if new # of
+_UPDTFM         inc FREMEN,X            ; set for next
+
+_STRKHT         inc RCKHIT,X            ; if new # of
                 lda RCKHIT,X            ; rocks hit =
                 cmp RKILL               ; max,kill bomb
-                bne LWRBMB              ; else, lower it
-KILLBMB         txa                     ; set pointer
+                bne LowerBomb           ; else, lower it
+
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+KILLBMB         .proc
+                txa                     ; set pointer
                 clc                     ; to bomb
                 adc #>PL2
                 sta SCRPTR+1
                 lda BMBDRP,X
                 sta SCRPTR
+
                 ldy #5                  ; and erase it
                 lda #0
-ERABOMB         sta (SCRPTR),Y
+_next1          sta (SCRPTR),Y
                 dey
-                bpl ERABOMB
-KILBOMB         txa                     ; turn off sound
+                bpl _next1
+
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+KILBOMB         .proc
+                txa                     ; turn off sound
                 asl A                   ; for this bomb
                 tay
                 lda #0
@@ -407,25 +568,32 @@ KILBOMB         txa                     ; turn off sound
                 sta AUDC1,Y
                 sta BMBDRP,X            ; set flag off
                 lda RCKHIT,X            ; if it didn't
-                bne DONXBMB             ; hit anything,
-                jsr LWRMISS             ; lower # bombs
-                jmp DONXBMB             ; & do next
+                bne DoNextBomb          ; hit anything,
 
-;
+                jsr DecrementMissile    ; lower # bombs
+
+                jmp DoNextBomb          ; & do next
+
+                .endproc
+
+
+;--------------------------------------
 ; lower the bombs
-;
-
-LWRBMB          txa
+;--------------------------------------
+LowerBomb       .proc
+                txa
                 clc
                 adc #>PL2               ; set pointer to
                 sta SCRPTR+1            ; bomb
                 lda BMBDRP,X
                 sta SCRPTR
+
                 lda #0                  ; erase the bomb
                 ldy #5
-ERBMB           sta (SCRPTR),Y
+_next1          sta (SCRPTR),Y
                 dey
-                bpl ERBMB
+                bpl _next1
+
                 inc DRPRATE,X           ; up drop speed
                 lda DRPRATE,X
                 lsr A                   ; update position
@@ -437,13 +605,16 @@ ERBMB           sta (SCRPTR),Y
                 adc BMBDRP,X
                 cmp #196                ; out of range?
                 bcs KILBOMB             ; yes, kill it
+
                 sta BMBDRP,X            ; else, set
                 sta SCRPTR              ; the bomb
+
                 ldy #5
-SETBOMB         lda CharsetCustom+96,Y
+_next2          lda CharsetCustom+96,Y
                 sta (SCRPTR),Y
                 dey
-                bpl SETBOMB
+                bpl _next2
+
                 txa                     ; set y to index
                 asl A                   ; the sound regs
                 tay
@@ -456,36 +627,56 @@ SETBOMB         lda CharsetCustom+96,Y
                 sec
                 sbc HOLDIT
                 sta AUDC1,Y
-DONXBMB         dex                     ; reset index
-                bmi DOPLMV              ; if both not
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+DoNextBomb      .proc
+                dex                     ; reset index
+                bmi CheckDrop._DOPLMV   ; if both not
+
                 jmp BMBNLOP             ; done, do next
 
-;
-; check & drop bombs
-;
+                .endproc
 
-CHKDRP          lda BOMBS,X             ; if no bombs left
-                beq DONXBMB             ; then do next
+
+;--------------------------------------
+; check & drop bombs
+;--------------------------------------
+CheckDrop       .proc
+                lda BOMBS,X             ; if no bombs left
+                beq DoNextBomb          ; then do next
+
                 txa                     ; if not the
                 clc                     ; computer,check
                 sbc PLAYERS             ; trigger
-                bne CHKTRG              ; it's player!
+                bne _CHKTRG             ; it's player!
+
                 lda DIR                 ; going left?
-                bmi GOINGR              ; no!
+                bmi _GOINGR             ;   no!
+
                 lda PLYRX,X             ; get computer x
                 cmp #$44                ; too far left?
-                bcc DONXBMB             ; yes!
-                bcs TRYDRP              ; no, try drop!
-GOINGR          lda PLYRX,X             ; get comp. x
+                bcc DoNextBomb          ;   yes!
+                bcs _TRYDRP             ;   no, try drop!
+
+_GOINGR         lda PLYRX,X             ; get comp. x
                 cmp #$B8                ; too far right?
-                bcs DONXBMB             ; yes!
-TRYDRP          lda RANDOM              ; computer drops
+                bcs DoNextBomb          ;   yes!
+
+_TRYDRP         lda RANDOM              ; computer drops
                 and #15                 ; a bomb if
-                beq DROPIT              ; random says to
-                bne DONXBMB             ; else do next
-CHKTRG          lda TRIG0,X             ; trig pushed?
-                bne DONXBMB             ; no, do next
-DROPIT          lda PLYRY,X             ; drop: set
+                beq _DROPIT             ; random says to
+                bne DoNextBomb          ; else do next
+
+_CHKTRG         lda TRIG0,X             ; trig pushed?
+                bne DoNextBomb          ;   no, do next
+
+_DROPIT         lda PLYRY,X             ; drop: set
                 clc                     ; bomb y to
                 adc #8                  ; player y+8
                 sta BMBDRP,X
@@ -495,12 +686,14 @@ DROPIT          lda PLYRY,X             ; drop: set
                 inc BRUN,X              ; up bombs dropped
                 lda #50                 ; set the sound
                 sta DRPFREQ,X           ; flag
-                bne DONXBMB             ; and do next
+                bne DoNextBomb          ; and do next
 
-DOPLMV          sta HITCLR              ; clear hits
-                jsr MOVEPLR             ; move players
+_DOPLMV         sta HITCLR              ; clear hits
+                jsr MovePlayer          ; move players
+
                 lda EXPLODE             ; explosion going?
-                beq CKRSTRT             ; no,skip
+                beq _CKRSTRT            ;   no,skip
+
                 dec EXPLODE             ; update explosion
                 dec EXPLODE             ; sound
                 eor #$F0
@@ -511,35 +704,44 @@ DOPLMV          sta HITCLR              ; clear hits
                 lsr A
                 eor #$8F
                 sta AUDC3
-CKRSTRT         lda CONSOL              ; any console
+_CKRSTRT        lda CONSOL              ; any console
                 cmp #7                  ; buttons pushed?
-                beq CKNSCR              ; if yes, then
+                beq _CKNSCR             ; if yes, then
+
                 jmp RESTART             ; re-start
-CKNSCR          lda ROCKS               ; # of rocks left
-                bne CHKPAUS             ; = zero?
+
+_CKNSCR         lda ROCKS               ; # of rocks left
+                bne _CHKPAUS            ; = zero?
+
                 lda ROCKS+1             ; if yes, then
-                bne CHKPAUS             ; set up a
-                jmp NEWSCRN             ; new screen
-CHKPAUS         lda CH                  ; spacebar pressed?
+                bne _CHKPAUS            ; set up a
+
+                jmp NewScreen           ; new screen
+
+_CHKPAUS        lda CH                  ; spacebar pressed?
                 cmp #33
-                bne CKDRRCK             ; no, continue
+                bne _CKDRRCK            ;   no, continue
+
                 lda #0                  ; yes, pause game
                 sta AUDC1               ; turn off main
                 sta AUDC2               ; sounds
                 sta AUDC3
-HLDPTRN         lda PORTA               ; wait for stick
+_wait1          lda PORTA               ; wait for stick
                 cmp #$FF                ; movement
-                beq HLDPTRN
+                beq _wait1
+
                 lda #$FF                ; reset ch for
                 sta CH                  ; another pause
                 sta CH1
-CKDRRCK         lda CLOCK               ; time to drop
+_CKDRRCK        lda CLOCK               ; time to drop
                 and #15                 ; suspended
-                beq DRPROCK             ; rocks?
-                jmp BMBLOOP             ; no, do bombs
-DRPROCK         lda #39                 ; set column to 39
+                beq _DRPROCK            ; rocks?
+
+                jmp BMBLOOP             ;   no, do bombs
+
+_DRPROCK        lda #39                 ; set column to 39
                 sta XCOUNT
-DSTYCNT         lda #8                  ; row to 8
+_next1          lda #8                  ; row to 8
                 sta YCOUNT              ; and set pointer
                 lda #<CANYON+360        ; to xcount
                 clc                     ; plus canyon
@@ -548,13 +750,15 @@ DSTYCNT         lda #8                  ; row to 8
                 lda #>CANYON+360
                 adc #0
                 sta SCRPTR+1
-RK2DRP          ldy #0                  ; rock fall loop:
+_next2          ldy #0                  ; rock fall loop:
                 lda (SCRPTR),Y          ; nothing there
-                beq DONXRCK             ; then try next up
+                beq _DONXRCK            ; then try next up
+
                 tax                     ; else hold it
                 ldy #$28                ; & look underneath
                 lda (SCRPTR),Y
-                bne DONXRCK             ; not blank-do next
+                bne _DONXRCK            ; not blank-do next
+
                 txa                     ; blank, move rock
                 sta (SCRPTR),Y          ; above down
                 ldy #0
@@ -564,60 +768,74 @@ RK2DRP          ldy #0                  ; rock fall loop:
                 sec                     ; so whole column
                 sbc #$28                ; won't fall at
                 sta SCRPTR              ; once
-                bcs NOVER
+                bcs _NOVER
+
                 dec SCRPTR+1
-NOVER           dec YCOUNT              ; last row done?
-                bmi DONXCOL             ; yes, do next col
-DONXRCK         lda SCRPTR              ; go up one
+_NOVER          dec YCOUNT              ; last row done?
+                bmi _DONXCOL            ;   yes, do next col
+
+_DONXRCK        lda SCRPTR              ; go up one
                 sec                     ; row
                 sbc #$28
                 sta SCRPTR
-                bcs NOVER2
+                bcs _NOVER2
+
                 dec SCRPTR+1
-NOVER2          dec YCOUNT              ; last row done?
-                bpl RK2DRP              ; yes, do next col
-DONXCOL         dec XCOUNT              ; last col done?
-                bpl DSTYCNT             ; no, do next
+_NOVER2         dec YCOUNT              ; last row done?
+                bpl _next2              ;   yes, do next col
+
+_DONXCOL        dec XCOUNT              ; last col done?
+                bpl _next1              ;   no, do next
+
                 jmp BMBLOOP             ; do bombs again
 
-;
-; move player,check for leaving
+                .endproc
+
+
+;======================================
+; move player, check for leaving
 ; screen, end game check, switch
 ; ship types
-;
+;======================================
+MovePlayer      .proc
+                lda ONSCR               ; if not on
+                bne _ADDCLOK            ; screen, set sound
 
-MOVEPLR         lda ONSCR               ; if not on
-                bne ADDCLOK             ; screen, set sound
                 lda MASK                ; and players
                 cmp #3                  ; balloon?
-                beq STBLSND             ; yes, do that
+                beq _STBLSND            ; yes, do that
+
                 lda #$96                ; set plane sound
                 sta AUDF4
                 lda #$24
                 sta AUDC4
-                bne ADDCLOK             ; & goto clock add
-STBLSND         lda #0                  ; set wind sound
+                bne _ADDCLOK            ; & goto clock add
+
+_STBLSND        lda #0                  ; set wind sound
                 sta AUDF4
                 lda #2
                 sta AUDC4
                 ldx #1                  ; set balloon
-STBLNS          lda PLYRY,X
+_next1          lda PLYRY,X
                 sta SCRPTR
                 txa
                 clc
                 adc #>PL0
                 sta SCRPTR+1
                 ldy #15
-SETBALN         lda CharsetCustom+80,Y
+_next2          lda CharsetCustom+80,Y
                 sta (SCRPTR),Y
                 dey
-                bpl SETBALN
+                bpl _next2
+
                 dex
-                bpl STBLNS
-ADDCLOK         inc CLOCK               ; add to clock
+                bpl _next1
+
+_ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
                 and MASK                ; mask<>0 then
-                bne DODELAY             ; don't move
+                bne _DODELAY            ; don't move
+
                 lda PLYRX               ; move the players
                 clc                     ; first player 1
                 adc DIR
@@ -633,14 +851,16 @@ ADDCLOK         inc CLOCK               ; add to clock
                 sta HPOSP3
                 lda MASK                ; if on planes
                 cmp #1                  ; then check if
-                bne DODELAY             ; time to animate
+                bne _DODELAY            ; time to animate
+
                 lda CLOCK               ; props
                 and #2
-                beq DODELAY             ; no, skip this
+                beq _DODELAY            ; no, skip this
+
                 lda DIR                 ; set temp dir
                 sta TDIR                ; (will be killed)
                 ldx #1
-ANILOOP         lda PLYRY,X             ; set pointer
+_next3          lda PLYRY,X             ; set pointer
                 sta SCRPTR              ; to player
                 txa
                 clc
@@ -657,54 +877,68 @@ ANILOOP         lda PLYRY,X             ; set pointer
                 stx HOLDIT              ; index.
                 tax                     ; save player #
                 ldy #0                  ; set player
-ANISET          lda CharsetCustom+48,X
+_next4          lda CharsetCustom+48,X
                 sta (SCRPTR),Y
                 inx
                 iny
                 cpy #8
-                bne ANISET
+                bne _next4
+
                 lda TDIR                ; reverse tdir
                 eor #$FE
                 sta TDIR
                 ldx HOLDIT              ; get player #
                 dex                     ; & animate next
-                bpl ANILOOP
-DODELAY         ldx #15                 ; wait for a
-DELAY1          ldy DELYVAL             ; while to make
-DELAY2          dey                     ; game playable
-                bne DELAY2
+                bpl _next3
+
+_DODELAY        ldx #15                 ; wait for a
+_wait1          ldy DELYVAL             ; while to make
+_wait2          dey                     ; game playable
+                bne _wait2
+
                 dex
-                bne DELAY1
+                bne _wait1
+
                 lda #1                  ; players are now
                 sta ONSCR               ; on screen
                 lda PLYRX               ; but check to
                 cmp #44                 ; see if they
-                beq OFFSCR              ; aren't
+                beq _OFFSCR             ; aren't
+
                 cmp #204
-                bne MPGOBAK             ; if on, return
-OFFSCR          lda #0                  ; else, turn off
+                bne _XIT                ; if on, return
+
+_OFFSCR         lda #0                  ; else, turn off
                 sta AUDC3               ; explosions and
                 sta AUDC4               ; bkg sound
                 sta EXPLODE
                 sta ONSCR               ; set onscr false
                 ldx #1
-CHKBR           lda BMBDRP,X            ; if a bomb is
-                beq CKBRN               ; in the air, and
+_next5          lda BMBDRP,X            ; if a bomb is
+                beq _CKBRN              ; in the air, and
+
                 lda RCKHIT,X            ; it hasn't hit
-                bne CKBRN               ; anything yet,
-                jsr LWRMISS             ; it's a miss
-CKBRN           lda BRUN,X              ; if no bombs
-                bne CKNBR               ; dropped this
-                jsr LWRMISS             ; pass,it's a miss
-CKNBR           dex
-                bpl CHKBR
-                jsr PMCLR               ; clear out players
+                bne _CKBRN              ; anything yet,
+
+                jsr DecrementMissile    ; it's a miss
+
+_CKBRN          lda BRUN,X              ; if no bombs
+                bne _CKNBR              ; dropped this
+
+                jsr DecrementMissile    ; pass, it's a miss
+
+_CKNBR          dex
+                bpl _next5
+
+                jsr ClearPlayer         ; clear out players
+
                 ldx PLAYERS             ; if the actual
                 lda BOMBS               ; players have
                 clc                     ; no more bombs,
                 adc BOMBS,X             ; and we're on a
                 adc PLAY                ; game, end it
-                beq ENDGAME
+                beq EndGame
+
                 lda DIR                 ; reverse direction
                 eor #$FE
                 sta DIR
@@ -715,378 +949,120 @@ CKNBR           dex
                 lda #3                  ; reset clock
                 sta CLOCK
                 lda ROCKS+1             ; if half of the
-                bne MPGOBAK             ; rocks are gone
+                bne _XIT                ; rocks are gone
+
                 lda ROCKS               ; then switch
                 cmp #149                ; to planes
-                bcs MPGOBAK             ; else return
+                bcs _XIT                ; else return
+
                 lda #1                  ; set move rate
                 sta MASK                ; mask
                 lda #4                  ; plane bombs get
                 sta RKILL               ; max of 4 rocks
-MPGOBAK         rts                     ; return
-;
-ENDGAME         pla                     ; get rid of
+_XIT            rts
+                .endproc
+
+
+;--------------------------------------
+; do delay so the players can see the
+; final score
+;--------------------------------------
+EndGame         .proc
+                pla                     ; get rid of
                 pla                     ; return address
-                lda #8                  ; do delay so
-                sta HOLDIT              ; the players
-WAIT0           ldx #$FF                ; can see the
-WAIT1           ldy #$FF                ; final score
-WAIT2           lda CONSOL              ; (end delay
-                cmp #7                  ; early with
-                bne ENDGOBK             ; consol key)
+
+                lda #8
+                sta HOLDIT
+_wait1          ldx #$FF
+_wait2          ldy #$FF
+_wait3          lda CONSOL              ; end delay early with consol key
+                cmp #7
+                bne _XIT
+
                 dey
-                bne WAIT2
+                bne _wait3
+
                 dex
-                bne WAIT1
+                bne _wait2
+
                 dec HOLDIT
-                bpl WAIT0
-ENDGOBK         jmp RESTART             ; go title screen
+                bpl _wait1
 
-;
+_XIT            jmp RESTART             ; go title screen
+                .endproc
+
+
+;======================================
 ; set canyon screen image
-;
-
-SETSCRN         ldy #0                  ; copy rocks &
-SETSC1          lda ROCKIMG,Y           ; canyon to
-                sta CANYON+40,Y         ; screen
+;======================================
+DrawScreen      .proc
+                ldy #0                  ; copy rocks & canyon to screen
+_next1          lda ROCKIMG,Y
+                sta CANYON+40,Y
                 iny
-                bne SETSC1
+                bne _next1
+
                 ldy #145
-SETSC2          lda ROCKIMG+255,Y
+_next2          lda ROCKIMG+255,Y
                 sta CANYON+295,Y
                 dey
-                bne SETSC2
-                rts                     ; return
+                bne _next2
 
-;
-; lower number of bombs left
-;
+                rts
+                .endproc
 
-LWRMISS         lda BOMBS,X             ; if already
-                beq LWMGOBK             ; zero, exit
+
+;======================================
+; lower number of bombs remaining
+;======================================
+DecrementMissile .proc
+                lda BOMBS,X             ; if already zero, exit
+                beq _XIT
+
                 dec BOMBS,X             ; lower bombs left
-                lda BOMBS,X             ; if at least 3
-                cmp #3                  ; left, return
-                bcs LWMGOBK
-                clc                     ; get index for
-                adc SCRNDX,X            ; screen to
-                tay                     ; erase bomb
+                lda BOMBS,X             ; if at least 3 remain, return
+                cmp #3
+                bcs _XIT
+
+                clc                     ; get index for screen to erase bomb
+                adc SCRNDX,X
+                tay
                 lda #0
                 sta BOMB1-3,Y
-LWMGOBK         rts                     ; return
+_XIT            rts
+                .endproc
 
-;
-; clear players,bomb y positions,
+
+;======================================
+; clear players, bomb y positions,
 ; bombs dropped this pass, and
 ; turn off bomb sounds
-;
-
-PMCLR           lda #0
+;======================================
+ClearPlayer     .proc
+                lda #0
                 tay
-PMCLOOP         sta PL0,Y               ; clear all
-                sta PL1,Y               ; players
+_next1          sta PL0,Y               ; clear all players
+                sta PL1,Y
                 sta PL2,Y
                 sta PL3,Y
                 dey
-                bne PMCLOOP
-                sta BMBDRP              ; clear bomb y
-                sta BMBDRP+1            ; position
-                sta BRUN                ; & bombs dropped
-                sta BRUN+1              ; this pass
-                sta AUDC1               ; turn off bomb
-                sta AUDC2               ; fall sounds
+                bne _next1
+
+                sta BMBDRP              ; clear bomb y position & bombs dropped this pass
+                sta BMBDRP+1
+                sta BRUN
+                sta BRUN+1
+
+                sta AUDC1               ; turn off bomb fall sounds
+                sta AUDC2
                 rts
+                .endproc
 
-;
-; player 2/computer messages
-;
 
-            .enc "atari-screen-inverse"
-P2COMPT         .text "RETUPMOC2 REYALP"
-            .enc "none"
+;--------------------------------------
 
-;
-; misc data
-;
-SCRNDX          .byte 3,13
-MASKS           .byte 1,3
+                .include "data.asm"
 
-;
-; title screen display list
-;
-
-DLIST1          .byte AEMPTY8,AEMPTY8,AEMPTY8
-
-                .byte $06+ALMS
-                    .addr GAME
-
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-
-                .byte $04+ALMS
-                    .addr CANYON+40
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-
-                .byte $07+ALMS
-                    .addr TITLE
-
-                .byte $06,$06
-
-                .byte AVB+AJMP
-                    .addr DLIST1
-
-;
-; game display list
-;
-
-DLIST2          .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8,AEMPTY8,AEMPTY8
-                .byte AEMPTY8
-
-                .byte $04+ALMS
-                    .word CANYON+40
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-                .byte $04,$04,$04
-
-                .byte $06+ALMS
-                    .addr GAME
-
-                .byte AEMPTY8
-
-                .byte $06,$06
-
-                .byte AVB+AJMP
-                    .addr DLIST2
-
-;
-; titles
-;
-
-TITLE
-            .enc "atari-screen-inverse"
-                .text "  boulder "
-                .text " bombers  "
-            .enc "atari-screen"
-                .text "   by  mark price   "
-                .text "     PLAYERS: "
-            .enc "none"
-
-SCNOPLR         .byte $11,0,0,0,0,0
-
-;
-; bottom of game screen
-;
-
-            .enc "atari-screen"
-GAME            .text "     HIGH: "
-HISCOR          .text "   0      PLAYER 1   "
-            .enc "none"
-
-P2MSG           .byte 0,0,0,0,0,0,0,0,0,0
-SCORE1          .byte 0,0,0,0,0
-BOMB1           .byte 0,0,0,0,0
-SCORE2          .byte 0,0,0,0,0
-BOMB2           .byte 0,0,0,0
-
-;
-; data for canyon
-;
-
-ROCKIMG         .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte $85,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,$85
-                .byte $84,$85,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,1,1
-                .byte 1,1,1,1,1,1,1,1,$84,$85
-                .byte $84,$85,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,$84,$85
-                .byte $84,$84,$85,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,$84,$84,$85
-                .byte $84,$84,$85,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,2,2,2
-                .byte 2,2,2,2,2,2,2,$84,$84,$85
-                .byte $84,$84,$84,$85,3
-                .byte 3,3,3,3,3,3,3
-                .byte $85,3,3,3,3,3,3,3,3,3,3,3
-                .byte 3,3,3,$85,3,3,3,3,3,3,3,3
-                .byte $84,$84,$84,$85,$84,$84
-                .byte $84,$85,3,3,3,3
-                .byte 3,3,3,$84,$84,$85
-                .byte 3,$85,3,3,3,3
-                .byte 3,3,3,3,$85,3
-                .byte $84,$84,$85,3,3,3
-                .byte 3,3,3,3,$84,$84
-                .byte $84,$85,$84,$84,$84,$84
-                .byte $85,3,3,3,3,3
-                .byte $84,$84,$84,$84,$84,$84
-                .byte $85,3,3,3,3,3
-                .byte 3,$84,$84,$84,$84,$84
-                .byte $84,$85,3,3,3,3
-                .byte 3,$84,$84,$84,$84,$85
-                .byte $84,$84,$84,$84,$84,$85
-                .byte 3,3,3,$84,$84,$84
-                .byte $84,$84,$84,$84,$84,$85
-                .byte 3,3,3,3,$84,$84
-                .byte $84,$84,$84,$84,$84,$84
-                .byte $85,3,3,3,$84,$84
-                .byte $84,$84,$84,$85
-
-;
-; character set data
-;
-
-MYCHARS         ;.byte $00,$00,$00,$00,$00,$00,$00,$00
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                ;.byte $54,$54,$54,$54,$54,$54,$54,$00
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %01010100         ; AAA.
-                .byte %00000000         ; ....
-                ;.byte $A8,$A8,$A8,$A8,$A8,$A8,$A8,$00
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %10101000         ; BBB.
-                .byte %00000000         ; ....
-                ;.byte $FC,$FC,$FC,$FC,$FC,$FC,$FC,$00
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %00000000         ; ....
-                ;.byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                ;.byte $FC,$FC,$FC,$FC,$FC,$FC,$FC,$FC
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                .byte %11111100         ; CCC.
-                ;.byte $00,$00,$01,$03,$3F,$D3,$FE,$80
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000001         ; ...A
-                .byte %00000011         ; ...C
-                .byte %00111111         ; .CCC
-                .byte %11010011         ; CA.C
-                .byte %11111110         ; CCCB
-                .byte %10000000         ; B...
-                ;.byte $00,$00,$01,$83,$BF,$D3,$7E,$00
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000001         ; ...A
-                .byte %10000011         ; B..C
-                .byte %10111111         ; BCCC
-                .byte %11010011         ; CA.C
-                .byte %01111110         ; ACCB
-                .byte %00000000         ; ....
-                ;.byte $00,$00,$80,$C0,$FC,$CB,$7F,$01
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %10000000         ; B...
-                .byte %11000000         ; C...
-                .byte %11111100         ; CCC.
-                .byte %11001011         ; C.BC
-                .byte %01111111         ; ACCC
-                .byte %00000001         ; ...A
-                ;.byte $00,$00,$80,$C1,$FD,$CB,$7E,$00
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %10000000         ; B...
-                .byte %11000001         ; C..A
-                .byte %11111101         ; CCCA
-                .byte %11001011         ; C.BC
-                .byte %01111110         ; ACCB
-                .byte %00000000         ; ....
-                ;.byte $3C,$7E,$FF,$00,$FF,$FF,$7E,$3C
-                .byte %00111100         ; .CC.
-                .byte %01111110         ; ACCB
-                .byte %11111111         ; CCCC
-                .byte %00000000         ; ....
-                .byte %11111111         ; CCCC
-                .byte %11111111         ; CCCC
-                .byte %01111110         ; ACCB
-                .byte %00111100         ; .CC.
-                ;.byte $18,$24,$24,$18,$18,$00,$00,$00
-                .byte %00011000         ; .AB.
-                .byte %00100100         ; .BA.
-                .byte %00100100         ; .BA.
-                .byte %00011000         ; .AB.
-                .byte %00011000         ; .AB.
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                ;.byte $A0,$40,$E0,$E0,$E0,$40,$00,$00
-                .byte %10100000         ; BB..
-                .byte %01000000         ; A...
-                .byte %11100000         ; CB..
-                .byte %11100000         ; CB..
-                .byte %11100000         ; CB..
-                .byte %01000000         ; A...
-                .byte %00000000         ; ....
-                .byte %00000000         ; ....
-                ;.byte $6C,$7C,$38,$7C,$7C,$7C,$38,$10
-                .byte %01101100         ; ABC.
-                .byte %01111100         ; ACC.
-                .byte %00111000         ; .CB.
-                .byte %01111100         ; ACC.
-                .byte %01111100         ; ACC.
-                .byte %01111100         ; ACC.
-                .byte %00111000         ; .CB.
-                .byte %00010000         ; .A..
-
-                .fill 4,$00
-                .fill $18C
-
-;
-; on-screen canyon
-;
-
-CANYON
 
 ;--------------------------------------
 ;--------------------------------------
