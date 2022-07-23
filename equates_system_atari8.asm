@@ -2,19 +2,9 @@
 ; SYSTEM EQUATES
 ;======================================
 
-ADLI            = $0080
 AVB             = $0040
 ALMS            = $0040
-AVSCR           = $0020
-AHSCR           = $0010
 AJMP            = $0001
-AEMPTY1         = $0000
-AEMPTY2         = $0010
-AEMPTY3         = $0020
-AEMPTY4         = $0030
-AEMPTY5         = $0040
-AEMPTY6         = $0050
-AEMPTY7         = $0060
 AEMPTY8         = $0070
 
 ;--------------------------------------
