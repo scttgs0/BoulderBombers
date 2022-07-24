@@ -456,3 +456,50 @@ wait_vdma       lda VDMA_STATUS         ; Get the VDMA status
 
 vdma_err        brk
                 .endproc
+
+
+;======================================
+;
+;======================================
+InitIRQs        .proc
+                pha
+
+;   enable vertical blank interrupt
+
+                .m8i8
+                ldx #HandleIrq_END-HandleIrq
+_relocate       ;lda @l $024000,X        ; HandleIrq address
+                ;sta @l $002000,X        ; new address within Bank 00
+                ;dex
+                ;bpl _relocate
+
+                sei                     ; disable IRQ
+
+                .m16
+                ;lda @l vecIRQ
+                ;sta IRQ_PRIOR
+
+                lda #<>$002500
+                sta @l vecIRQ
+
+                .m8
+                lda #$07                ; reset consol
+                sta CONSOL
+
+                lda #$1F
+                sta InputFlags
+                stz InputType           ; joystick
+
+                lda @l INT_MASK_REG0
+                and #~FNX0_INT00_SOF    ; enable Start-of-Frame IRQ
+                sta @l INT_MASK_REG0
+
+                lda @l INT_MASK_REG1
+                and #~FNX1_INT00_KBD    ; enable Keyboard IRQ
+                sta @l INT_MASK_REG1
+
+                cli                     ; enable IRQ
+
+                pla
+                rts
+                .endproc
