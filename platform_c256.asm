@@ -176,7 +176,7 @@ _nextGlyph      lda TitleScreenData,Y   ; Get the tile code
                 cpy #MAPWIDTH*MAPHEIGHT-18  ; bottom lines are text
                 bne _nextGlyph
 
-                .setbank $03
+                .setbank $00
                 plp
                 rts
                 .endproc
@@ -448,8 +448,8 @@ wait_vdma       lda VDMA_STATUS         ; Get the VDMA status
                 sta SDMA0_CTRL
                 sta VDMA_CTRL
 
-                .setdp $0800
-                .setbank $03
+                .setdp $0000
+                .setbank $00
                 .m8i8
                 plp
                 rts
@@ -479,7 +479,7 @@ _relocate       ;lda @l $024000,X        ; HandleIrq address
                 ;lda @l vecIRQ
                 ;sta IRQ_PRIOR
 
-                lda #<>$002500
+                lda #<>$002900
                 sta @l vecIRQ
 
                 .m8

@@ -9,10 +9,18 @@
 
 CLOCK           .byte ?
 DELYVAL         .byte ?
+
 DIR             .byte ?
+dirLeft     = $FF                       ; =-1
+dirRight    = 1
+
 EXPLODE         .byte ?
 HOLDIT          .byte ?
-MASK            .byte ?
+
+MASK            .byte ?                 ; movement rate
+maskPlane   = 1
+maskBalloon = 3
+
 ONSCR           .byte ?
 PLAY            .byte ?
 PLAYERS         .byte ?
@@ -44,8 +52,8 @@ InputFlags      .byte ?
 InputType       .byte ?
 itJoystick  = 0
 itKeyboard  = 1
-KEYCHAR         .byte ?                   ; last key pressed
-CONSOL          .byte ?                   ; state of OPTION,SELECT,START
+KEYCHAR         .byte ?                 ; last key pressed
+CONSOL          .byte ?                 ; state of OPTION,SELECT,START
 
 SOURCE          .dword ?                ; Starting address for the source data (4 bytes)
 DEST            .dword ?                ; Starting address for the destination block (4 bytes)

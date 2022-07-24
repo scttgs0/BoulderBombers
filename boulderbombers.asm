@@ -38,6 +38,7 @@ BOOT            clc
 ;--------------------------------------
 
                 .include "main.asm"
+                .include "data.asm"
 
 
 ;--------------------------------------
@@ -46,7 +47,6 @@ BOOT            clc
 
                 .include "interrupt.asm"
                 .include "platform_c256.asm"
-                .include "data.asm"
 
 
 ;--------------------------------------

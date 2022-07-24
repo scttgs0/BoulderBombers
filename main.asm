@@ -2,51 +2,48 @@
 ;
 ;--------------------------------------
 INIT            .proc
-                ldx #111                ; copy my chars
+                ldx #111                ; copy my chars (14 chars)
 _next1          lda MYCHARS,X
                 sta CharsetCustom,X
                 dex
                 bpl _next1
 
-                ;lda #0                  ; disable vbi
+                ;lda #0                 ; disable vbi
                 ;sta NMIEN
 
-                ;lda #$34                ; set colors
+                jsr InitLUT
+                ;jsr InitCharLUT
+
+;   set playfield colors
+                ;lda #$34               ; dark-orange, lum=4
                 ;sta COLPF0
-                ;lda #$28
+                ;lda #$28               ; red-orange, lum=8
                 ;sta COLPF1
-                ;lda #$84
+                ;lda #$84               ; medium-blue, lum=4
                 ;sta COLPF2
-                ;lda #$C4
+                ;lda #$C4               ; medium-green, lum=4
                 ;sta COLPF3
-                ;lda #0
+                ;lda #0                 ; black, lum=0
                 ;sta COLBAK
 
 ;   quad-wide sprites
-                ;ldx #3                  ; init players
+                ;ldx #3                 ; init players
 _next2          ;sta SIZEP0,X
                 ;dex
                 ;bpl _next2
 
-                ;lda #$28
+;   set sprite colors
+                ;lda #$28               ; red-orange, lum=8
                 ;sta COLPM0
-                ;lda #$84
+                ;lda #$84               ; medium-blue, lum=4
                 ;sta COLPM1
-                ;lda #$C8
+                ;lda #$C8               ; medium-green, lum=8
                 ;sta COLPM2
-                ;lda #$C8
+                ;lda #$C8               ; medium-green, lum=8
                 ;sta COLPM3
 
-                ;lda #>PMAREA
-                ;sta PMBASE
-
-;   enabled instruction fetch, single-line sprite, sprite DMA, normal playfield
-                ;lda #$3E
-                ;sta DMACTL
-
-;   enable players and missiles
-                ;lda #3
-                ;sta GRACTL
+;   initialize sprites
+                ;jsr InitSprites
 
                 ldy #112                ; init chr set
 _next3          lda CharsetNorm,Y
@@ -75,12 +72,8 @@ _next6          sta CANYON,Y
 
                 jsr DrawScreen
 
-                ;lda #0                  ; init sound
+                ;lda #0                 ; init sound
                 ;sta AUDCTL
-
-;   bring POKEY out of the two-tone mode (prevent noise)
-                ;lda #3
-                ;sta SKCTL
 
                 lda #56                 ; set player
                 sta PLYRY               ;  lanes
@@ -103,21 +96,20 @@ RESTART         .proc
 
                 lda #0                  ; turn off screen
                 ;sta DMACTL
-                ;sta AUDC3               ; explosions,
+                ;sta AUDC3              ; explosions,
                 sta EXPLODE
-                ;sta AUDC4               ; and bkg sound
+                ;sta AUDC4              ; and bkg sound
 
                 jsr ClearPlayer         ; clear players
 
-                ;lda #<DLIST1            ;set title
-                ;sta DLIST               ; screen
-                ;lda #>DLIST1
-                ;sta DLIST+1
+                .frsGraphics mcTextOn|mcSpriteOn,mcVideoMode320
+                .frsMouse_off
+                .frsBorder_off
 
                 lda #$FF                ; set game speed
                 sta DELYVAL             ; for titles
 
-                lda #1                  ; set start dir
+                lda #dirRight           ; set start dir
                 sta DIR
                 sta PLAY                ; set play false
 
@@ -125,7 +117,7 @@ RESTART         .proc
                 sta ONSCR               ; on screen
 
 ;   enabled instruction fetch, single-line sprite, sprite DMA, normal playfield
-                ;lda #$3E                ; turn screen back on
+                ;lda #$3E               ; turn screen back on
                 ;sta DMACTL
 
                 jsr InitIRQs
@@ -148,7 +140,7 @@ _wait1          lda CONSOL              ; yes, wait for
                 clc
                 adc #$11                ; & set on screen
                 sta SCNOPLR
-                bne _moveT               ; (move players)
+                bne _moveT              ; (move players)
 
 _chkSTART       cmp #2                  ; if start then
                 beq START               ; start game
@@ -204,8 +196,8 @@ _next2          sta BOMB1,X
                 sta BOMBS
                 sta BOMBS+1
 
-                lda #$11                ; set next free
-                sta FREMEN              ; bomb at 1000
+                lda #$11                ; set next free bomb at 1000
+                sta FREMEN
                 sta FREMEN+1
 
                 lda PLAYERS             ; set second
@@ -221,13 +213,13 @@ _next3          lda P2COMPT,Y
                 dex
                 bpl _next3
 
-                ;lda #<DLIST2            ; set dlist
-                ;sta DLIST               ; to game
-                ;lda #>DLIST2            ; screen
+                ;lda #<DLIST2           ; set dlist
+                ;sta DLIST              ; to game
+                ;lda #>DLIST2           ; screen
                 ;sta DLIST+1
 
 ;   enabled instruction fetch, single-line sprite, sprite DMA, normal playfield
-                ;lda #$3E                ; turn on screen
+                ;lda #$3E               ; turn on screen
                 ;sta DMACTL
 
                 .endproc
@@ -241,12 +233,12 @@ _next3          lda P2COMPT,Y
 NewScreen       .proc
                 jsr DrawScreen          ; set canyon
 
-                lda #3                  ; set type to
-                sta MASK                ; balloon
+                lda #maskBalloon        ; set type to balloon
+                sta MASK
                 sta CLOCK               ; and begin clock
 
-                lda #1
-                sta DIR                 ; dir = right
+                lda #dirRight
+                sta DIR
 
                 sta ROCKS+1             ; rocks in
                 lda #42                 ; canyon=298
@@ -262,7 +254,7 @@ NewScreen       .proc
                 lda #204                ; of players
                 sta PLYRX+1
 
-                ;sta HITCLR              ; clear collisions
+                ;sta HITCLR             ; clear collisions
 
                 lda #8                  ; #rocks per bomb
                 sta RKILL               ; (max) =8
@@ -300,7 +292,7 @@ BMBNLOP         .proc
 
                 jmp CheckDrop           ; check trig
 
-_chkHits        ;lda P2PF,X              ; bomb hit anything?
+_chkHits        ;lda P2PF,X             ; bomb hit anything?
                 ;bne _chkRockOK
                 bra _chkRockOK  ; HACK:
 
@@ -413,7 +405,7 @@ _next1          lda SCORE1,Y            ; done?
                 bmi CheckHiScore        ; rollover! leave
 
                 lda SCORE1,Y            ; get digit
-                bne _scbrk               ; if blank, set
+                bne _scbrk              ; if blank, set
 
                 lda #$10                ; to zero
 _scbrk          clc                     ; add 1
@@ -704,9 +696,9 @@ _CHKPAUS        lda KEYCHAR             ; spacebar pressed?
                 cmp #33
                 bne _CKDRRCK            ;   no, continue
 
-                ;lda #0                  ; yes, pause game
-                ;sta AUDC1               ; turn off main
-                ;sta AUDC2               ; sounds
+                ;lda #0                 ; yes, pause game
+                ;sta AUDC1              ; turn off main
+                ;sta AUDC2              ; sounds
                 ;sta AUDC3
 _wait1          lda JOYSTICK0           ; wait for stick movement
                 and #$0F
@@ -783,17 +775,17 @@ MovePlayer      .proc
                 lda ONSCR               ; if not on
                 bne _ADDCLOK            ; screen, set sound
 
-                lda MASK                ; and players
-                cmp #3                  ; balloon?
-                beq _STBLSND            ; yes, do that
+                lda MASK                ; and player is balloon?
+                cmp #maskBalloon
+                beq _STBLSND            ;   yes, do that
 
-                ;lda #$96                ; set plane sound
+                ;lda #$96               ; set plane sound
                 ;sta AUDF4
                 lda #$24
                 ;sta AUDC4
                 bne _ADDCLOK            ; & goto clock add
 
-_STBLSND        ;lda #0                  ; set wind sound
+_STBLSND        ;lda #0                 ; set wind sound
                 ;sta AUDF4
                 lda #2
                 ;sta AUDC4
@@ -815,8 +807,8 @@ _next2          lda CharsetCustom+80,Y
 
 _ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
-                and MASK                ; mask<>0 then
-                bne _DODELAY            ; don't move
+                and MASK                ; mask<>0 then don't move
+                bne _DODELAY
 
                 lda PLYRX               ; move the players
                 clc                     ; first player 1
@@ -831,9 +823,9 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 sta PLYRX+1
                 sta SP01_X_POS
                 sta SP03_X_POS
-                lda MASK                ; if on planes
-                cmp #1                  ; then check if
-                bne _DODELAY            ; time to animate
+                lda MASK                ; if on planes then check if time to animate
+                cmp #maskPlane
+                bne _DODELAY
 
                 lda CLOCK               ; props
                 and #2
@@ -891,8 +883,8 @@ _wait2          dey                     ; game playable
                 bne _XIT                ; if on, return
 
 _OFFSCR         lda #0                  ; else, turn off
-                ;sta AUDC3               ; explosions and
-                ;sta AUDC4               ; bkg sound
+                ;sta AUDC3              ; explosions and
+                ;sta AUDC4              ; bkg sound
                 sta EXPLODE
                 sta ONSCR               ; set onscr false
                 ldx #1
@@ -937,10 +929,10 @@ _CKNBR          dex
                 cmp #149                ; to planes
                 bcs _XIT                ; else return
 
-                lda #1                  ; set move rate
-                sta MASK                ; mask
-                lda #4                  ; plane bombs get
-                sta RKILL               ; max of 4 rocks
+                lda #maskPlane          ; set move rate mask
+                sta MASK
+                lda #4                  ; plane bombs get max of 4 rocks
+                sta RKILL
 _XIT            rts
                 .endproc
 
@@ -1035,7 +1027,7 @@ _next1          sta PL0,Y               ; clear all players
                 sta BRUN
                 sta BRUN+1
 
-                ;sta AUDC1               ; turn off bomb fall sounds
+                ;sta AUDC1              ; turn off bomb fall sounds
                 ;sta AUDC2
                 rts
                 .endproc

@@ -304,7 +304,7 @@ VbiHandler      .proc
                 phy
 
                 .m8i8
-                .setbank $03
+                .setbank $00
 
                 lda JIFFYCLOCK
                 inc A
