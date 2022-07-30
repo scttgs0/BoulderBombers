@@ -6,6 +6,8 @@
 ;*                     *
 ;***********************
 
+                .cpu "65816"
+
                 .include "equates_system_c256.asm"
                 .include "equates_zeropage.asm"
                 .include "equates_game.asm"
@@ -53,6 +55,8 @@ BOOT            clc
                 .align $100
 ;--------------------------------------
 
-                .include "FONT.asm"
-palette         .include "PALETTE.asm"
-palette_end
+CharsetNorm     .include "FONT.asm"
+CharsetNorm_end
+
+Palette         .include "PALETTE.asm"
+Palette_end

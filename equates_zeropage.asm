@@ -35,8 +35,10 @@ DRPFREQ         .word ?
 DRPRATE         .word ?
 FREMEN          .word ?
 BOMBS           .word ?
-PLYRX           .word ?
-PLYRY           .word ?
+PlayerPosX      .byte ?
+                .byte ?
+PlayerPosY      .byte ?
+                .byte ?
 RCKHIT          .word ?
 ROCKS           .word ?
 SCRPTR          .word ?
@@ -58,3 +60,12 @@ CONSOL          .byte ?                 ; state of OPTION,SELECT,START
 SOURCE          .dword ?                ; Starting address for the source data (4 bytes)
 DEST            .dword ?                ; Starting address for the destination block (4 bytes)
 SIZE            .dword ?                ; Number of bytes to copy (4 bytes)
+
+zpTemp1         .byte ?
+zpTemp2         .byte ?
+
+zpSource        .addr ?
+zpDest          .addr ?
+
+CharResX        = 40
+CharResY        = 25

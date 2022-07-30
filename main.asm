@@ -2,17 +2,24 @@
 ;
 ;--------------------------------------
 INIT            .proc
-                ldx #111                ; copy my chars (14 chars)
-_next1          lda MYCHARS,X
+
+;   build up our custom charset (512 bytes = 64 characters)
+                ldx #255                ; copy the game stamps (32 chars)
+_next1          lda GameStamps,X
                 sta CharsetCustom,X
                 dex
                 bpl _next1
 
-                ;lda #0                 ; disable vbi
-                ;sta NMIEN
+_next2          lda CharsetNorm+256,Y   ; merge standard charset into the custom charset (skip 32 chars)
+                sta CharsetCustom+256,Y
+                iny
+                bne _next2
 
                 jsr InitLUT
-                ;jsr InitCharLUT
+                jsr InitCharLUT
+
+                jsr SetFont
+                jsr ClearScreen
 
 ;   set playfield colors
                 ;lda #$34               ; dark-orange, lum=4
@@ -25,12 +32,6 @@ _next1          lda MYCHARS,X
                 ;sta COLPF3
                 ;lda #0                 ; black, lum=0
                 ;sta COLBAK
-
-;   quad-wide sprites
-                ;ldx #3                 ; init players
-_next2          ;sta SIZEP0,X
-                ;dex
-                ;bpl _next2
 
 ;   set sprite colors
                 ;lda #$28               ; red-orange, lum=8
@@ -45,40 +46,25 @@ _next2          ;sta SIZEP0,X
 ;   initialize sprites
                 ;jsr InitSprites
 
-                ldy #112                ; init chr set
-_next3          lda CharsetNorm,Y
-                sta CharsetCustom,Y
-                iny
-                bne _next3
-
-_next4          lda CharsetNorm+256,Y
-                sta CharsetCustom+256,Y
-                iny
-                bne _next4
-
-                ;lda #>CharsetCustom
-                ;sta CHBASE
-
                 lda #0                  ; init vars
                 ldy #SCRPTR+1-CLOCK
 _next5          sta CLOCK,Y
                 dey
                 bpl _next5
 
-                ldy #$27                ; set screen disp
+                ldy #$27                ; set screen display
 _next6          sta CANYON,Y
                 dey
                 bpl _next6
 
                 jsr DrawScreen
 
-                ;lda #0                 ; init sound
-                ;sta AUDCTL
+                jsr InitSID             ; init sound
 
-                lda #56                 ; set player
-                sta PLYRY               ;  lanes
+                lda #56                 ; set player lanes
+                sta PlayerPosY
                 lda #72
-                sta PLYRY+1
+                sta PlayerPosY+1
 
                 .endproc
 
@@ -89,16 +75,15 @@ _next6          sta CANYON,Y
 ;
 ;--------------------------------------
 RESTART         .proc
-                lda #44                 ; set player
-                sta PLYRX               ; start
-                lda #204                ; positions
-                sta PLYRX+1
+                lda #44                 ; set player start positions
+                sta PlayerPosX
+                lda #204
+                sta PlayerPosX+1
 
-                lda #0                  ; turn off screen
-                ;sta DMACTL
-                ;sta AUDC3              ; explosions,
+                lda #0                  ; turn off explosions, and bkg sound
+                sta SID_CTRL3
                 sta EXPLODE
-                ;sta AUDC4              ; and bkg sound
+                ;sta AUDC4
 
                 jsr ClearPlayer         ; clear players
 
@@ -106,50 +91,60 @@ RESTART         .proc
                 .frsMouse_off
                 .frsBorder_off
 
-                lda #$FF                ; set game speed
-                sta DELYVAL             ; for titles
+                lda #<CharResX
+                sta COLS_PER_LINE
+                lda #>CharResX
+                sta COLS_PER_LINE+1
+                lda #CharResX
+                sta COLS_VISIBLE
 
-                lda #dirRight           ; set start dir
+                lda #<CharResY
+                sta LINES_MAX
+                lda #>CharResY
+                sta LINES_MAX+1
+                lda #CharResY
+                sta LINES_VISIBLE
+
+                lda #$FF                ; set game speed for titles
+                sta DELYVAL
+
+                lda #dirRight           ; set start direction
                 sta DIR
                 sta PLAY                ; set play false
 
-                lda #0                  ; players not
-                sta ONSCR               ; on screen
-
-;   enabled instruction fetch, single-line sprite, sprite DMA, normal playfield
-                ;lda #$3E               ; turn screen back on
-                ;sta DMACTL
+                lda #0                  ; players not on screen
+                sta ONSCR
 
                 jsr InitIRQs
 
                 lda #3                  ; init clock
                 sta CLOCK
 
-_next1          lda CONSOL              ; check consol
-                and #3                  ; switches
-                cmp #1                  ; select pressed?
-                bne _chkSTART           ;   no, try start
+_next1          lda CONSOL              ; check consol switches
+                and #3
+                cmp #1                  ; SELECT pressed?
+                bne _chkSTART           ;   no, try START
 
-_wait1          lda CONSOL              ; yes, wait for
-                and #2                  ; key release
+_wait1          lda CONSOL              ;   yes, wait for key release
+                and #2
                 beq _wait1
 
-                lda PLAYERS             ; change # of
-                eor #1                  ; players
+                lda PLAYERS             ; change # of players
+                eor #1
                 sta PLAYERS
                 clc
                 adc #$11                ; & set on screen
                 sta SCNOPLR
                 bne _moveT              ; (move players)
 
-_chkSTART       cmp #2                  ; if start then
-                beq START               ; start game
+_chkSTART       cmp #2                  ; if START then start game
+                beq START
 
-_moveT          lda ONSCR               ; if on screen,
-                bne _moveIt             ; then move
+_moveT          lda ONSCR               ; if on screen, then move
+                bne _moveIt
 
-                lda SID_RANDOM          ; else, pick out
-                and #1                  ; new ship type
+                lda SID_RANDOM          ; else, pick out new ship type
+                and #1
                 tax
                 lda MASKS,X
                 sta MASK                ; & set it
@@ -164,19 +159,18 @@ _moveIt         jsr MovePlayer          ; move players
 ;
 ;--------------------------------------
 START           .proc
-                lda CONSOL              ; wait for key
-                and #1                  ; release
+                lda CONSOL              ; wait for key release
+                and #1
                 beq START
 
-                lda #3                  ; set game speed
-                sta DELYVAL             ; to $ff+$04
+                lda #3                  ; set game speed to $ff+$04
+                sta DELYVAL
 
                 lda #0                  ; set play true
                 sta PLAY
-                ;sta DMACTL             ; turn off screen
 
-                ldx #2                  ; set scores to
-_next1          sta SCORE1,X            ; zero
+                ldx #2                  ; reset scores to zero
+_next1          sta SCORE1,X
                 sta SCORE2,X
                 dex
                 bpl _next1
@@ -185,8 +179,8 @@ _next1          sta SCORE1,X            ; zero
                 sta SCORE1+3
                 sta SCORE2+3
 
-                ldx #2                  ; set bombs left
-                lda #$CD                ; to three
+                ldx #2                  ; set bombs remaining to three
+                lda #$CD
 _next2          sta BOMB1,X
                 sta BOMB2,X
                 dex
@@ -200,10 +194,11 @@ _next2          sta BOMB1,X
                 sta FREMEN
                 sta FREMEN+1
 
-                lda PLAYERS             ; set second
-                asl A                   ; player message
-                asl A                   ; to 'player 2'
-                asl A                   ; or 'computer'
+;   set second player message to 'player 2' or 'computer'
+                lda PLAYERS
+                asl A
+                asl A
+                asl A
 
                 ldx #7
                 tay
@@ -213,14 +208,10 @@ _next3          lda P2COMPT,Y
                 dex
                 bpl _next3
 
-                ;lda #<DLIST2           ; set dlist
-                ;sta DLIST              ; to game
-                ;lda #>DLIST2           ; screen
+                ;lda #<DLIST2           ; set dlist to game screen
+                ;sta DLIST
+                ;lda #>DLIST2
                 ;sta DLIST+1
-
-;   enabled instruction fetch, single-line sprite, sprite DMA, normal playfield
-                ;lda #$3E               ; turn on screen
-                ;sta DMACTL
 
                 .endproc
 
@@ -233,37 +224,37 @@ _next3          lda P2COMPT,Y
 NewScreen       .proc
                 jsr DrawScreen          ; set canyon
 
-                lda #maskBalloon        ; set type to balloon
+                lda #maskBalloon        ; set type to Balloon
                 sta MASK
                 sta CLOCK               ; and begin clock
 
                 lda #dirRight
                 sta DIR
 
-                sta ROCKS+1             ; rocks in
-                lda #42                 ; canyon=298
+                sta ROCKS+1             ; rocks in canyon=298
+                lda #42
                 sta ROCKS
                 jsr ClearPlayer         ; clear players
 
-                lda #0                  ; set players on
-                sta ONSCR               ; screen=false
+                lda #0                  ; set players on screen=false
+                sta ONSCR
                 ;sta AUDF4
 
-                lda #44                 ; set start
-                sta PLYRX               ; positions
-                lda #204                ; of players
-                sta PLYRX+1
+                lda #44                 ; set start positions of players
+                sta PlayerPosX
+                lda #204
+                sta PlayerPosX+1
 
                 ;sta HITCLR             ; clear collisions
 
-                lda #8                  ; #rocks per bomb
-                sta RKILL               ; (max) =8
+                lda #8                  ; # of rocks per bomb
+                sta RKILL               ; (max) = 8
 
-                lda DELYVAL             ; speed up the
-                cmp #$AF                ; game just a bit
-                beq BMBLOOP             ; (unless already
+                lda DELYVAL             ; speed up the game just a bit
+                cmp #$AF
+                beq BMBLOOP             ; (unless already at max speed)
 
-                sec                     ; at max speed)
+                sec
                 sbc #4
                 sta DELYVAL
 
@@ -287,10 +278,10 @@ BMBLOOP         .proc
 ;
 ;--------------------------------------
 BMBNLOP         .proc
-                lda BMBDRP,X            ; if bomb not
-                bne _chkHits            ; dropped
+                lda BMBDRP,X            ; if bomb not dropped
+                bne _chkHits
 
-                jmp CheckDrop           ; check trig
+                jmp CheckDrop           ; check trigger
 
 _chkHits        ;lda P2PF,X             ; bomb hit anything?
                 ;bne _chkRockOK
@@ -298,30 +289,34 @@ _chkHits        ;lda P2PF,X             ; bomb hit anything?
 
                 jmp LowerBomb           ;   no, move bomb
 
-_chkRockOK      and #7                  ; if hit only
-                bne _chkHitRock         ; color 3, it
+_chkRockOK      and #7                  ; if hit only color 3, it gets erased
+                bne _chkHitRock
 
-                jmp KILLBMB             ; gets erased
+                jmp KILLBMB
 
-_chkHitRock     lda #0                  ; set pointer
-                sta SCRPTR+1            ; into screen
-                lda BMBDRP,X            ; ram where the
-                sec                     ; rock hit is.
-                sbc #103                ; 1st, get bomb's
-                and #$F8                ; y-pos trans-
-                sta SCRPTR              ; lated into
-                asl SCRPTR              ; row number
-                asl SCRPTR              ; and multiply it
-                rol SCRPTR+1            ; by 40
+_chkHitRock
+;   set pointer into screen ram where the rock hit is
+                lda #0
+                sta SCRPTR+1
+                lda BMBDRP,X
+
+;   1st, get bomb's y-pos translated into row number and multiply it by 40
+                sec
+                sbc #103
+                and #$F8
+                sta SCRPTR
+                asl SCRPTR
+                asl SCRPTR
+                rol SCRPTR+1
                 clc
                 adc SCRPTR
                 sta SCRPTR
                 bcc _gtp0
 
                 inc SCRPTR+1
-_gtp0           lda PLYRX,X             ; then, change
-                sec                     ; x-pos into the
-                sbc #47                 ; column number
+_gtp0           lda PlayerPosX,X        ; then, change x-pos into the column number
+                sec
+                sbc #47
                 lsr A
                 lsr A
                 clc                     ; and add it on
@@ -330,91 +325,91 @@ _gtp0           lda PLYRX,X             ; then, change
                 bcc _gtpA
 
                 inc SCRPTR+1
-_gtpA           clc                     ; add screen
-                adc #<CANYON            ; start
-                sta SCRPTR              ; address
+_gtpA           clc                     ; add screen start address
+                adc #<CANYON
+                sta SCRPTR
                 lda SCRPTR+1
                 adc #>CANYON
                 sta SCRPTR+1
                 ldy #0                  ; clear index
-                lda (SCRPTR),Y          ; & get char
-                beq _gtp1               ; if it's blank
+                lda (SCRPTR),Y          ; & get char if it's blank
+                beq _gtp1
 
-                cmp #4                  ; or above 4
-                bcc _gotChr             ; this isn't it.
+                cmp #4                  ; or above 4 this isn't it.
+                bcc _gotChr
 
-_gtp1           iny                     ; try again,one
-                lda (SCRPTR),Y          ; right
+_gtp1           iny                     ; try again, one right
+                lda (SCRPTR),Y
                 beq _gtp2
 
                 cmp #4
                 bcc _gotChr
 
-_gtp2           ldy #$28                ; if we still
-                lda (SCRPTR),Y          ; don't get it
-                beq _gtp3               ; try 1 down
+_gtp2           ldy #$28                ; if we still don't get it, try 1 down
+                lda (SCRPTR),Y
+                beq _gtp3
 
                 cmp #4
                 bcc _gotChr
 
-_gtp3           iny                     ; then, both at
-                lda (SCRPTR),Y          ; once
+_gtp3           iny                     ; then, both at once
+                lda (SCRPTR),Y
                 bne _gckrck
 
-                jmp LowerBomb           ; if by this
+                jmp LowerBomb           ; if by this time, we dont have it, then give up
 
-_gckrck         cmp #4                  ; time, we dont
-                bcc _gotChr             ; have it, then
+_gckrck         cmp #4
+                bcc _gotChr
 
-                jmp LowerBomb           ; give up
+                jmp LowerBomb
 
-_gotChr         asl A                   ; hold score=
-                sta HOLDIT              ; char * 2
-                lda #0                  ; erase rock on
-                sta (SCRPTR),Y          ; screen
-                lda ROCKS               ; lower # of
-                sec                     ; rocks left
+_gotChr         asl A                   ; hold score= char * 2
+                sta HOLDIT
+                lda #0                  ; erase rock on screen
+                sta (SCRPTR),Y
+                lda ROCKS               ; decrement # of rocks remaining
+                sec
                 sbc #1
                 sta ROCKS
                 bcs _got1
 
                 dec ROCKS+1
-_got1           lda #$FE                ; start explosion
-                sta EXPLODE             ; sound
+_got1           lda #$FE                ; start explosion sound
+                sta EXPLODE
 
 ; add on to score
 
-                ldy SCRNDX,X            ; get base index
-                lda HOLDIT              ; to scores,and
-                clc                     ; add to score
+                ldy SCRNDX,X            ; get base index to scores, and add to score
+                lda HOLDIT
+                clc
                 adc SCORE1,Y
                 sta SCORE1,Y
-                lda #3                  ; set digit # for
-                sta HOLDIT              ; rollover prot.
+                lda #3                  ; set digit # for rollover prot.
+                sta HOLDIT
 _next1          lda SCORE1,Y            ; done?
                 beq CheckHiScore        ;   yes, check high
 
                 cmp #26                 ; digit >10?
-                bcc _scundx             ; no, go right
+                bcc _scundx             ;   no, go right
 
-                sec                     ; sub 10 from
-                sbc #10                 ; this digit
+                sec                     ; sub 10 from this digit
+                sbc #10
                 sta SCORE1,Y
                 dey                     ; point to next
                 dec HOLDIT
                 bmi CheckHiScore        ; rollover! leave
 
                 lda SCORE1,Y            ; get digit
-                bne _scbrk              ; if blank, set
+                bne _scbrk              ; if blank, set to zero
 
-                lda #$10                ; to zero
+                lda #$10
 _scbrk          clc                     ; add 1
                 adc #1
                 sta SCORE1,Y            ; and save it
                 bne _next1              ; check this digit
 
-_scundx         iny                     ; go right one
-                inc HOLDIT              ; digit
+_scundx         iny                     ; go right one digit
+                inc HOLDIT
                 bne _next1
 
                 .endproc
@@ -427,16 +422,16 @@ _scundx         iny                     ; go right one
 ;--------------------------------------
 CheckHiScore    .proc
                 lda #<SCORE1
-                sta SCRPTR              ; set pointer
-                lda #>SCORE1            ; to score for
-                sta SCRPTR+1            ; player 1
+                sta SCRPTR              ; set pointer to score for player 1
+                lda #>SCORE1
+                sta SCRPTR+1
 
-                txa                     ; if it isn't
-                beq _chkScore           ; player 1, then
+                txa                     ; if it isn't player 1, then
+                beq _chkScore
 
-                lda #10                 ; add to get
-                clc                     ; pointer for
-                adc SCRPTR              ; player 2
+                lda #10                 ; add to get pointer for player 2
+                clc
+                adc SCRPTR
                 sta SCRPTR
                 bcc _chkScore
 
@@ -451,10 +446,10 @@ _next1          lda (SCRPTR),Y
                 bcc CHKFRM              ; if high > skip
 
 _chkNxtDgt      iny                     ; do next digit
-                cpy #4                  ; if all done,
-                bne _next1              ; then it's the
+                cpy #4                  ; if all done, then it's the same, skip
+                bne _next1
 
-                beq CHKFRM              ; same, skip
+                beq CHKFRM
 
                 .endproc
 
@@ -480,27 +475,27 @@ _next1          lda (SCRPTR),Y
 ; check for getting extra bombs
 ;======================================
 CHKFRM          .proc
-                ldy SCRNDX,X            ; get score
-                lda SCORE1-3,Y          ; in thousands
-                cmp FREMEN,X            ; if not free
-                bne _STRKHT             ; bomb yet,skip.
+                ldy SCRNDX,X            ; get score in thousands
+                lda SCORE1-3,Y
+                cmp FREMEN,X            ; if not free bomb yet,skip.
+                bne _STRKHT
 
-                inc BOMBS,X             ; else, up bombs
-                lda BOMBS,X             ; by 1
-                cmp #4                  ; if bombs>=4,
-                bcs _UPDTFM             ; keep in reserve
+                inc BOMBS,X             ; else, up bombs by 1
+                lda BOMBS,X
+                cmp #4                  ; if bombs>=4, keep in reserve
+                bcs _UPDTFM
 
-                clc                     ; if bombs less
-                adc SCRNDX,X            ; than 4, then
-                tay                     ; set extra
-                lda #$CD                ; on screen
+                clc                     ; if bombs less than 4, then set extra on screen
+                adc SCRNDX,X
+                tay
+                lda #$CD
                 sta BOMB1-4,Y
 _UPDTFM         inc FREMEN,X            ; set for next
 
-_STRKHT         inc RCKHIT,X            ; if new # of
-                lda RCKHIT,X            ; rocks hit =
-                cmp RKILL               ; max,kill bomb
-                bne LowerBomb           ; else, lower it
+_STRKHT         inc RCKHIT,X            ; if new # of rocks hit = max, kill bomb else, lower it
+                lda RCKHIT,X
+                cmp RKILL
+                bne LowerBomb
 
                 .endproc
 
@@ -511,8 +506,8 @@ _STRKHT         inc RCKHIT,X            ; if new # of
 ;
 ;--------------------------------------
 KILLBMB         .proc
-                txa                     ; set pointer
-                clc                     ; to bomb
+                txa                     ; set pointer to bomb
+                clc
                 adc #>PL2
                 sta SCRPTR+1
                 lda BMBDRP,X
@@ -533,19 +528,23 @@ _next1          sta (SCRPTR),Y
 ;
 ;--------------------------------------
 KILBOMB         .proc
-                txa                     ; turn off sound
-                asl A                   ; for this bomb
+                txa                     ; turn off sound for this bomb
+                .mult7
                 tay
+
+                .setbank $AF
                 lda #0
-                ;sta AUDF1,Y
-                ;sta AUDC1,Y
+                sta SID_FREQ1,Y
+                sta SID_CTRL1,Y
+                .setbank $00
                 sta BMBDRP,X            ; set flag off
-                lda RCKHIT,X            ; if it didn't
-                bne DoNextBomb          ; hit anything,
+
+                lda RCKHIT,X            ; if it didn't hit anything,
+                bne _hop
 
                 jsr DecrementMissile    ; lower # bombs
 
-                jmp DoNextBomb          ; & do next
+_hop            jmp DoNextBomb          ; & do next
 
                 .endproc
 
@@ -556,8 +555,8 @@ KILBOMB         .proc
 LowerBomb       .proc
                 txa
                 clc
-                adc #>PL2               ; set pointer to
-                sta SCRPTR+1            ; bomb
+                adc #>PL2               ; set pointer to bomb
+                sta SCRPTR+1
                 lda BMBDRP,X
                 sta SCRPTR
 
@@ -577,10 +576,10 @@ _next1          sta (SCRPTR),Y
                 clc
                 adc BMBDRP,X
                 cmp #196                ; out of range?
-                bcs KILBOMB             ; yes, kill it
+                bcs KILBOMB             ;   yes, kill it
 
-                sta BMBDRP,X            ; else, set
-                sta SCRPTR              ; the bomb
+                sta BMBDRP,X            ;   no, set the bomb
+                sta SCRPTR
 
                 ldy #5
 _next2          lda CharsetCustom+96,Y
@@ -588,18 +587,24 @@ _next2          lda CharsetCustom+96,Y
                 dey
                 bpl _next2
 
-                txa                     ; set y to index
-                asl A                   ; the sound regs
+                txa                     ; set y to index the sound regs
+                .mult7
                 tay
-                lda HOLDIT              ; update sound
-                clc                     ; of dropping
-                adc DRPFREQ,X           ; bomb
+
+                lda HOLDIT              ; update sound of dropping bomb
+                clc
+                adc DRPFREQ,X
                 sta DRPFREQ,X
-                ;sta AUDF1,Y
+                .setbank $AF
+                sta SID_FREQ1,Y
+                .setbank $00
+
                 lda #$A8
                 sec
                 sbc HOLDIT
-                ;sta AUDC1,Y
+                .setbank $AF
+                sta SID_CTRL1,Y
+                .setbank $00
                 .endproc
 
                 ;[fall-through]
@@ -609,10 +614,10 @@ _next2          lda CharsetCustom+96,Y
 ;
 ;--------------------------------------
 DoNextBomb      .proc
-                dex                     ; reset index
-                bmi CheckDrop._DOPLMV   ; if both not
+                dex                     ; reset index if both not done
+                bmi CheckDrop._DOPLMV
 
-                jmp BMBNLOP             ; done, do next
+                jmp BMBNLOP             ; do next
 
                 .endproc
 
@@ -621,85 +626,85 @@ DoNextBomb      .proc
 ; check & drop bombs
 ;--------------------------------------
 CheckDrop       .proc
-                lda BOMBS,X             ; if no bombs left
-                beq DoNextBomb          ; then do next
+                lda BOMBS,X             ; if no bombs left then do next
+                beq DoNextBomb
 
-                txa                     ; if not the
-                clc                     ; computer,check
-                sbc PLAYERS             ; trigger
+                txa                     ; if not the computer, check trigger
+                clc
+                sbc PLAYERS
                 bne _CHKTRG             ; it's player!
 
                 lda DIR                 ; going left?
                 bmi _GOINGR             ;   no!
 
-                lda PLYRX,X             ; get computer x
+                lda PlayerPosX,X        ; get computer x
                 cmp #$44                ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bcs _TRYDRP             ;   no, try drop!
 
-_GOINGR         lda PLYRX,X             ; get comp. x
+_GOINGR         lda PlayerPosX,X        ; get computer x
                 cmp #$B8                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
-_TRYDRP         lda SID_RANDOM          ; computer drops
-                and #15                 ; a bomb if
-                beq _DROPIT             ; random says to
+_TRYDRP         lda SID_RANDOM          ; computer drops a bomb if random says to
+                and #15
+                beq _DROPIT
                 bne DoNextBomb          ; else do next
 
 _CHKTRG         lda JOYSTICK0,X         ; trig pushed?
                 and #$10
                 bne DoNextBomb          ;   no, do next
 
-_DROPIT         lda PLYRY,X             ; drop: set
-                clc                     ; bomb y to
-                adc #8                  ; player y+8
+_DROPIT         lda PlayerPosY,X        ; drop: set bomb Y to player Y+8
+                clc
+                adc #8
                 sta BMBDRP,X
                 lda #0                  ; clear drop rate
                 sta DRPRATE,X
                 sta RCKHIT,X            ; and rocks hit
-                inc BRUN,X              ; up bombs dropped
-                lda #50                 ; set the sound
-                sta DRPFREQ,X           ; flag
+                inc BRUN,X              ; increment bombs dropped
+                lda #50                 ; set the sound flag
+                sta DRPFREQ,X
                 bne DoNextBomb          ; and do next
 
-_DOPLMV         ;sta HITCLR              ; clear collisions
+_DOPLMV         ;sta HITCLR             ; clear collisions
                 jsr MovePlayer          ; move players
 
                 lda EXPLODE             ; explosion going?
-                beq _CKRSTRT            ;   no,skip
+                beq _CKRSTRT            ;   no, skip
 
-                dec EXPLODE             ; update explosion
-                dec EXPLODE             ; sound
+                dec EXPLODE             ; update explosion sound
+                dec EXPLODE
                 eor #$F0
-                ;sta AUDF3
+                sta SID_FREQ3
                 lsr A
                 lsr A
                 lsr A
                 lsr A
                 eor #$8F
-                ;sta AUDC3
-_CKRSTRT        lda CONSOL              ; any console
-                cmp #7                  ; buttons pushed?
-                beq _CKNSCR             ; if yes, then
+                sta SID_CTRL3
+_CKRSTRT        lda CONSOL              ; any console buttons pushed?
+                cmp #7
+                beq _CKNSCR             ;   no
 
-                jmp RESTART             ; re-start
+                jmp RESTART             ;   yes, re-start
 
 _CKNSCR         lda ROCKS               ; # of rocks left
                 bne _CHKPAUS            ; = zero?
 
-                lda ROCKS+1             ; if yes, then
-                bne _CHKPAUS            ; set up a
+                lda ROCKS+1
+                bne _CHKPAUS            ;   no
 
-                jmp NewScreen           ; new screen
+                jmp NewScreen           ;   yes, set up a new screen
 
 _CHKPAUS        lda KEYCHAR             ; spacebar pressed?
                 cmp #33
                 bne _CKDRRCK            ;   no, continue
 
-                ;lda #0                 ; yes, pause game
-                ;sta AUDC1              ; turn off main
-                ;sta AUDC2              ; sounds
-                ;sta AUDC3
+                lda #0                  ;   yes, pause game
+                sta SID_CTRL1           ; turn off main sounds
+                sta SID_CTRL2
+                sta SID_CTRL3
 _wait1          lda JOYSTICK0           ; wait for stick movement
                 and #$0F
                 cmp #$0F
@@ -725,31 +730,31 @@ _next1          lda #8                  ; row to 8
                 adc #0
                 sta SCRPTR+1
 _next2          ldy #0                  ; rock fall loop:
-                lda (SCRPTR),Y          ; nothing there
-                beq _DONXRCK            ; then try next up
+                lda (SCRPTR),Y          ; nothing there then try next up
+                beq _DONXRCK
 
-                tax                     ; else hold it
-                ldy #$28                ; & look underneath
+                tax                     ; else hold it & look underneath
+                ldy #$28
                 lda (SCRPTR),Y
                 bne _DONXRCK            ; not blank-do next
 
-                txa                     ; blank, move rock
-                sta (SCRPTR),Y          ; above down
+                txa                     ; blank, move rock above down
+                sta (SCRPTR),Y
                 ldy #0
                 tya
                 sta (SCRPTR),Y
-                lda SCRPTR              ; & go up one
-                sec                     ; so whole column
-                sbc #$28                ; won't fall at
-                sta SCRPTR              ; once
+                lda SCRPTR              ; & go up one so whole column won't fall at once
+                sec
+                sbc #$28
+                sta SCRPTR
                 bcs _NOVER
 
                 dec SCRPTR+1
 _NOVER          dec YCOUNT              ; last row done?
                 bmi _DONXCOL            ;   yes, do next col
 
-_DONXRCK        lda SCRPTR              ; go up one
-                sec                     ; row
+_DONXRCK        lda SCRPTR              ; go up one row
+                sec
                 sbc #$28
                 sta SCRPTR
                 bcs _NOVER2
@@ -772,25 +777,25 @@ _DONXCOL        dec XCOUNT              ; last col done?
 ; ship types
 ;======================================
 MovePlayer      .proc
-                lda ONSCR               ; if not on
-                bne _ADDCLOK            ; screen, set sound
+                lda ONSCR               ; if not on screen, set sound
+                bne _ADDCLOK
 
-                lda MASK                ; and player is balloon?
+                lda MASK                ; player is Balloon?
                 cmp #maskBalloon
                 beq _STBLSND            ;   yes, do that
 
-                ;lda #$96               ; set plane sound
+                lda #$96                ; set plane sound
                 ;sta AUDF4
                 lda #$24
                 ;sta AUDC4
                 bne _ADDCLOK            ; & goto clock add
 
-_STBLSND        ;lda #0                 ; set wind sound
+_STBLSND        lda #0                  ; set wind sound
                 ;sta AUDF4
                 lda #2
                 ;sta AUDC4
-                ldx #1                  ; set balloon
-_next1          lda PLYRY,X
+                ldx #1                  ; set Balloon
+_next1          lda PlayerPosY,X
                 sta SCRPTR
                 txa
                 clc
@@ -810,17 +815,17 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 and MASK                ; mask<>0 then don't move
                 bne _DODELAY
 
-                lda PLYRX               ; move the players
-                clc                     ; first player 1
+                lda PlayerPosX          ; move the players; first player 1
+                clc
                 adc DIR
-                sta PLYRX
+                sta PlayerPosX
                 sta SP00_X_POS
                 sta SP02_X_POS
                 lda DIR                 ; then player 2
                 eor #$FE
                 clc
-                adc PLYRX+1
-                sta PLYRX+1
+                adc PlayerPosX+1
+                sta PlayerPosX+1
                 sta SP01_X_POS
                 sta SP03_X_POS
                 lda MASK                ; if on planes then check if time to animate
@@ -829,26 +834,26 @@ _ADDCLOK        inc CLOCK               ; add to clock
 
                 lda CLOCK               ; props
                 and #2
-                beq _DODELAY            ; no, skip this
+                beq _DODELAY            ;   no, skip this
 
                 lda DIR                 ; set temp dir
                 sta TDIR                ; (will be killed)
                 ldx #1
-_next3          lda PLYRY,X             ; set pointer
-                sta SCRPTR              ; to player
+_next3          lda PlayerPosY,X        ; set pointer to player
+                sta SCRPTR
                 txa
                 clc
                 adc #>PL0
                 sta SCRPTR+1
-                lda CLOCK               ; get image index
-                and #4                  ; from clock
+                lda CLOCK               ; get image index from clock
+                and #4
                 asl A
                 sta HOLDIT              ; and hold it
-                lda TDIR                ; get direction
-                and #$10                ; index from
-                clc                     ; dir
-                adc HOLDIT              ; & add 'em to get
-                stx HOLDIT              ; index.
+                lda TDIR                ; get direction index from dir
+                and #$10
+                clc
+                adc HOLDIT              ; & add 'em to get index.
+                stx HOLDIT
                 tax                     ; save player #
                 ldy #0                  ; set player
 _next4          lda CharsetCustom+48,X
@@ -865,68 +870,69 @@ _next4          lda CharsetCustom+48,X
                 dex                     ; & animate next
                 bpl _next3
 
-_DODELAY        ldx #15                 ; wait for a
-_wait1          ldy DELYVAL             ; while to make
-_wait2          dey                     ; game playable
+_DODELAY        ldx #15                 ; wait for a while to make game playable
+_wait1          ldy DELYVAL
+_wait2          dey
                 bne _wait2
 
                 dex
                 bne _wait1
 
-                lda #1                  ; players are now
-                sta ONSCR               ; on screen
-                lda PLYRX               ; but check to
-                cmp #44                 ; see if they
-                beq _OFFSCR             ; aren't
+;   players are now on screen, but check to see if they aren't
+                lda #1
+                sta ONSCR
+                lda PlayerPosX
+                cmp #44
+                beq _OFFSCR
 
                 cmp #204
                 bne _XIT                ; if on, return
 
-_OFFSCR         lda #0                  ; else, turn off
-                ;sta AUDC3              ; explosions and
-                ;sta AUDC4              ; bkg sound
+_OFFSCR         lda #0                  ; else, turn off explosions and bkg sound
+                sta SID_CTRL3
+                ;sta AUDC4
                 sta EXPLODE
                 sta ONSCR               ; set onscr false
                 ldx #1
-_next5          lda BMBDRP,X            ; if a bomb is
-                beq _CKBRN              ; in the air, and
+_next5          lda BMBDRP,X            ; if a bomb is in the air, and
+                beq _CKBRN
 
-                lda RCKHIT,X            ; it hasn't hit
-                bne _CKBRN              ; anything yet,
+                lda RCKHIT,X            ; it hasn't hit anything yet,
+                bne _CKBRN
 
                 jsr DecrementMissile    ; it's a miss
 
-_CKBRN          lda BRUN,X              ; if no bombs
-                bne _CKNBR              ; dropped this
+_CKBRN          lda BRUN,X              ; if no bombs dropped this pass,
+                bne _CKNBR
 
-                jsr DecrementMissile    ; pass, it's a miss
+                jsr DecrementMissile    ; it's a miss
 
 _CKNBR          dex
                 bpl _next5
 
                 jsr ClearPlayer         ; clear out players
 
-                ldx PLAYERS             ; if the actual
-                lda BOMBS               ; players have
-                clc                     ; no more bombs,
-                adc BOMBS,X             ; and we're on a
-                adc PLAY                ; game, end it
+                ldx PLAYERS             ; if the actual players have no more bombs,
+                lda BOMBS
+                clc
+                adc BOMBS,X             ; and we're on a game, end it
+                adc PLAY
                 beq EndGame
 
                 lda DIR                 ; reverse direction
                 eor #$FE
                 sta DIR
-                ldx PLYRY               ; change player
-                ldy PLYRY+1             ; lanes
-                stx PLYRY+1
-                sty PLYRY
+                ldx PlayerPosY          ; change player lanes
+                ldy PlayerPosY+1
+                stx PlayerPosY+1
+                sty PlayerPosY
                 lda #3                  ; reset clock
                 sta CLOCK
-                lda ROCKS+1             ; if half of the
-                bne _XIT                ; rocks are gone
+                lda ROCKS+1             ; if half of the rocks are gone
+                bne _XIT
 
-                lda ROCKS               ; then switch
-                cmp #149                ; to planes
+                lda ROCKS               ; then switch to planes
+                cmp #149
                 bcs _XIT                ; else return
 
                 lda #maskPlane          ; set move rate mask
@@ -942,8 +948,8 @@ _XIT            rts
 ; final score
 ;--------------------------------------
 EndGame         .proc
-                pla                     ; get rid of
-                pla                     ; return address
+                pla                     ; get rid of return address
+                pla
 
                 lda #8
                 sta HOLDIT
@@ -1027,7 +1033,7 @@ _next1          sta PL0,Y               ; clear all players
                 sta BRUN
                 sta BRUN+1
 
-                ;sta AUDC1              ; turn off bomb fall sounds
-                ;sta AUDC2
+                sta SID_CTRL1           ; turn off bomb fall sounds
+                sta SID_CTRL2
                 rts
                 .endproc

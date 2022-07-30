@@ -9,6 +9,44 @@ BITMAPTXT3      = $B31400
 
 
 ;======================================
+; Initialize SID
+;======================================
+InitSID         .proc
+                pha
+                phx
+
+;   reset the SID
+                lda #$00
+                ldx #$18
+_next1          sta $AF_E400,X
+                dex
+                bpl _next1
+
+                lda #$09                ; Attack/Decay = 9
+                sta SID_ATDCY1
+                sta SID_ATDCY2
+                sta SID_ATDCY3
+
+                lda #$00                ; Susatain/Release = 0
+                sta SID_SUREL1
+                sta SID_SUREL2
+                sta SID_SUREL3
+
+                ;lda #$21
+                ;sta SID_CTRL1
+                ;sta SID_CTRL2
+                ;sta SID_CTRL3
+
+                lda #$0F                ; Volume = 15 (max)
+                sta SID_SIGVOL
+
+                plx
+                pla
+                rts
+                .endproc
+
+
+;======================================
 ; Create the lookup table (LUT)
 ;======================================
 InitLUT         .proc
@@ -16,10 +54,10 @@ InitLUT         .proc
                 phb
 
                 .m16i16
-                lda #palette_end-palette ; Copy the palette to LUT0
-                ldx #<>palette
+                lda #Palette_end-Palette ; Copy the Palette to LUT0
+                ldx #<>Palette
                 ldy #<>GRPH_LUT0_PTR
-                mvn `palette,`GRPH_LUT0_PTR
+                mvn `Palette,`GRPH_LUT0_PTR
 
                 plb
                 plp
@@ -501,5 +539,50 @@ _relocate       ;lda @l $024000,X        ; HandleIrq address
                 cli                     ; enable IRQ
 
                 pla
+                rts
+                .endproc
+
+
+;======================================
+;
+;======================================
+SetFont         .proc
+                php
+                pha
+                phx
+                phy
+
+                lda #<CharsetCustom
+                sta zpSource
+                lda #>CharsetCustom
+                sta zpSource+1
+                lda #`CharsetCustom
+                sta zpSource+2
+
+                lda #<FONT_MEMORY_BANK0
+                sta zpDest
+                lda #>FONT_MEMORY_BANK0
+                sta zpDest+1
+                lda #`FONT_MEMORY_BANK0
+                sta zpDest+2
+
+                ldx #$05                ; 5 pages
+_nextPage       ldy #$00                ; 128 characters * 8 bytes
+_next1          lda (zpSource),Y
+                sta (zpDest),Y
+
+                iny
+                bne _next1
+
+                inc zpSource+1
+                inc zpDest+1
+
+                dex
+                bne _nextPage
+
+                ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
