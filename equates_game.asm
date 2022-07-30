@@ -8,4 +8,4 @@ PL1             = PL0+256
 PL2             = PL1+256
 PL3             = PL2+256
 
-CharsetCustom   = $2C00                 ; custom charset
+CharsetCustom   = $3400                 ; custom charset

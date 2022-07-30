@@ -4,16 +4,17 @@
 INIT            .proc
 
 ;   build up our custom charset (512 bytes = 64 characters)
-                ldx #255                ; copy the game stamps (32 chars)
-_next1          lda GameStamps,X
-                sta CharsetCustom,X
-                dex
-                bpl _next1
-
-_next2          lda CharsetNorm+256,Y   ; merge standard charset into the custom charset (skip 32 chars)
-                sta CharsetCustom+256,Y
+                ldy #$00                ; copy the game stamps (32 chars)
+_next1          lda GameStamps,Y
+                sta CharsetCustom,Y
                 iny
-                bne _next2
+                bne _next1
+
+;                 ldx #$02
+; _next2          lda CharsetNorm+256,X   ; merge standard charset into the custom charset (skip 32 chars)
+;                 sta CharsetCustom+256,X
+;                 dex
+;                 bpl _next2
 
                 jsr InitLUT
                 jsr InitCharLUT
