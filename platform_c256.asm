@@ -390,6 +390,66 @@ _setAddr2       sta CS_COLOR_MEM_PTR,x  ; SMC
 
 
 ;======================================
+; Render High Score
+;======================================
+RenderHiScore   .proc
+                php
+                .m16i8
+
+;   clear the 40-char line
+                ldx #$28
+_nextColor      dex
+                lda #$54
+                sta CS_COLOR_MEM_PTR+3*CharResX,X
+                bne _nextColor
+
+;   process the text
+                ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                lda GAME,Y
+                cmp #$20
+                beq _space
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+3*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+3*CharResX,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl A
+                
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+3*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+3*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+3*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+3*CharResX,X
+
+                bra _nextChar
+
+                plp
+                rts
+                .endproc
+
+
+;======================================
 ; Blit bitmap text to VRAM
 ;--------------------------------------
 ; on entry:

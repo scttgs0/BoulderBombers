@@ -467,6 +467,8 @@ _next1          lda (SCRPTR),Y
                 dey
                 bpl _next1
 
+                jsr RenderHiScore
+
                 .endproc
 
                 ;[fall-through]

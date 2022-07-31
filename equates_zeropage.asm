@@ -68,4 +68,4 @@ zpSource        .addr ?
 zpDest          .addr ?
 
 CharResX        = 40
-CharResY        = 25
+CharResY        = 30
