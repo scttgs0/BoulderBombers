@@ -2,7 +2,7 @@
         --long-address \
         --flat \
         --nostart \
-        -o boulderbombers.pgx \
-        --list=boulderbombers.lst \
-        --labels=boulderbombers.lbl \
+        -o bbombers.pgx \
+        --list=bbombers.lst \
+        --labels=bbombers.lbl \
         boulderbombers.asm
