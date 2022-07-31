@@ -14,6 +14,7 @@ BITMAPTXT3      = $B31400
 InitSID         .proc
                 pha
                 phx
+                .m8i8
 
 ;   reset the SID
                 lda #$00
@@ -54,11 +55,12 @@ InitLUT         .proc
                 phb
 
                 .m16i16
-                lda #Palette_end-Palette ; Copy the Palette to LUT0
+                lda #Palette_end-Palette ; Copy the palette to LUT0
                 ldx #<>Palette
                 ldy #<>GRPH_LUT0_PTR
                 mvn `Palette,`GRPH_LUT0_PTR
 
+                .m8i8
                 plb
                 plp
                 rts
@@ -72,6 +74,10 @@ InitCharLUT     .proc
 v_LUTSize       .var 64                 ; 4-byte color * 16 colors
 ;---
 
+                pha
+                phx
+                .m8i8
+
                 ldx #$00
 _next1          lda Custom_LUT,x
                 sta FG_CHAR_LUT_PTR,x
@@ -81,6 +87,8 @@ _next1          lda Custom_LUT,x
                 cpx #v_LUTSize
                 bne _next1
 
+                plx
+                pla
                 rts
 
 ;--------------------------------------
@@ -577,7 +585,7 @@ _relocate       ;lda @l $024000,X        ; HandleIrq address
                 ;lda @l vecIRQ
                 ;sta IRQ_PRIOR
 
-                lda #<>$002900
+                lda #<>HandleIrq
                 sta @l vecIRQ
 
                 .m8
@@ -626,10 +634,10 @@ SetFont         .proc
                 lda #`FONT_MEMORY_BANK0
                 sta zpDest+2
 
-                ldx #$05                ; 5 pages
-_nextPage       ldy #$00                ; 128 characters * 8 bytes
-_next1          lda (zpSource),Y
-                sta (zpDest),Y
+                ldx #$07                ; 7 pages
+_nextPage       ldy #$00
+_next1          lda [zpSource],Y
+                sta [zpDest],Y
 
                 iny
                 bne _next1
