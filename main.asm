@@ -82,9 +82,9 @@ _next6          sta CANYON,Y
 ;
 ;--------------------------------------
 RESTART         .proc
-                lda #44+32              ; set player start positions
+                lda #1                  ; set player start positions
                 sta PlayerPosX
-                lda #204+32
+                lda #152
                 sta PlayerPosX+1
 
                 lda #0                  ; turn off explosions, and bkg sound
@@ -235,9 +235,9 @@ NewScreen       .proc
                 sta ONSCR
                 ;sta AUDF4
 
-                lda #44+32              ; set start positions of players
+                lda #1                  ; set start positions of players
                 sta PlayerPosX
-                lda #204+32
+                lda #152
                 sta PlayerPosX+1
 
                 ;sta HITCLR             ; clear collisions
@@ -635,12 +635,12 @@ CheckDrop       .proc
                 bmi _GOINGR             ;   no!
 
                 lda PlayerPosX,X        ; get computer x
-                cmp #$44+32             ; too far left?
+                cmp #1                  ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bcs _TRYDRP             ;   no, try drop!
 
 _GOINGR         lda PlayerPosX,X        ; get computer x
-                cmp #$B8+32             ; too far right?
+                cmp #152                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
 _TRYDRP         lda SID_RANDOM          ; computer drops a bomb if random says to
@@ -816,15 +816,31 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 clc
                 adc DIR
                 sta PlayerPosX
+
+                .m16
+                and #$FF
+                asl A
+                clc
+                adc #32
                 sta SP00_X_POS
                 sta SP02_X_POS
+                .m8
+
                 lda DIR                 ; then player 2
                 eor #$FE
                 clc
                 adc PlayerPosX+1
                 sta PlayerPosX+1
+
+                .m16
+                and #$FF
+                asl A
+                clc
+                adc #32
                 sta SP01_X_POS
                 sta SP03_X_POS
+                .m8
+
                 lda MASK                ; if on planes then check if time to animate
                 cmp #maskPlane
                 bne _DODELAY
@@ -876,14 +892,15 @@ _next4          lda CharsetCustom+48,X
 ;                 bne _wait1
 
 _DODELAY        lda JIFFYCLOCK
+                inc A
+                inc A
 _wait1          cmp JIFFYCLOCK
-                beq _wait1
+                bne _wait1
 
 ;   players are now on screen, but check to see if they aren't
                 lda #1
                 sta ONSCR
                 lda PlayerPosX
-                cmp #44+32
                 beq _OFFSCR
 
                 cmp #204
