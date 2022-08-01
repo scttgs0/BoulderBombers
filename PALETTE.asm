@@ -21,7 +21,7 @@ ItlnUnit        .dword $00a6a4a5    ; [13]
 AxisUnit        .dword $0065c556    ; [14]
 RssnUnit        .dword $00745720    ; [15]
 Black           .dword $00000000    ; [16]
-                .dword $00c20000
+                .dword $00E6E600    ; [17]
                 .dword $00612000
                 .dword $00a100a1
                 .dword $00004000
