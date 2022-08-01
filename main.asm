@@ -2,25 +2,44 @@
 ;
 ;--------------------------------------
 INIT            .proc
+                .frsGraphics mcTextOn|mcSpriteOn,mcVideoMode320
+                .frsMouse_off
+                .frsBorder_off
 
-;   build up our custom charset (512 bytes = 64 characters)
-                ldy #$00                ; copy the game stamps (32 chars)
-_next1          lda GameStamps,Y
-                sta CharsetCustom,Y
-                iny
-                bne _next1
+                lda #<CharResX
+                sta COLS_PER_LINE
+                lda #>CharResX
+                sta COLS_PER_LINE+1
+                lda #CharResX
+                sta COLS_VISIBLE
 
-;                 ldx #$02
-; _next2          lda CharsetNorm+256,X   ; merge standard charset into the custom charset (skip 32 chars)
-;                 sta CharsetCustom+256,X
-;                 dex
-;                 bpl _next2
+                lda #<CharResY
+                sta LINES_MAX
+                lda #>CharResY
+                sta LINES_MAX+1
+                lda #CharResY
+                sta LINES_VISIBLE
 
                 jsr InitLUT
                 jsr InitCharLUT
 
                 jsr SetFont
                 jsr ClearScreen
+
+                jsr InitSID             ; init sound
+
+;   build up our custom charset (512 bytes = 64 characters)
+;                ldy #$00                ; copy the game stamps (32 chars)
+;_next1          lda GameStamps,Y
+;                sta CharsetCustom,Y
+;                iny
+;                bne _next1
+
+;                 ldx #$02
+; _next2          lda CharsetNorm+256,X   ; merge standard charset into the custom charset (skip 32 chars)
+;                 sta CharsetCustom+256,X
+;                 dex
+;                 bpl _next2
 
 ;   set playfield colors
                 ;lda #$34               ; dark-orange, lum=4
@@ -60,8 +79,6 @@ _next6          sta CANYON,Y
 
                 jsr DrawScreen
 
-                jsr InitSID             ; init sound
-
                 lda #56                 ; set player lanes
                 sta PlayerPosY
                 lda #72
@@ -88,23 +105,12 @@ RESTART         .proc
 
                 jsr ClearPlayer         ; clear players
 
-                .frsGraphics mcTextOn|mcSpriteOn,mcVideoMode320
-                .frsMouse_off
-                .frsBorder_off
+                jsr RenderHiScore
+                jsr RenderTitle
+                jsr RenderAuthor
+                jsr RenderSelect
 
-                lda #<CharResX
-                sta COLS_PER_LINE
-                lda #>CharResX
-                sta COLS_PER_LINE+1
-                lda #CharResX
-                sta COLS_VISIBLE
-
-                lda #<CharResY
-                sta LINES_MAX
-                lda #>CharResY
-                sta LINES_MAX+1
-                lda #CharResY
-                sta LINES_VISIBLE
+_endless        bra _endless
 
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL

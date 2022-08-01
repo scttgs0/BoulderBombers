@@ -18,18 +18,66 @@ MASKS           .byte 1,3
 ; titles
 ;======================================
 
-TITLE           .text "  BOULDER  BOMBERS  "        ; double-height
-                .text "   BY  MARK PRICE   "
-                .text "     PLAYERS: "
-SCNOPLR         .text            $11,"     "
+TitleMsg        ;.text "  BOULDER  BOMBERS  "        ; double-wide, double-height
+;   top
+                .byte $00,$00,$00,$00
+                .byte $B6,$B7,$CA,$CB,$D6,$D7,$C2,$C3,$BA,$BB,$BE,$BF,$CE,$CF
+                .byte $00,$00,$00,$00
+                .byte $B6,$B7,$CA,$CB,$C6,$C7,$B6,$B7,$BE,$BF,$CE,$CF,$D2,$D3
+                .byte $00,$00,$00,$00
+;   bottom
+                .byte $00,$00,$00,$00
+                .byte $B8,$B9,$CC,$CD,$D8,$D9,$C4,$C5,$BC,$BD,$C0,$C1,$D0,$D1
+                .byte $00,$00,$00,$00
+                .byte $B8,$B9,$CC,$CD,$C8,$C9,$B8,$B9,$C0,$C1,$D0,$D1,$D4,$D5
+                .byte $00,$00,$00,$00
 
+AuthorMsg       .text "   BY  MARK PRICE   "
+PlyrQtyMsg      .text "     PLAYERS: "
+SCNOPLR         .text               "1     "
+
+TitleMsgColor
+;   top
+                .byte $00,$00,$00,$00
+                .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
+                .byte $00,$00,$00,$00
+                .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
+                .byte $00,$00,$00,$00
+;   bottom
+                .byte $00,$00,$00,$00
+                .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
+                .byte $00,$00,$00,$00
+                .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
+                .byte $00,$00,$00,$00
+
+AuthorColor     .byte $00,$00,$00
+                .byte $90,$90
+                .byte $00,$00
+                .byte $90,$90,$90,$90
+                .byte $00
+                .byte $90,$90,$90,$90,$90
+                .byte $00,$00,$00
+
+PlyrQtyColor    .byte $00,$00,$00,$00,$00
+                .byte $C0,$C0,$C0,$C0,$C0,$C0,$C0,$C0
+                .byte $00
+                .byte $C0
+                .byte $00,$00,$00,$00,$00
 
 ;======================================
 ; bottom of game screen
 ;======================================
 
-GAME            .text "     HIGH: "
-HISCOR          .text "   0      PLAYER 1   "
+GameMsg         .text "     HIGH: "
+HISCOR          .text "   0     "
+
+GameMsgColor    .byte $00,$00,$00,$00,$00
+                .byte $C0,$C0,$C0,$C0,$C0
+                .byte $00,$00,$00,$00
+                .byte $C0,$C0,$C0,$C0,$C0
+                .byte $00
+
+                .text " PLAYER 1   "
 
 P2MSG           .text "          "
 SCORE1          .text "     "

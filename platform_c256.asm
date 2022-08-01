@@ -402,21 +402,31 @@ _setAddr2       sta CS_COLOR_MEM_PTR,x  ; SMC
 ;======================================
 RenderHiScore   .proc
                 php
-                .m16i8
+                .m8i8
 
-;   clear the 40-char line
-                ldx #$28
-_nextColor      dex
-                lda #$54
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda GameMsgColor,Y
                 sta CS_COLOR_MEM_PTR+3*CharResX,X
-                bne _nextColor
+                inx
+                sta CS_COLOR_MEM_PTR+3*CharResX,X
+                bra _nextColor
 
 ;   process the text
-                ldx #$FF
+_processText    ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
-                lda GAME,Y
+                cpy #$14
+                beq _XIT
+
+                lda GameMsg,Y
                 cmp #$20
                 beq _space
 
@@ -434,7 +444,7 @@ _space          sta CS_TEXT_MEM_PTR+3*CharResX,X
 _number         sec
                 sbc #$30
                 asl A
-                
+
                 clc
                 adc #$A0
                 sta CS_TEXT_MEM_PTR+3*CharResX,X
@@ -452,7 +462,169 @@ _letter         sta CS_TEXT_MEM_PTR+3*CharResX,X
 
                 bra _nextChar
 
-                plp
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render Title
+;======================================
+RenderTitle     .proc
+                php
+                .m8i8
+
+;   reset color for twp 40-char lines
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$50
+                beq _processText
+
+                lda TitleMsgColor,Y
+                sta CS_COLOR_MEM_PTR+23*CharResX,X
+
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$50
+                beq _XIT
+
+                lda TitleMsg,Y
+                sta CS_TEXT_MEM_PTR+23*CharResX,X
+
+                bra _nextChar
+
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render Author
+;======================================
+RenderAuthor    .proc
+                php
+                .m8i8
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda AuthorColor,Y
+                sta CS_COLOR_MEM_PTR+25*CharResX,X
+                inx
+                sta CS_COLOR_MEM_PTR+25*CharResX,X
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda AuthorMsg,Y
+                cmp #$20
+                beq _space
+
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+25*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+25*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+25*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+25*CharResX,X
+
+                bra _nextChar
+
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render SELECT (Qty of Players)
+;======================================
+RenderSelect    .proc
+                php
+                .m8i8
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda PlyrQtyColor,Y
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                inx
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda PlyrQtyMsg,Y
+                cmp #$20
+                beq _space
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl A
+
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+_XIT            plp
                 rts
                 .endproc
 
@@ -620,11 +792,11 @@ SetFont         .proc
                 phx
                 phy
 
-                lda #<CharsetCustom
+                lda #<CharsetNorm
                 sta zpSource
-                lda #>CharsetCustom
+                lda #>CharsetNorm
                 sta zpSource+1
-                lda #`CharsetCustom
+                lda #`CharsetNorm
                 sta zpSource+2
 
                 lda #<FONT_MEMORY_BANK0
