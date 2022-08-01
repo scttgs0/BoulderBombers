@@ -305,21 +305,14 @@ InitSprites     .proc
 
                 .m16
                 lda #00
-                ;sta SP00_X_POS
-                ;sta SP00_Y_POS
-                ;sta SP01_X_POS
-                ;sta SP01_Y_POS
+                sta SP00_X_POS
+                sta SP00_Y_POS
+                sta SP01_X_POS
+                sta SP01_Y_POS
                 sta SP02_X_POS
                 sta SP02_Y_POS
                 sta SP03_X_POS
                 sta SP03_Y_POS
-
-                lda #70         ; HACK:
-                sta SP00_X_POS
-                sta SP00_Y_POS
-                lda #90
-                sta SP01_X_POS
-                sta SP01_Y_POS
 
                 .m8
                 lda #scEnable

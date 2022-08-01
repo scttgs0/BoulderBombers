@@ -68,11 +68,17 @@ _next6          sta CANYON,Y
 
                 jsr DrawScreen
 
-                lda #56                 ; set player lanes
+                .m16
+                lda #70                 ; set player lanes
+                sta SP00_Y_POS
+                .m8
                 sta PlayerPosY
-                lda #72
-                sta PlayerPosY+1
 
+                .m16
+                lda #90
+                sta SP01_Y_POS
+                .m8
+                sta PlayerPosY+1
                 .endproc
 
                 ;[fall-through]
@@ -900,17 +906,18 @@ _wait1          cmp JIFFYCLOCK
 ;   players are now on screen, but check to see if they aren't
                 lda #1
                 sta ONSCR
+
                 lda PlayerPosX
                 beq _OFFSCR
 
-                cmp #204
+                cmp #152
                 bne _XIT                ; if on, return
 
 _OFFSCR         lda #0                  ; else, turn off explosions and bkg sound
                 sta SID_CTRL3
                 ;sta AUDC4
                 sta EXPLODE
-                sta ONSCR               ; set onscr false
+                sta ONSCR               ; set onscreen false
                 ldx #1
 _next5          lda BMBDRP,X            ; if a bomb is in the air, and
                 beq _CKBRN
@@ -940,10 +947,21 @@ _CKNBR          dex
                 lda DIR                 ; reverse direction
                 eor #$FE
                 sta DIR
+
                 ldx PlayerPosY          ; change player lanes
                 ldy PlayerPosY+1
                 stx PlayerPosY+1
                 sty PlayerPosY
+
+                .m16
+                tya
+                and #$FF
+                sta SP00_Y_POS
+                txa
+                and #$FF
+                sta SP01_Y_POS
+                .m8
+
                 lda #3                  ; reset clock
                 sta CLOCK
                 lda ROCKS+1             ; if half of the rocks are gone
