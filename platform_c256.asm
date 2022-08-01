@@ -99,15 +99,15 @@ Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green  [Editor Text bg]
                 .dword $006B89D7        ; 3: Blue Gray          [Editor Info fg][Dialog fg]
                 .dword $00693972        ; 4: Indigo             [Monitor Info bg]
                 .dword $00B561C2        ; 5: Deep Fuchsia       [Monitor Info fg][Window Split]
-                .dword $0076ADEB        ; 6: Maya Blue          [Reserved Word]
+                .dword $00352BB0        ; 6: Blue Pigment       [Reserved Word]
                 .dword $007A7990        ; 7: Fern Green         [Comment]
                 .dword $0074D169        ; 8: Moss Green         [Constant]
-                .dword $00D5CD6B        ; 9: Medium Spring Bud  [String]
+                .dword $00E6E600        ; 9: Peridot            [String]
                 .dword $00C563BD        ; A: Pastel Violet      [Loop Control]
                 .dword $005B8B46        ; B: Han Blue           [ProcFunc Name]
                 .dword $00BC605E        ; C: Medium Carmine     [Define]
                 .dword $00C9A765        ; D: Satin Sheen Gold   [Type]
-                .dword $0062C36B        ; E: Mantis Green       [Highlight]
+                .dword $0004750E        ; E: Hookers Green      [Highlight]
                 .dword $00BC605E        ; F: Medium Carmine     [Warning]
 
                 .endproc
@@ -483,7 +483,7 @@ _nextColor      inx
                 beq _processText
 
                 lda TitleMsgColor,Y
-                sta CS_COLOR_MEM_PTR+23*CharResX,X
+                sta CS_COLOR_MEM_PTR+24*CharResX,X
 
                 bra _nextColor
 
@@ -496,7 +496,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda TitleMsg,Y
-                sta CS_TEXT_MEM_PTR+23*CharResX,X
+                sta CS_TEXT_MEM_PTR+24*CharResX,X
 
                 bra _nextChar
 
@@ -521,9 +521,9 @@ _nextColor      inx
                 beq _processText
 
                 lda AuthorColor,Y
-                sta CS_COLOR_MEM_PTR+25*CharResX,X
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
                 inx
-                sta CS_COLOR_MEM_PTR+25*CharResX,X
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
                 bra _nextColor
 
 ;   process the text
@@ -540,17 +540,17 @@ _nextChar       inx
 
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+25*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
                 inx
-                sta CS_TEXT_MEM_PTR+25*CharResX,X
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+25*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+25*CharResX,X
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
 
                 bra _nextChar
 
@@ -575,9 +575,9 @@ _nextColor      inx
                 beq _processText
 
                 lda PlyrQtyColor,Y
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+27*CharResX,X
                 inx
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+27*CharResX,X
                 bra _nextColor
 
 ;   process the text
@@ -596,9 +596,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+27*CharResX,X
                 inx
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
 
                 bra _nextChar
 
@@ -609,22 +609,81 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+27*CharResX,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
 
                 bra _nextChar
 
 _XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render Canyon
+;======================================
+RenderCanyon    .proc
+                php
+                .m8i16
+
+                ldx #$FFFF
+                ldy #$FFFF
+_nextChar       inx
+                iny
+                cpy #400
+                beq _XIT
+
+                lda CANYON,Y
+                beq _space
+                cmp #$20
+                beq _space
+
+                cmp #$84
+                bcc _boulder
+
+_earth          eor #$80
+                pha
+
+                lda #$E0
+                sta CS_COLOR_MEM_PTR+13*CharResX,X
+
+                pla
+                sta CS_TEXT_MEM_PTR+13*CharResX,X
+
+                bra _nextChar
+
+_space          lda #$00
+                sta CS_COLOR_MEM_PTR+13*CharResX,X
+                sta CS_TEXT_MEM_PTR+13*CharResX,X
+
+                bra _nextChar
+
+_boulder        phy
+                xba
+                lda #$00
+                xba
+                tay
+                lda CanyonColors,Y
+                sta CS_COLOR_MEM_PTR+13*CharResX,X
+                ply
+
+                lda #$01
+                sta CS_TEXT_MEM_PTR+13*CharResX,X
+
+                bra _nextChar
+
+_XIT            .m8i8
+                plp
                 rts
                 .endproc
 
@@ -792,11 +851,11 @@ SetFont         .proc
                 phx
                 phy
 
-                lda #<CharsetNorm
+                lda #<GameFont
                 sta zpSource
-                lda #>CharsetNorm
+                lda #>GameFont
                 sta zpSource+1
-                lda #`CharsetNorm
+                lda #`GameFont
                 sta zpSource+2
 
                 lda #<FONT_MEMORY_BANK0

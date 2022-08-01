@@ -36,7 +36,7 @@ INIT            .proc
 ;                bne _next1
 
 ;                 ldx #$02
-; _next2          lda CharsetNorm+256,X   ; merge standard charset into the custom charset (skip 32 chars)
+; _next2          lda GameFont+256,X   ; merge standard charset into the custom charset (skip 32 chars)
 ;                 sta CharsetCustom+256,X
 ;                 dex
 ;                 bpl _next2
@@ -109,8 +109,9 @@ RESTART         .proc
                 jsr RenderTitle
                 jsr RenderAuthor
                 jsr RenderSelect
+                jsr RenderCanyon
 
-_endless        bra _endless
+;_endless        bra _endless
 
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL
