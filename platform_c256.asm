@@ -1,6 +1,6 @@
 VRAM            = $B00000               ; First byte of video RAM
 
-SPRITES         = VRAM+20000
+SPRITES         = VRAM
 BITMAP          = $B30000
 BITMAPTXT0      = $B6F200
 BITMAPTXT1      = $B71A00
@@ -272,22 +272,25 @@ InitSprites     .proc
                 phb
 
                 .m16i16
-                lda #$800               ; Set the size
+                lda #StampSprites_end-StampSprites
                 sta SIZE
                 lda #$00
                 sta SIZE+2
 
-                lda #<>SPR_STAR         ; Set the source address
+                lda #<>SPR_Ballon       ; Set the source address
                 sta SOURCE
-                lda #`SPR_STAR
+                lda #`SPR_Ballon
                 sta SOURCE+2
 
                 lda #<>(SPRITES-VRAM)   ; Set the destination address
                 sta DEST
                 sta SP00_ADDR           ; And set the Vicky register
-                clc
-                adc #$400               ; 1024
                 sta SP01_ADDR
+
+                clc
+                adc #$1400              ; 5*1024
+                sta SP02_ADDR
+                sta SP03_ADDR
 
                 lda #`(SPRITES-VRAM)
                 sta DEST+2
@@ -295,13 +298,26 @@ InitSprites     .proc
                 .m8
                 sta SP00_ADDR+2
                 sta SP01_ADDR+2
+                sta SP02_ADDR+2
+                sta SP03_ADDR+2
 
                 jsr Copy2VRAM
 
                 .m16
                 lda #00
+                ;sta SP00_X_POS
+                ;sta SP00_Y_POS
+                ;sta SP01_X_POS
+                ;sta SP01_Y_POS
+                sta SP02_X_POS
+                sta SP02_Y_POS
+                sta SP03_X_POS
+                sta SP03_Y_POS
+
+                lda #70         ; HACK:
                 sta SP00_X_POS
                 sta SP00_Y_POS
+                lda #90
                 sta SP01_X_POS
                 sta SP01_Y_POS
 
@@ -309,6 +325,8 @@ InitSprites     .proc
                 lda #scEnable
                 sta SP00_CTRL
                 sta SP01_CTRL
+                sta SP02_CTRL
+                sta SP03_CTRL
 
                 plb
                 plp

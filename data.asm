@@ -18,7 +18,7 @@ MASKS           .byte 1,3
 ; titles
 ;======================================
 
-TitleMsg        ;.text "  BOULDER  BOMBERS  "        ; double-wide, double-height
+TitleMsg        ;.text "  BOULDER  BOMBERS  "       ; double-wide, double-height
 ;   top
                 .byte $00,$00,$00,$00
                 .byte $B6,$B7,$CA,$CB,$D6,$D7,$C2,$C3,$BA,$BB,$BE,$BF,$CE,$CF

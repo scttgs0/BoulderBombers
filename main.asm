@@ -2,7 +2,7 @@
 ;
 ;--------------------------------------
 INIT            .proc
-                .frsGraphics mcTextOn|mcSpriteOn,mcVideoMode320
+                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode320
                 .frsMouse_off
                 .frsBorder_off
 
@@ -28,19 +28,6 @@ INIT            .proc
 
                 jsr InitSID             ; init sound
 
-;   build up our custom charset (512 bytes = 64 characters)
-;                ldy #$00                ; copy the game stamps (32 chars)
-;_next1          lda GameStamps,Y
-;                sta CharsetCustom,Y
-;                iny
-;                bne _next1
-
-;                 ldx #$02
-; _next2          lda GameFont+256,X   ; merge standard charset into the custom charset (skip 32 chars)
-;                 sta CharsetCustom+256,X
-;                 dex
-;                 bpl _next2
-
 ;   set playfield colors
                 ;lda #$34               ; dark-orange, lum=4
                 ;sta COLPF0
@@ -64,7 +51,9 @@ INIT            .proc
                 ;sta COLPM3
 
 ;   initialize sprites
-                ;jsr InitSprites
+                jsr InitSprites
+
+;_endless        bra _endless
 
                 lda #0                  ; init vars
                 ldy #SCRPTR+1-CLOCK
@@ -93,9 +82,9 @@ _next6          sta CANYON,Y
 ;
 ;--------------------------------------
 RESTART         .proc
-                lda #44                 ; set player start positions
+                lda #44+32              ; set player start positions
                 sta PlayerPosX
-                lda #204
+                lda #204+32
                 sta PlayerPosX+1
 
                 lda #0                  ; turn off explosions, and bkg sound
@@ -110,8 +99,6 @@ RESTART         .proc
                 jsr RenderAuthor
                 jsr RenderSelect
                 jsr RenderCanyon
-
-;_endless        bra _endless
 
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL
@@ -248,9 +235,9 @@ NewScreen       .proc
                 sta ONSCR
                 ;sta AUDF4
 
-                lda #44                 ; set start positions of players
+                lda #44+32              ; set start positions of players
                 sta PlayerPosX
-                lda #204
+                lda #204+32
                 sta PlayerPosX+1
 
                 ;sta HITCLR             ; clear collisions
@@ -648,12 +635,12 @@ CheckDrop       .proc
                 bmi _GOINGR             ;   no!
 
                 lda PlayerPosX,X        ; get computer x
-                cmp #$44                ; too far left?
+                cmp #$44+32             ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bcs _TRYDRP             ;   no, try drop!
 
 _GOINGR         lda PlayerPosX,X        ; get computer x
-                cmp #$B8                ; too far right?
+                cmp #$B8+32             ; too far right?
                 bcs DoNextBomb          ;   yes!
 
 _TRYDRP         lda SID_RANDOM          ; computer drops a bomb if random says to
@@ -880,19 +867,23 @@ _next4          lda CharsetCustom+48,X
                 dex                     ; & animate next
                 bpl _next3
 
-_DODELAY        ldx #15                 ; wait for a while to make game playable
-_wait1          ldy DELYVAL
-_wait2          dey
-                bne _wait2
+; _DODELAY        ldx #15                 ; wait for a while to make game playable
+; _wait1          ldy DELYVAL
+; _wait2          dey
+;                 bne _wait2
 
-                dex
-                bne _wait1
+;                 dex
+;                 bne _wait1
+
+_DODELAY        lda JIFFYCLOCK
+_wait1          cmp JIFFYCLOCK
+                beq _wait1
 
 ;   players are now on screen, but check to see if they aren't
                 lda #1
                 sta ONSCR
                 lda PlayerPosX
-                cmp #44
+                cmp #44+32
                 beq _OFFSCR
 
                 cmp #204

@@ -6,6 +6,11 @@
 ;*                     *
 ;***********************
 
+;   SP00        Player1
+;   SP01        Player2
+;   SP02        Player1 Bomb
+;   SP03        Player2 Bomb
+
                 .cpu "65816"
 
                 .include "equates_system_c256.asm"
@@ -60,3 +65,11 @@ GameFont_end
 
 Palette         .include "PALETTE.asm"
 Palette_end
+
+
+;--------------------------------------
+                .align $100
+;--------------------------------------
+
+StampSprites    .include "SPRITES.asm"
+StampSprites_end
