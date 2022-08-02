@@ -11,8 +11,8 @@ P2COMPT         .text "RETUPMOC"        ; "COMPUTER" spelled backwards
 ;======================================
 
 SCRNDX          .byte 3,13
-MASKS           .byte 1,3
-
+MASKS           .byte maskPlane,maskBalloon
+MasksSprOffset  .word $0400,$0000
 
 ;======================================
 ; titles

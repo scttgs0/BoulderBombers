@@ -149,7 +149,21 @@ _moveT          lda ONSCR               ; if on screen, then move
                 tax
                 lda MASKS,X
                 sta MASK                ; & set it
-_moveIt         jsr MovePlayer          ; move players
+
+                .m16
+                ;lda MasksSprOffset,X
+                ;sta SP00_ADDR
+                ;sta SP01_ADDR
+
+                cpx #maskBalloon
+                beq _moveIt
+
+                ;clc    ; HACK:
+                ;adc $800
+                ;sta SP00_ADDR
+
+_moveIt         .m8
+                jsr MovePlayer          ; move players
 
                 jmp _next1              ; do check again
 
@@ -228,6 +242,12 @@ NewScreen       .proc
                 lda #maskBalloon        ; set type to Balloon
                 sta MASK
                 sta CLOCK               ; and begin clock
+
+                .m16
+                lda #$0000
+                sta SP00_ADDR
+                sta SP01_ADDR
+                .m8
 
                 lda #dirRight
                 sta DIR
@@ -975,6 +995,14 @@ _CKNBR          dex
                 sta MASK
                 lda #4                  ; plane bombs get max of 4 rocks
                 sta RKILL
+
+                ;.m16
+                ;lda #$0C00
+                ;sta SP00_ADDR
+                ;lda #$0400
+                ;sta SP01_ADDR
+                ;.m8
+
 _XIT            rts
                 .endproc
 
