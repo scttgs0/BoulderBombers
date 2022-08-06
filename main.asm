@@ -134,9 +134,11 @@ _wait1          lda CONSOL              ;   yes, wait for key release
                 eor #1
                 sta PLAYERS
                 clc
-                adc #$11                ; & set on screen
+                adc #$31                ; & set on screen
                 sta SCNOPLR
-                bne _moveT              ; (move players)
+                jsr RenderSelect
+
+                bra _moveT              ; (move players)
 
 _chkSTART       cmp #2                  ; if START then start game
                 beq START

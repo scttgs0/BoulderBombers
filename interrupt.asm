@@ -313,17 +313,11 @@ VbiHandler      .proc
                 lda JOYSTICK0           ; read joystick0
                 and #$1F
                 cmp #$1F
-                beq _1                  ; when no activity, keyboard is alternative
+                beq _XIT                ; when no activity, keyboard is alternative
 
                 sta InputFlags          ; joystick activity -- override keyboard input
                 lda #itJoystick
                 sta InputType
-                bra _1
-
-_1              ldx InputType
-                bne _XIT                ; keyboard, move on
-
-                sta InputFlags
 
 _XIT            .m16i16
                 ply

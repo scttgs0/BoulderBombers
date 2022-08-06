@@ -23,7 +23,7 @@ maskBalloon = 3
 
 ONSCR           .byte ?
 PLAY            .byte ?
-PLAYERS         .byte ?
+PLAYERS         .byte ?                 ; 0 = 1-player, 1 = 2-player
 RKILL           .byte ?
 TDIR            .byte ?
 XCOUNT          .byte ?
