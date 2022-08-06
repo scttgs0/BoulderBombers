@@ -92,7 +92,7 @@ _next6          sta CANYON,Y
 RESTART         .proc
                 lda #1                  ; set player start positions
                 sta PlayerPosX
-                lda #152
+                lda #151
                 sta PlayerPosX+1
 
                 lda #0                  ; turn off explosions, and bkg sound
@@ -273,7 +273,7 @@ NewScreen       .proc
 
                 lda #1                  ; set start positions of players
                 sta PlayerPosX
-                lda #152
+                lda #151
                 sta PlayerPosX+1
 
                 ;sta HITCLR             ; clear collisions
@@ -676,7 +676,7 @@ CheckDrop       .proc
                 bcs _TRYDRP             ;   no, try drop!
 
 _GOINGR         lda PlayerPosX,X        ; get computer x
-                cmp #152                ; too far right?
+                cmp #151                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
 _TRYDRP         .randomByte             ; computer drops a bomb if random says to
@@ -862,10 +862,9 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 sta SP02_X_POS
                 .m8
 
-                lda DIR                 ; then player 2
-                eor #$FE
-                clc
-                adc PlayerPosX+1
+                lda #152                ; then player 2
+                sec
+                sbc PlayerPosX
                 sta PlayerPosX+1
 
                 .m16
