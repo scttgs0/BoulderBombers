@@ -22,10 +22,10 @@ stPlane         = 1
 stBalloon       = 3
 
 ONSCR               .byte ?
-PLAY                .byte ?
+zpWaitForPlay       .byte ?             ; 0 = game in play, 1 = not in play
 PLAYERS             .byte ?             ; 0 = 1-player, 1 = 2-player
 RKILL               .byte ?
-TDIR                .byte ?
+tmpDIR              .byte ?
 XCOUNT              .byte ?
 YCOUNT              .byte ?
 

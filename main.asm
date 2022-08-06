@@ -55,8 +55,6 @@ INIT            .proc
 ;   initialize sprites
                 jsr InitSprites
 
-;_endless        bra _endless
-
                 lda #0                  ; init vars
                 ldy #SCRPTR+1-CLOCK
 _next5          sta CLOCK,Y
@@ -113,7 +111,7 @@ RESTART         .proc
 
                 lda #dirRight           ; set start direction
                 sta DIR
-                sta PLAY                ; set play false
+                sta zpWaitForPlay       ; waiting for play to start
 
                 lda #0                  ; players not on screen
                 sta ONSCR
@@ -153,7 +151,7 @@ _moveT          lda ONSCR               ; if on screen, then move
                 tax
                 phx
                 lda ShipTypeTbl,X
-                sta zpShipType                ; & set it
+                sta zpShipType          ; & set it
 
                 .m16i8
                 txa
@@ -163,15 +161,6 @@ _moveT          lda ONSCR               ; if on screen, then move
                 lda ShipSprOffset,X
                 sta SP00_ADDR
                 sta SP01_ADDR
-
-                ;;.m8
-                ;;plx
-                ;;cpx #stBalloon
-                ;;beq _moveIt
-
-                ;clc    ; HACK:
-                ;adc $800
-                ;sta SP00_ADDR
 
 _moveIt         jsr MovePlayer          ; move players
 
@@ -191,8 +180,8 @@ START           .proc
                 lda #3                  ; set game speed to $ff+$04
                 sta DELYVAL
 
-                lda #0                  ; set play true
-                sta PLAY
+                lda #0                  ; we're now in play, clear the wait flag
+                sta zpWaitForPlay
 
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
@@ -233,11 +222,6 @@ _next3          lda P2COMPT,Y
                 dex
                 bpl _next3
 
-                ;lda #<DLIST2           ; set dlist to game screen
-                ;sta DLIST
-                ;lda #>DLIST2
-                ;sta DLIST+1
-
                 .endproc
 
                 ;[fall-through]
@@ -249,7 +233,7 @@ _next3          lda P2COMPT,Y
 NewScreen       .proc
                 jsr DrawScreen          ; set canyon
 
-                lda #stBalloon        ; set type to Balloon
+                lda #stBalloon          ; set type to Balloon
                 sta zpShipType
                 sta CLOCK               ; and begin clock
 
@@ -469,18 +453,18 @@ CheckHiScore    .proc
                 inc SCRPTR+1
 _chkScore       ldy #0                  ; begin at hi end
 _next1          lda (SCRPTR),Y
-                cmp HighScoreMsg+11,Y            ; compare 'em
+                cmp HighScoreMsg+11,Y   ; compare 'em
                 beq _chkNxtDgt          ; if same, do next
 
                 bcs SetHiScore          ; if player > set
 
-                bcc CHKFRM              ; if high > skip
+                bcc CheckFreeMan        ; if high > skip
 
 _chkNxtDgt      iny                     ; do next digit
                 cpy #4                  ; if all done, then it's the same, skip
                 bne _next1
 
-                beq CHKFRM
+                beq CheckFreeMan
 
                 .endproc
 
@@ -507,7 +491,7 @@ _next1          lda (SCRPTR),Y
 ;======================================
 ; check for getting extra bombs
 ;======================================
-CHKFRM          .proc
+CheckFreeMan    .proc
                 ldy ScoreIndex,X        ; get score in thousands
                 lda SCORE1-3,Y
                 cmp FREMEN,X            ; if not free bomb yet, skip.
@@ -668,14 +652,14 @@ CheckDrop       .proc
                 bne _CHKTRG             ; it's player!
 
                 lda DIR                 ; going left?
-                bmi _GOINGR             ;   no!
+                bmi _GOING_R            ;   no!
 
                 lda PlayerPosX,X        ; get computer x
                 cmp #1                  ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bcs _TRYDRP             ;   no, try drop!
 
-_GOINGR         lda PlayerPosX,X        ; get computer x
+_GOING_R        lda PlayerPosX,X        ; get computer x
                 cmp #151                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
@@ -813,7 +797,8 @@ MovePlayer      .proc
                 lda ONSCR               ; if not on screen, set sound
                 bne _ADDCLOK
 
-                lda zpShipType                ; player is Balloon?
+;   do the appropriate sound effect based on the ship type
+                lda zpShipType          ; player is Balloon?
                 cmp #stBalloon
                 beq _STBLSND            ;   yes, do that
 
@@ -827,28 +812,16 @@ _STBLSND        lda #0                  ; set wind sound
                 ;sta AUDF4
                 lda #2
                 ;sta AUDC4
-                ldx #1                  ; set Balloon
-_next1          lda PlayerPosY,X
-                sta SCRPTR
-                txa
-                clc
-                adc #>PL0
-                sta SCRPTR+1
-                ldy #15
-_next2          lda CharsetCustom+80,Y
-                sta (SCRPTR),Y
-                dey
-                bpl _next2
-
-                dex
-                bpl _next1
 
 _ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
-                and zpShipType                ; mask<>0 then don't move
-                bne _DODELAY
+                and zpShipType          ; mask<>0 then don't move
+                beq _cont1
 
-                lda PlayerPosX          ; move the players; first player 1
+               jmp _DODELAY
+
+;   move the players
+_cont1          lda PlayerPosX          ; first player 1
                 clc
                 adc DIR
                 sta PlayerPosX
@@ -876,7 +849,8 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 sta SP03_X_POS
                 .m8
 
-                lda zpShipType                ; if on planes then check if time to animate
+;   player animation
+                lda zpShipType          ; if on planes then check if time to animate
                 cmp #stPlane
                 bne _DODELAY
 
@@ -884,48 +858,54 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 and #2
                 beq _DODELAY            ;   no, skip this
 
-                lda DIR                 ; set temp dir
-                sta TDIR                ; (will be killed)
+                lda DIR                 ; set temp direction
+                sta tmpDIR              ; (will be killed)
+
                 ldx #1
-_next3          lda PlayerPosY,X        ; set pointer to player
-                sta SCRPTR
-                txa
-                clc
-                adc #>PL0
-                sta SCRPTR+1
+_next3          phx
+
                 lda CLOCK               ; get image index from clock
                 and #4
                 asl A
                 sta HOLDIT              ; and hold it
-                lda TDIR                ; get direction index from dir
+
+                lda tmpDIR              ; get direction index from dir
                 and #$10
                 clc
                 adc HOLDIT              ; & add 'em to get index.
                 stx HOLDIT
                 tax                     ; save player #
-                ldy #0                  ; set player
-_next4          lda CharsetCustom+48,X
-                sta (SCRPTR),Y
-                inx
-                iny
-                cpy #8
-                bne _next4
 
-                lda TDIR                ; reverse tdir
+;   calculate stamp address
+                .m16
+                and #$FF
+
+                ldy #6
+_nextMult       asl A                   ; *128
+                dey
+                bpl _nextMult
+
+                clc
+                adc #$400
+
+                plx
+                beq _plyr00
+
+                sta SP01_ADDR
+                bra _cont
+
+_plyr00         sta SP00_ADDR
+
+_cont           .m8
+                lda tmpDIR              ; reverse tdir
                 eor #$FE
-                sta TDIR
+                sta tmpDIR
+
                 ldx HOLDIT              ; get player #
                 dex                     ; & animate next
                 bpl _next3
 
-; _DODELAY        ldx #15                 ; wait for a while to make game playable
-; _wait1          ldy DELYVAL
-; _wait2          dey
-;                 bne _wait2
-
-;                 dex
-;                 bne _wait1
-
+;   wait for a while to make game playable
 _DODELAY        lda JIFFYCLOCK
                 inc A
                 ;inc A
@@ -969,8 +949,9 @@ _CKNBR          dex
                 ldx PLAYERS             ; if the actual players have no more bombs,
                 lda BOMBS
                 clc
-                adc BOMBS,X             ; and we're on a game, end it
-                adc PLAY
+                adc BOMBS,X
+                adc zpWaitForPlay       ; and we're on a game, end it
+                                        ; zpWaitForPlay = [0] means a game is in progress
                 beq EndGame
 
                 lda DIR                 ; reverse direction
@@ -1000,7 +981,7 @@ _CKNBR          dex
                 cmp #149
                 bcs _XIT                ; else return
 
-                lda #stPlane          ; set move rate mask
+                lda #stPlane            ; set move rate mask
                 sta zpShipType
                 lda #4                  ; plane bombs get max of 4 rocks
                 sta RKILL
