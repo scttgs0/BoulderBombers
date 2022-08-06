@@ -9,6 +9,55 @@ BITMAPTXT3      = $B31400
 
 
 ;======================================
+; seed = elapsed seconds this hour
+;======================================
+Random_Seed     .proc
+                .m8
+                lda RTC_MIN
+                sta RND_MIN
+                lda RTC_SEC
+                sta RND_SEC
+
+                .m16
+;   elapsed minutes * 60
+                lda RND_MIN
+                asl A
+                asl A
+                pha
+                asl A
+                pha
+                asl A
+                pha
+                asl A
+                sta RND_RESULT      ; *32
+                pla
+                clc
+                adc RND_RESULT      ; *16
+                sta RND_RESULT
+                pla
+                clc
+                adc RND_RESULT      ; *8
+                sta RND_RESULT
+                pla
+                clc
+                adc RND_RESULT      ; *4
+                sta RND_RESULT
+
+;   + elapsed seconds
+                lda RND_SEC
+                adc RND_RESULT
+
+                sta GABE_RNG_SEED_LO
+
+                .m8
+                lda #grcEnable|grcDV
+                sta GABE_RNG_CTRL
+                lda #grcEnable
+                sta GABE_RNG_CTRL
+                .endproc
+
+
+;======================================
 ; Initialize SID
 ;======================================
 InitSID         .proc
@@ -437,7 +486,7 @@ _nextChar       inx
                 cpy #$14
                 beq _XIT
 
-                lda GameMsg,Y
+                lda HighScoreMsg,Y
                 cmp #$20
                 beq _space
 

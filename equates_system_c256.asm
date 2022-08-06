@@ -122,6 +122,13 @@ C256F_MODEL_MINOR       = $AF_070C
 
 ;---------------------------------------
 
+RTC_SEC                 = $AF_0800      ; Seconds Register
+RTC_MIN                 = $AF_0802      ; Minutes Register
+RTC_HRS                 = $AF_0804      ; Hours Register
+RTC_DAY                 = $AF_0806      ; Day Register
+
+;---------------------------------------
+
 SP00_CTRL               = $AF_0C00
 scEnable            = $01
 
@@ -241,3 +248,18 @@ LUTSprColor4    = 13
 LUTSprColor5    = 14
 LUTSprColor6    = 15
 LUTSprColor7    = 16
+
+;--------------------------------------
+
+; READ
+GABE_RNG_DAT_LO         = $AF_E884      ; Low Part of 16Bit RNG Generator
+GABE_RNG_DAT_HI         = $AF_E885      ; Hi Part of 16Bit RNG Generator
+
+; WRITE
+GABE_RNG_SEED_LO        = $AF_E884      ; Low Part of 16Bit RNG Generator
+GABE_RNG_SEED_HI        = $AF_E885      ; Hi Part of 16Bit RNG Generator
+
+; WRITE
+GABE_RNG_CTRL           = $AF_E886
+grcEnable       = $01                   ; Enable the LFSR BLOCK_LEN
+grcDV           = $02                   ; After Setting the Seed Value, Toggle that Bit for it be registered
