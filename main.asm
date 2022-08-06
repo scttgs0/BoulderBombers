@@ -2,6 +2,8 @@
 ;
 ;--------------------------------------
 INIT            .proc
+                jsr Random_Seed
+
                 .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode320
                 .frsMouse_off
                 .frsBorder_off
@@ -135,7 +137,7 @@ _wait1          lda CONSOL              ;   yes, wait for key release
                 sta PLAYERS
                 clc
                 adc #$31                ; & set on screen
-                sta SCNOPLR
+                sta PlyrQtyMsg+14
                 jsr RenderSelect
 
                 bra _moveT              ; (move players)
@@ -146,26 +148,32 @@ _chkSTART       cmp #2                  ; if START then start game
 _moveT          lda ONSCR               ; if on screen, then move
                 bne _moveIt
 
-                lda SID_RANDOM          ; else, pick out new ship type
+                .randomByte             ; else, pick out new ship type
                 and #1
                 tax
-                lda MASKS,X
-                sta MASK                ; & set it
+                phx
+                lda ShipTypeTbl,X
+                sta zpShipType                ; & set it
 
-                .m16
-                ;lda MasksSprOffset,X
-                ;sta SP00_ADDR
-                ;sta SP01_ADDR
+                .m16i8
+                txa
+                and #1
+                asl A
+                tax
+                lda ShipSprOffset,X
+                sta SP00_ADDR
+                sta SP01_ADDR
 
-                cpx #maskBalloon
-                beq _moveIt
+                ;;.m8
+                ;;plx
+                ;;cpx #stBalloon
+                ;;beq _moveIt
 
                 ;clc    ; HACK:
                 ;adc $800
                 ;sta SP00_ADDR
 
-_moveIt         .m8
-                jsr MovePlayer          ; move players
+_moveIt         jsr MovePlayer          ; move players
 
                 jmp _next1              ; do check again
 
@@ -241,8 +249,8 @@ _next3          lda P2COMPT,Y
 NewScreen       .proc
                 jsr DrawScreen          ; set canyon
 
-                lda #maskBalloon        ; set type to Balloon
-                sta MASK
+                lda #stBalloon        ; set type to Balloon
+                sta zpShipType
                 sta CLOCK               ; and begin clock
 
                 .m16
@@ -402,7 +410,7 @@ _got1           lda #$FE                ; start explosion sound
 
 ; add on to score
 
-                ldy SCRNDX,X            ; get base index to scores, and add to score
+                ldy ScoreIndex,X        ; get base index to scores, and add to score
                 lda HOLDIT
                 clc
                 adc SCORE1,Y
@@ -461,7 +469,7 @@ CheckHiScore    .proc
                 inc SCRPTR+1
 _chkScore       ldy #0                  ; begin at hi end
 _next1          lda (SCRPTR),Y
-                cmp HISCOR,Y            ; compare 'em
+                cmp HighScoreMsg+11,Y            ; compare 'em
                 beq _chkNxtDgt          ; if same, do next
 
                 bcs SetHiScore          ; if player > set
@@ -485,7 +493,7 @@ _chkNxtDgt      iny                     ; do next digit
 SetHiScore      .proc
                 ldy #3                  ; copy the new high score into HISCOR
 _next1          lda (SCRPTR),Y
-                sta HISCOR,Y
+                sta HighScoreMsg+11,Y
                 dey
                 bpl _next1
 
@@ -500,9 +508,9 @@ _next1          lda (SCRPTR),Y
 ; check for getting extra bombs
 ;======================================
 CHKFRM          .proc
-                ldy SCRNDX,X            ; get score in thousands
+                ldy ScoreIndex,X        ; get score in thousands
                 lda SCORE1-3,Y
-                cmp FREMEN,X            ; if not free bomb yet,skip.
+                cmp FREMEN,X            ; if not free bomb yet, skip.
                 bne _STRKHT
 
                 inc BOMBS,X             ; else, up bombs by 1
@@ -511,7 +519,7 @@ CHKFRM          .proc
                 bcs _UPDTFM
 
                 clc                     ; if bombs less than 4, then set extra on screen
-                adc SCRNDX,X
+                adc ScoreIndex,X
                 tay
                 lda #$CD
                 sta BOMB1-4,Y
@@ -671,7 +679,7 @@ _GOINGR         lda PlayerPosX,X        ; get computer x
                 cmp #152                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
-_TRYDRP         lda SID_RANDOM          ; computer drops a bomb if random says to
+_TRYDRP         .randomByte             ; computer drops a bomb if random says to
                 and #15
                 beq _DROPIT
                 bne DoNextBomb          ; else do next
@@ -805,8 +813,8 @@ MovePlayer      .proc
                 lda ONSCR               ; if not on screen, set sound
                 bne _ADDCLOK
 
-                lda MASK                ; player is Balloon?
-                cmp #maskBalloon
+                lda zpShipType                ; player is Balloon?
+                cmp #stBalloon
                 beq _STBLSND            ;   yes, do that
 
                 lda #$96                ; set plane sound
@@ -837,7 +845,7 @@ _next2          lda CharsetCustom+80,Y
 
 _ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
-                and MASK                ; mask<>0 then don't move
+                and zpShipType                ; mask<>0 then don't move
                 bne _DODELAY
 
                 lda PlayerPosX          ; move the players; first player 1
@@ -869,8 +877,8 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 sta SP03_X_POS
                 .m8
 
-                lda MASK                ; if on planes then check if time to animate
-                cmp #maskPlane
+                lda zpShipType                ; if on planes then check if time to animate
+                cmp #stPlane
                 bne _DODELAY
 
                 lda CLOCK               ; props
@@ -921,7 +929,7 @@ _next4          lda CharsetCustom+48,X
 
 _DODELAY        lda JIFFYCLOCK
                 inc A
-                inc A
+                ;inc A
 _wait1          cmp JIFFYCLOCK
                 bne _wait1
 
@@ -993,8 +1001,8 @@ _CKNBR          dex
                 cmp #149
                 bcs _XIT                ; else return
 
-                lda #maskPlane          ; set move rate mask
-                sta MASK
+                lda #stPlane          ; set move rate mask
+                sta zpShipType
                 lda #4                  ; plane bombs get max of 4 rocks
                 sta RKILL
 
@@ -1071,7 +1079,7 @@ DecrementMissile .proc
                 bcs _XIT
 
                 clc                     ; get index for screen to erase bomb
-                adc SCRNDX,X
+                adc ScoreIndex,X
                 tay
                 lda #0
                 sta BOMB1-3,Y

@@ -10,9 +10,11 @@ P2COMPT         .text "RETUPMOC"        ; "COMPUTER" spelled backwards
 ; misc data
 ;======================================
 
-SCRNDX          .byte 3,13
-MASKS           .byte maskPlane,maskBalloon
-MasksSprOffset  .word $0400,$0000
+ScoreIndex      .byte 3,13              ; char positions within the screen score line
+ShipTypeTbl     .byte stPlane
+                .byte stBalloon
+ShipSprOffset   .word $0400
+                .word $0000
 
 ;======================================
 ; titles
@@ -33,8 +35,7 @@ TitleMsg        ;.text "  BOULDER  BOMBERS  "       ; double-wide, double-height
                 .byte $00,$00,$00,$00
 
 AuthorMsg       .text "   BY  MARK PRICE   "
-PlyrQtyMsg      .text "     PLAYERS: "
-SCNOPLR         .text               "1     "
+PlyrQtyMsg      .text "     PLAYERS: 1     "
 
 TitleMsgColor
 ;   top
@@ -68,8 +69,7 @@ PlyrQtyColor    .byte $00,$00,$00,$00,$00
 ; bottom of game screen
 ;======================================
 
-GameMsg         .text "     HIGH: "
-HISCOR          .text "   0     "
+HighScoreMsg    .text "     HIGH:    0     "
 
 GameMsgColor    .byte $00,$00,$00,$00,$00
                 .byte $C0,$C0,$C0,$C0,$C0
