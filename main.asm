@@ -892,11 +892,11 @@ _nextMult       asl A                   ; *128
                 beq _plyr00
 
                 sta SP01_ADDR
-                bra _cont
+                bra _cont2
 
 _plyr00         sta SP00_ADDR
 
-_cont           .m8
+_cont2          .m8
                 lda tmpDIR              ; reverse tdir
                 eor #$FE
                 sta tmpDIR
