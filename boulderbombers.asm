@@ -45,7 +45,17 @@ BOOT            clc
                 * = $2000
 ;--------------------------------------
 
-                .include "main.asm"
+                .include "launch.asm"
+
+                .include "newscreen.asm"
+                .include "bombloop.asm"
+                .include "score.asm"
+                .include "bomb.asm"
+                .include "player.asm"
+                .include "render.asm"
+
+                .include "endgame.asm"
+
                 .include "data.asm"
 
 

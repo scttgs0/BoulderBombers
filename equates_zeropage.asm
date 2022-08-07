@@ -34,11 +34,13 @@ BRUN                .word ?
 DRPFREQ             .word ?
 DRPRATE             .word ?
 FREMEN              .word ?
-BOMBS               .word ?
+BombCount           .word ?             ; low-byte=player 1, high-byte=player 2
+
 PlayerPosX          .byte ?
                     .byte ?
 PlayerPosY          .byte ?
                     .byte ?
+
 RCKHIT              .word ?
 ROCKS               .word ?
 SCRPTR              .word ?

@@ -104,10 +104,15 @@ InitLUT         .proc
                 phb
 
                 .m16i16
-                lda #Palette_end-Palette ; Copy the palette to LUT0
+                lda #Palette_end-Palette        ; Copy the palette to LUT0
                 ldx #<>Palette
                 ldy #<>GRPH_LUT0_PTR
                 mvn `Palette,`GRPH_LUT0_PTR
+
+                lda #Palette_end-Palette-64     ; ... LUT1
+                ldx #<>Palette+64
+                ldy #<>GRPH_LUT1_PTR
+                mvn `Palette,`GRPH_LUT1_PTR
 
                 .m8i8
                 plb
@@ -366,9 +371,11 @@ InitSprites     .proc
                 .m8
                 lda #scEnable
                 sta SP00_CTRL
-                sta SP01_CTRL
                 sta SP02_CTRL
                 sta SP03_CTRL
+
+                lda #scEnable|scLUT1
+                sta SP01_CTRL
 
                 plb
                 plp
