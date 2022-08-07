@@ -71,19 +71,40 @@ PlyrQtyColor    .byte $00,$00,$00,$00,$00
 
 HighScoreMsg    .text "     HIGH:    0     "
 
-GameMsgColor    .byte $00,$00,$00,$00,$00
+HighScoreColor  .byte $00,$00,$00,$00,$00
                 .byte $C0,$C0,$C0,$C0,$C0
                 .byte $00,$00,$00,$00
                 .byte $C0,$C0,$C0,$C0,$C0
                 .byte $00
 
-                .text " PLAYER 1   "
+PlayersMsg      .text " PLAYER 1  "
 
-P2MSG           .text "          "
-SCORE1          .text "     "
-BOMB1           .text "     "
-SCORE2          .text "     "
-BOMB2           .text "    "
+P2MSG           .text "         "
+
+PlayersMsgColor .byte $00,$90,$90,$90,$90
+                .byte $90,$90,$00,$90,$00
+                .byte $00,$60,$60,$60,$60
+                .byte $60,$60,$60,$60,$00
+
+ScoreMsg        .text " "
+SCORE1          .text "    "
+                .text " "
+BOMB1           .text "   "
+                .text "  "
+SCORE2          .text "    "
+                .text " "
+BOMB2           .text "   "
+                .text " "
+
+ScoreMsgColor   .byte $00
+                .byte $A0,$A0,$A0,$A0
+                .byte $00
+                .byte $E0,$E0,$E0
+                .byte $00,$00
+                .byte $A0,$A0,$A0,$A0
+                .byte $00
+                .byte $E0,$E0,$E0
+                .byte $00
 
 
 ;======================================

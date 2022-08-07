@@ -130,9 +130,9 @@ _wait1          lda CONSOL              ;   yes, wait for key release
                 and #2
                 beq _wait1
 
-                lda PLAYERS             ; change # of players
+                lda PlayerCount         ; change # of players
                 eor #1
-                sta PLAYERS
+                sta PlayerCount
                 clc
                 adc #$31                ; & set on screen
                 sta PlyrQtyMsg+14
@@ -161,6 +161,7 @@ _moveT          lda ONSCR               ; if on screen, then move
                 lda ShipSprOffset,X
                 sta SP00_ADDR
                 sta SP01_ADDR
+                .m8
 
 _moveIt         jsr MovePlayer          ; move players
 
@@ -173,9 +174,10 @@ _moveIt         jsr MovePlayer          ; move players
 ;
 ;--------------------------------------
 START           .proc
-                lda CONSOL              ; wait for key release
+;   wait for key release
+_wait1          lda CONSOL              
                 and #1
-                beq START
+                beq _wait1
 
                 lda #3                  ; set game speed to $ff+$04
                 sta DELYVAL
@@ -183,18 +185,19 @@ START           .proc
                 lda #0                  ; we're now in play, clear the wait flag
                 sta zpWaitForPlay
 
+                lda #$20
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
                 sta SCORE2,X
                 dex
                 bpl _next1
 
-                lda #$10
+                lda #$30
                 sta SCORE1+3
                 sta SCORE2+3
 
                 ldx #2                  ; set bombs remaining to three
-                lda #$CD
+                lda #$9B
 _next2          sta BOMB1,X
                 sta BOMB2,X
                 dex
@@ -209,7 +212,7 @@ _next2          sta BOMB1,X
                 sta FREMEN+1
 
 ;   set second player message to 'player 2' or 'computer'
-                lda PLAYERS
+                lda PlayerCount
                 asl A
                 asl A
                 asl A
@@ -221,6 +224,13 @@ _next3          lda P2COMPT,Y
                 iny
                 dex
                 bpl _next3
+
+;_endless        bra _endless
+
+                jsr ClearGamePanel
+                jsr RenderHiScore2
+                jsr RenderPlayers
+                jsr RenderScore
 
                 .endproc
 
@@ -293,14 +303,14 @@ BMBLOOP         .proc
 ;
 ;--------------------------------------
 BMBNLOP         .proc
-                lda BMBDRP,X            ; if bomb not dropped
+                lda zpBombDrop,X        ; if bomb not dropped
                 bne _chkHits
 
                 jmp CheckDrop           ; check trigger
 
 _chkHits        ;lda P2PF,X             ; bomb hit anything?
                 ;bne _chkRockOK
-                bra _chkRockOK  ; HACK:
+                ;bra _chkRockOK  ; HACK:
 
                 jmp LowerBomb           ;   no, move bomb
 
@@ -313,7 +323,7 @@ _chkHitRock
 ;   set pointer into screen ram where the rock hit is
                 lda #0
                 sta SCRPTR+1
-                lda BMBDRP,X
+                lda zpBombDrop,X
 
 ;   1st, get bomb's y-pos translated into row number and multiply it by 40
                 sec
@@ -527,7 +537,7 @@ KILLBMB         .proc
                 clc
                 adc #>PL2
                 sta SCRPTR+1
-                lda BMBDRP,X
+                lda zpBombDrop,X
                 sta SCRPTR
 
                 ldy #5                  ; and erase it
@@ -554,7 +564,8 @@ KILBOMB         .proc
                 sta SID_FREQ1,Y
                 sta SID_CTRL1,Y
                 .setbank $00
-                sta BMBDRP,X            ; set flag off
+
+                sta zpBombDrop,X        ; set flag off
 
                 lda RCKHIT,X            ; if it didn't hit anything,
                 bne _hop
@@ -567,21 +578,10 @@ _hop            jmp DoNextBomb          ; & do next
 
 
 ;--------------------------------------
-; lower the bombs
+; decend the bombs
 ;--------------------------------------
 LowerBomb       .proc
-                txa
-                clc
-                adc #>PL2               ; set pointer to bomb
-                sta SCRPTR+1
-                lda BMBDRP,X
-                sta SCRPTR
-
-                lda #0                  ; erase the bomb
-                ldy #5
-_next1          sta (SCRPTR),Y
-                dey
-                bpl _next1
+                lda zpBombDrop,X
 
                 inc DRPRATE,X           ; up drop speed
                 lda DRPRATE,X
@@ -590,20 +590,26 @@ _next1          sta (SCRPTR),Y
                 lsr A
                 lsr A
                 sta HOLDIT
+
                 clc
-                adc BMBDRP,X
-                cmp #196                ; out of range?
+                adc zpBombDrop,X
+                cmp #212                ; out of range?
                 bcs KILBOMB             ;   yes, kill it
 
-                sta BMBDRP,X            ;   no, set the bomb
-                sta SCRPTR
+                sta zpBombDrop,X        ;   no, set the bomb
 
-                ldy #5
-_next2          lda CharsetCustom+96,Y
-                sta (SCRPTR),Y
-                dey
-                bpl _next2
+                .m16
+                and #$FF
 
+                cpx #1
+                beq _player2
+
+                sta SP02_Y_POS
+                bra _cont
+
+_player2        sta SP03_Y_POS
+
+_cont           .m8
                 txa                     ; set y to index the sound regs
                 .mult7
                 tay
@@ -648,13 +654,13 @@ CheckDrop       .proc
 
                 txa                     ; if not the computer, check trigger
                 clc
-                sbc PLAYERS
-                bne _CHKTRG             ; it's player!
+                sbc PlayerCount
+                bne _chkTrigger         ; it's player!
 
                 lda DIR                 ; going left?
                 bmi _GOING_R            ;   no!
 
-                lda PlayerPosX,X        ; get computer x
+                lda PlayerPosX,X        ; get ship x
                 cmp #1                  ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bcs _TRYDRP             ;   no, try drop!
@@ -668,14 +674,15 @@ _TRYDRP         .randomByte             ; computer drops a bomb if random says t
                 beq _DROPIT
                 bne DoNextBomb          ; else do next
 
-_CHKTRG         lda JOYSTICK0,X         ; trig pushed?
+_chkTrigger     lda JOYSTICK0,X         ; trig pushed?
                 and #$10
                 bne DoNextBomb          ;   no, do next
 
 _DROPIT         lda PlayerPosY,X        ; drop: set bomb Y to player Y+8
                 clc
                 adc #8
-                sta BMBDRP,X
+                sta zpBombDrop,X
+
                 lda #0                  ; clear drop rate
                 sta DRPRATE,X
                 sta RCKHIT,X            ; and rocks hit
@@ -928,7 +935,7 @@ _OFFSCR         lda #0                  ; else, turn off explosions and bkg soun
                 sta EXPLODE
                 sta ONSCR               ; set onscreen false
                 ldx #1
-_next5          lda BMBDRP,X            ; if a bomb is in the air, and
+_next5          lda zpBombDrop,X        ; if a bomb is in the air, and
                 beq _CKBRN
 
                 lda RCKHIT,X            ; it hasn't hit anything yet,
@@ -946,7 +953,7 @@ _CKNBR          dex
 
                 jsr ClearPlayer         ; clear out players
 
-                ldx PLAYERS             ; if the actual players have no more bombs,
+                ldx PlayerCount         ; if the actual players have no more bombs,
                 lda BOMBS
                 clc
                 adc BOMBS,X
@@ -1032,13 +1039,13 @@ _XIT            jmp RESTART             ; go title screen
 DrawScreen      .proc
                 ldy #0                  ; copy rocks & canyon to screen
 _next1          lda ROCKIMG,Y
-                sta CANYON+40,Y
+                sta CANYON,Y
                 iny
                 bne _next1
 
                 ldy #145
 _next2          lda ROCKIMG+255,Y
-                sta CANYON+295,Y
+                sta CANYON+255,Y
                 dey
                 bne _next2
 
@@ -1074,16 +1081,16 @@ _XIT            rts
 ;======================================
 ClearPlayer     .proc
                 lda #0
-                tay
-_next1          sta PL0,Y               ; clear all players
-                sta PL1,Y
-                sta PL2,Y
-                sta PL3,Y
-                dey
-                bne _next1
+;                tay
+;_next1          sta PL0,Y               ; clear all players
+;                sta PL1,Y
+;                sta PL2,Y
+;                sta PL3,Y
+;                dey
+;                bne _next1
 
-                sta BMBDRP              ; clear bomb y position & bombs dropped this pass
-                sta BMBDRP+1
+                sta zpBombDrop          ; clear bomb y position & bombs dropped this pass
+                sta zpBombDrop+1
                 sta BRUN
                 sta BRUN+1
 

@@ -458,6 +458,54 @@ _setAddr2       sta CS_COLOR_MEM_PTR,x  ; SMC
 
 
 ;======================================
+; Clear the bottom of the screen
+;======================================
+ClearGamePanel  .proc
+v_QtyPages      .var $04                ; 40x30 = $4B0... 4 pages + 176 bytes
+
+v_Empty         .var $00
+v_TextColor     .var $40
+;---
+
+                php
+                .m8i8
+
+                lda #<CS_COLOR_MEM_PTR+24*CharResX
+                sta zpDest
+                lda #>CS_COLOR_MEM_PTR+24*CharResX
+                sta zpDest+1
+                lda #`CS_COLOR_MEM_PTR+24*CharResX
+                sta zpDest+2
+
+                lda #$00
+                ldy #$00
+_next1          sta [zpDest],Y
+
+                iny
+                cpy #$A0                ; 4 lines
+                bne _next1
+
+                lda #<CS_TEXT_MEM_PTR+24*CharResX
+                sta zpDest
+                lda #>CS_TEXT_MEM_PTR+24*CharResX
+                sta zpDest+1
+                lda #`CS_TEXT_MEM_PTR+24*CharResX
+                sta zpDest+2
+
+                lda #$00
+                ldy #$00
+_next2          sta [zpDest],Y
+
+                iny
+                cpy #$A0                ; 4 lines
+                bne _next2
+
+                plp
+                rts
+                .endproc
+
+
+;======================================
 ; Render High Score
 ;======================================
 RenderHiScore   .proc
@@ -472,10 +520,10 @@ _nextColor      inx
                 cpy #$14
                 beq _processText
 
-                lda GameMsgColor,Y
-                sta CS_COLOR_MEM_PTR+3*CharResX,X
+                lda HighScoreColor,Y
+                sta CS_COLOR_MEM_PTR+2*CharResX,X
                 inx
-                sta CS_COLOR_MEM_PTR+3*CharResX,X
+                sta CS_COLOR_MEM_PTR+2*CharResX,X
                 bra _nextColor
 
 ;   process the text
@@ -494,9 +542,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+3*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+2*CharResX,X
                 inx
-                sta CS_TEXT_MEM_PTR+3*CharResX,X
+                sta CS_TEXT_MEM_PTR+2*CharResX,X
 
                 bra _nextChar
 
@@ -507,18 +555,88 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+3*CharResX,X
+                sta CS_TEXT_MEM_PTR+2*CharResX,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+3*CharResX,X
+                sta CS_TEXT_MEM_PTR+2*CharResX,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+3*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+2*CharResX,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+3*CharResX,X
+                sta CS_TEXT_MEM_PTR+2*CharResX,X
+
+                bra _nextChar
+
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render High Score
+;======================================
+RenderHiScore2  .proc
+                php
+                .m8i8
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda HighScoreColor,Y
+                sta CS_COLOR_MEM_PTR+24*CharResX,X
+                inx
+                sta CS_COLOR_MEM_PTR+24*CharResX,X
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda HighScoreMsg,Y
+                cmp #$20
+                beq _space
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+24*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+24*CharResX,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl A
+
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+24*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+24*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+24*CharResX,X
 
                 bra _nextChar
 
@@ -684,6 +802,155 @@ _letter         sta CS_TEXT_MEM_PTR+27*CharResX,X
 
                 bra _nextChar
 
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render Title
+;======================================
+RenderPlayers   .proc
+                php
+                .m8i8
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda PlayersMsgColor,Y
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                inx
+                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda PlayersMsg,Y
+                cmp #$20
+                beq _space
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl A
+
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+26*CharResX,X
+
+                bra _nextChar
+
+_XIT            plp
+                rts
+                .endproc
+
+
+;======================================
+; Render Player Scores & Bombs
+;======================================
+RenderScore     .proc
+                php
+                .m8i8
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda ScoreMsgColor,Y
+                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                inx
+                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                bra _nextColor
+
+;   process the text
+_processText    ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda ScoreMsg,Y
+                cmp #$20
+                beq _space
+
+                cmp #$9B
+                beq _bomb
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+27*CharResX,X
+                inx
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl A
+
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+27*CharResX,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
+
+                bra _nextChar
+
+_bomb           sta CS_TEXT_MEM_PTR+27*CharResX,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+27*CharResX,X
+
+                bra _nextChar
 _XIT            plp
                 rts
                 .endproc

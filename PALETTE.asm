@@ -3,7 +3,7 @@ PfColor0        .dword $00267420    ; tree
 PfColor1        .dword $0073716f    ; city
 PfColor2        .dword $00202d78    ; river
 PfColor3        .dword $00757420    ; mountain
-PfColor4        .dword $00462075    ; swamp
+PfColor4        .dword $0024752E    ; bombs
 PfColor5        .dword $00300400
 PfColor6        .dword $000000e2
 PfColor7        .dword $00400000

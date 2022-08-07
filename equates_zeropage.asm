@@ -23,13 +23,13 @@ stBalloon       = 3
 
 ONSCR               .byte ?
 zpWaitForPlay       .byte ?             ; 0 = game in play, 1 = not in play
-PLAYERS             .byte ?             ; 0 = 1-player, 1 = 2-player
+PlayerCount         .byte ?             ; 0 = 1-player, 1 = 2-player
 RKILL               .byte ?
 tmpDIR              .byte ?
 XCOUNT              .byte ?
 YCOUNT              .byte ?
 
-BMBDRP              .word ?
+zpBombDrop          .word ?             ; 0 = not dropping bomb; !0 = bomb Y position
 BRUN                .word ?
 DRPFREQ             .word ?
 DRPRATE             .word ?
