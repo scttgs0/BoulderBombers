@@ -189,10 +189,10 @@ CS_TEXT_MEM_PTR         = $AF_A000      ; ascii code for text character
 CS_COLOR_MEM_PTR        = $AF_C000      ; HiNibble = Foreground; LoNibble = Background
                                         ; 0-15 = index into the CHAR_LUT tables
 
-COLS_VISIBLE            = $00_000F      ;2 Bytes Columns visible per screen line. A virtual line can be longer than displayed, up to COLS_PER_LINE long. Default = 80
-COLS_PER_LINE           = $00_0011      ;2 Bytes Columns in memory per screen line. A virtual line can be this long. Default=128
-LINES_VISIBLE           = $00_0013      ;2 Bytes The number of rows visible on the screen. Default=25
-LINES_MAX               = $00_0015      ;2 Bytes The number of rows in memory for the screen. Default=64
+COLS_VISIBLE            = $00_000F      ; 2-byte Columns visible per screen line. A virtual line can be longer than displayed, up to COLS_PER_LINE long. Default = 80
+COLS_PER_LINE           = $00_0011      ; 2-byte Columns in memory per screen line. A virtual line can be this long. Default=128
+LINES_VISIBLE           = $00_0013      ; 2-byte The number of rows visible on the screen. Default=25
+LINES_MAX               = $00_0015      ; 2-byte The number of rows in memory for the screen. Default=64
 
 ;---------------------------------------
 
@@ -231,6 +231,8 @@ JOYSTICK0               = $AF_E800      ; (R) Joystick 0
                                         ;          /  |  \
                                         ;      1001   |   0101
                                         ;           1101
+
+JOYSTICK1               = $AF_E801
 
 LUTBkColor      = 0
 LUTPfColor0     = 1

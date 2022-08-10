@@ -27,6 +27,7 @@ INIT            .proc
 
                 jsr SetFont
                 jsr ClearScreen
+                jsr ClearGamePanel
 
                 jsr InitSID             ; init sound
 

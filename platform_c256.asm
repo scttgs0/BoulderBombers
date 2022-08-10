@@ -423,41 +423,58 @@ InitBitmap      .proc
 
 
 ;======================================
-; Clear the visible screen
+; Clear the play area of the screen
 ;======================================
 ClearScreen     .proc
 v_QtyPages      .var $04                ; 40x30 = $4B0... 4 pages + 176 bytes
+                                        ; remaining 176 bytes cleared via ClearGamePanel
 
-v_Empty         .var $00
+v_EmptyText     .var $00
 v_TextColor     .var $40
 ;---
 
                 php
-                .m16i8
+                .m8i8
 
-;   reset the addresses to make this reentrant
-                lda #<>CS_TEXT_MEM_PTR
-                sta _setAddr1+1
-                lda #<>CS_COLOR_MEM_PTR
-                sta _setAddr2+1
+;   clear color
+                lda #<CS_COLOR_MEM_PTR
+                sta zpDest
+                lda #>CS_COLOR_MEM_PTR
+                sta zpDest+1
+                lda #`CS_COLOR_MEM_PTR
+                sta zpDest+2
 
-                .m8
-                ldx #$00
-                ldy #v_QtyPages
-
-_clearNext      lda #v_Empty
-_setAddr1       sta CS_TEXT_MEM_PTR,x   ; SMC
-
+                ldx #v_QtyPages
                 lda #v_TextColor
-_setAddr2       sta CS_COLOR_MEM_PTR,x  ; SMC
+_nextPageC      ldy #$00
+_next1C         sta [zpDest],Y
 
-                inx
-                bne _clearNext
+                iny
+                bne _next1C
 
-                inc _setAddr1+2         ; advance to next memory page
-                inc _setAddr2+2         ; advance to next memory page
-                dey
-                bne _clearNext
+                inc zpDest+1            ; advance to next memory page
+                dex
+                bne _nextPageC
+
+;   clear text
+                lda #<CS_TEXT_MEM_PTR
+                sta zpDest
+                lda #>CS_TEXT_MEM_PTR
+                sta zpDest+1
+                lda #`CS_TEXT_MEM_PTR
+                sta zpDest+2
+
+                ldx #v_QtyPages
+                lda #v_EmptyText
+_nextPageT      ldy #$00
+_next1T         sta [zpDest],Y
+
+                iny
+                bne _next1T
+
+                inc zpDest+1            ; advance to next memory page
+                dex
+                bne _nextPageT
 
                 plp
                 rts
@@ -468,9 +485,7 @@ _setAddr2       sta CS_COLOR_MEM_PTR,x  ; SMC
 ; Clear the bottom of the screen
 ;======================================
 ClearGamePanel  .proc
-v_QtyPages      .var $04                ; 40x30 = $4B0... 4 pages + 176 bytes
-
-v_Empty         .var $00
+v_EmptyText     .var $00
 v_TextColor     .var $40
 ;---
 
@@ -484,12 +499,12 @@ v_TextColor     .var $40
                 lda #`CS_COLOR_MEM_PTR+24*CharResX
                 sta zpDest+2
 
-                lda #$00
+                lda #v_TextColor
                 ldy #$00
 _next1          sta [zpDest],Y
 
                 iny
-                cpy #$A0                ; 4 lines
+                cpy #$F0                ; 6 lines
                 bne _next1
 
                 lda #<CS_TEXT_MEM_PTR+24*CharResX
@@ -499,12 +514,12 @@ _next1          sta [zpDest],Y
                 lda #`CS_TEXT_MEM_PTR+24*CharResX
                 sta zpDest+2
 
-                lda #$00
+                lda #v_EmptyText
                 ldy #$00
 _next2          sta [zpDest],Y
 
                 iny
-                cpy #$A0                ; 4 lines
+                cpy #$F0                ; 6 lines
                 bne _next2
 
                 plp
