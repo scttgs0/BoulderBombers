@@ -487,16 +487,17 @@ _next1T         sta [zpDest],Y
 ClearGamePanel  .proc
 v_EmptyText     .var $00
 v_TextColor     .var $40
+v_RenderLine    .var 24*CharResX
 ;---
 
                 php
                 .m8i8
 
-                lda #<CS_COLOR_MEM_PTR+24*CharResX
+                lda #<CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest
-                lda #>CS_COLOR_MEM_PTR+24*CharResX
+                lda #>CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest+1
-                lda #`CS_COLOR_MEM_PTR+24*CharResX
+                lda #`CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest+2
 
                 lda #v_TextColor
@@ -507,11 +508,11 @@ _next1          sta [zpDest],Y
                 cpy #$F0                ; 6 lines
                 bne _next1
 
-                lda #<CS_TEXT_MEM_PTR+24*CharResX
+                lda #<CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest
-                lda #>CS_TEXT_MEM_PTR+24*CharResX
+                lda #>CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest+1
-                lda #`CS_TEXT_MEM_PTR+24*CharResX
+                lda #`CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest+2
 
                 lda #v_EmptyText
@@ -531,6 +532,9 @@ _next2          sta [zpDest],Y
 ; Render High Score
 ;======================================
 RenderHiScore   .proc
+v_RenderLine    .var 2*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -543,9 +547,9 @@ _nextColor      inx
                 beq _processText
 
                 lda HighScoreColor,Y
-                sta CS_COLOR_MEM_PTR+2*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+2*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -557,6 +561,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda HighScoreMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
@@ -564,9 +569,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+2*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+2*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -577,18 +582,18 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+2*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+2*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+2*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+2*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -601,6 +606,9 @@ _XIT            plp
 ; Render High Score
 ;======================================
 RenderHiScore2  .proc
+v_RenderLine    .var 24*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -613,9 +621,9 @@ _nextColor      inx
                 beq _processText
 
                 lda HighScoreColor,Y
-                sta CS_COLOR_MEM_PTR+24*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+24*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -627,6 +635,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda HighScoreMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
@@ -634,9 +643,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+24*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -647,18 +656,18 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+24*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -671,6 +680,9 @@ _XIT            plp
 ; Render Title
 ;======================================
 RenderTitle     .proc
+v_RenderLine    .var 24*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -683,7 +695,7 @@ _nextColor      inx
                 beq _processText
 
                 lda TitleMsgColor,Y
-                sta CS_COLOR_MEM_PTR+24*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
 
                 bra _nextColor
 
@@ -696,7 +708,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda TitleMsg,Y
-                sta CS_TEXT_MEM_PTR+24*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -709,6 +721,9 @@ _XIT            plp
 ; Render Author
 ;======================================
 RenderAuthor    .proc
+v_RenderLine    .var 26*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -721,9 +736,9 @@ _nextColor      inx
                 beq _processText
 
                 lda AuthorColor,Y
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -735,22 +750,23 @@ _nextChar       inx
                 beq _XIT
 
                 lda AuthorMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -763,6 +779,9 @@ _XIT            plp
 ; Render SELECT (Qty of Players)
 ;======================================
 RenderSelect    .proc
+v_RenderLine    .var 27*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -775,9 +794,9 @@ _nextColor      inx
                 beq _processText
 
                 lda PlyrQtyColor,Y
-                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -789,6 +808,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda PlyrQtyMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
@@ -796,9 +816,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+27*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -809,18 +829,18 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+27*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -833,6 +853,9 @@ _XIT            plp
 ; Render Title
 ;======================================
 RenderPlayers   .proc
+v_RenderLine    .var 26*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -845,9 +868,9 @@ _nextColor      inx
                 beq _processText
 
                 lda PlayersMsgColor,Y
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+26*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -859,6 +882,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda PlayersMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
@@ -866,9 +890,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+26*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -879,18 +903,18 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+26*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+26*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -903,6 +927,9 @@ _XIT            plp
 ; Render Player Scores & Bombs
 ;======================================
 RenderScore     .proc
+v_RenderLine    .var 27*CharResX
+;---
+
                 php
                 .m8i8
 
@@ -915,9 +942,9 @@ _nextColor      inx
                 beq _processText
 
                 lda ScoreMsgColor,Y
-                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_COLOR_MEM_PTR+27*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 bra _nextColor
 
 ;   process the text
@@ -929,6 +956,7 @@ _nextChar       inx
                 beq _XIT
 
                 lda ScoreMsg,Y
+                beq _space
                 cmp #$20
                 beq _space
 
@@ -939,9 +967,9 @@ _nextChar       inx
                 bcc _number
                 bra _letter
 
-_space          sta CS_TEXT_MEM_PTR+27*CharResX,X
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -952,25 +980,25 @@ _number         sec
 
                 clc
                 adc #$A0
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_letter         sta CS_TEXT_MEM_PTR+27*CharResX,X
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 clc
                 adc #$40
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_bomb           sta CS_TEXT_MEM_PTR+27*CharResX,X
+_bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 inx
                 inc A
-                sta CS_TEXT_MEM_PTR+27*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 _XIT            plp
@@ -982,6 +1010,9 @@ _XIT            plp
 ; Render Canyon
 ;======================================
 RenderCanyon    .proc
+v_RenderLine    .var 13*CharResX
+;---
+
                 php
                 .m8i16
 
@@ -1004,16 +1035,16 @@ _earth          eor #$80
                 pha
 
                 lda #$E0
-                sta CS_COLOR_MEM_PTR+13*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
 
                 pla
-                sta CS_TEXT_MEM_PTR+13*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
 _space          lda #$00
-                sta CS_COLOR_MEM_PTR+13*CharResX,X
-                sta CS_TEXT_MEM_PTR+13*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
@@ -1023,11 +1054,11 @@ _boulder        phy
                 xba
                 tay
                 lda CanyonColors,Y
-                sta CS_COLOR_MEM_PTR+13*CharResX,X
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 ply
 
                 lda #$01
-                sta CS_TEXT_MEM_PTR+13*CharResX,X
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
