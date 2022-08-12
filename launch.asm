@@ -47,17 +47,19 @@ _next6          sta CANYON,Y
 
                 jsr DrawScreen
 
-                .m16
-                lda #70                 ; set player lanes
-                sta SP00_Y_POS
-                .m8
-                sta PlayerPosY
+                ldx #70                 ; set player lanes
+                stx PlayerPosY
+                ldy #90
+                sty PlayerPosY+1
 
                 .m16
-                lda #90
+                txa
+                and #$FF
+                sta SP00_Y_POS
+                tya
+                and #$FF
                 sta SP01_Y_POS
                 .m8
-                sta PlayerPosY+1
                 .endproc
 
                 ;[fall-through]
@@ -128,7 +130,6 @@ _moveT          lda ONSCR               ; if on screen, then move
                 .randomByte             ; else, pick out new ship type
                 and #1
                 tax
-                phx
                 lda ShipTypeTbl,X
                 sta zpShipType          ; & set it
 
@@ -154,7 +155,7 @@ _moveIt         jsr MovePlayer          ; move players
 ;--------------------------------------
 START           .proc
 ;   wait for key release
-_wait1          lda CONSOL              
+_wait1          lda CONSOL
                 and #1
                 beq _wait1
 
