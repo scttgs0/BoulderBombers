@@ -53,7 +53,9 @@ SCRPTR              .word ?
 
 JIFFYCLOCK          .byte ?
 InputFlags          .byte ?
+                    .byte ?
 InputType           .byte ?
+                    .byte ?
 itJoystick      = 0
 itKeyboard      = 1
 KEYCHAR             .byte ?             ; last key pressed

@@ -141,7 +141,7 @@ _TRYDRP         .randomByte             ; computer drops a bomb if random says t
                 beq _DROPIT
                 bne DoNextBomb          ; else do next
 
-_chkTrigger     lda JOYSTICK0,X         ; trig pushed?
+_chkTrigger     lda InputFlags,X        ; trig pushed?
                 and #$10
                 bne DoNextBomb          ;   no, do next
 
@@ -198,7 +198,7 @@ _CHKPAUS        lda KEYCHAR             ; spacebar pressed?
                 sta SID_CTRL2
                 sta SID_CTRL3
 
-_wait1          lda JOYSTICK0           ; wait for stick movement
+_wait1          lda InputFlags          ; wait for stick movement
                 and #$0F
                 cmp #$0F
                 beq _wait1
