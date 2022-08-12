@@ -99,6 +99,7 @@ _nextMult       asl A                   ; *128
                 adc #$400
 
                 plx
+                cpx #$00
                 beq _plyr00
 
                 sta SP01_ADDR
@@ -130,13 +131,16 @@ _wait1          cmp JIFFYCLOCK
                 beq _OFFSCR
 
                 cmp #152
-                bne _XIT                ; if on, return
+                beq _OFFSCR
+
+                bra _XIT                ; if on, return
 
 _OFFSCR         lda #0                  ; else, turn off explosions and bkg sound
                 sta SID_CTRL3
                 ;sta AUDC4
                 sta EXPLODE
                 sta ONSCR               ; set onscreen false
+
                 ldx #1
 _next5          lda zpBombDrop,X        ; if a bomb is in the air, and
                 beq _CKBRN
@@ -195,13 +199,6 @@ _CKNBR          dex
                 sta zpShipType
                 lda #4                  ; plane bombs get max of 4 rocks
                 sta RKILL
-
-                ;.m16
-                ;lda #$0C00
-                ;sta SP00_ADDR
-                ;lda #$0400
-                ;sta SP01_ADDR
-                ;.m8
 
 _XIT            rts
                 .endproc
