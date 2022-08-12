@@ -29,15 +29,21 @@ tmpDIR              .byte ?
 XCOUNT              .byte ?
 YCOUNT              .byte ?
 
-zpBombDrop          .word ?             ; 0 = not dropping bomb; !0 = bomb Y position
-BRUN                .word ?
-DRPFREQ             .word ?
-DRPRATE             .word ?
-FREMEN              .word ?
-BombCount           .word ?             ; low-byte=player 1, high-byte=player 2
-
-PlayerPosX          .byte ?
+zpBombDrop          .byte ?             ; 0 = not dropping bomb; !0 = bomb Y position
                     .byte ?
+BRUN                .byte ?
+                    .byte ?
+DRPFREQ             .byte ?
+                    .byte ?
+DRPRATE             .byte ?
+                    .byte ?
+FREMEN              .byte ?
+                    .byte ?
+BombCount           .byte ?
+                    .byte ?
+
+PlayerPosX          .byte ?             ; low-byte= player 1
+                    .byte ?             ; high-byte=player 2
 PlayerPosY          .byte ?
                     .byte ?
 
