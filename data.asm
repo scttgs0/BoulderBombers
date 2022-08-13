@@ -10,7 +10,7 @@ P2COMPT         .text "RETUPMOC"        ; "COMPUTER" spelled backwards
 ; misc data
 ;======================================
 
-ScoreIndex      .byte 3,13              ; char positions within the screen score line
+ScoreIndex      .byte 1,11              ; char positions within the screen score line
 ShipTypeTbl     .byte stPlane
                 .byte stBalloon
 ShipSprOffset   .word $0400

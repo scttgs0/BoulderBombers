@@ -284,9 +284,11 @@ DecrementMissile .proc
 
                 clc                     ; get index for screen to erase bomb
                 adc ScoreIndex,X
+                adc #5                  ; bomb icons are 5 chars from the score index
                 tay
                 lda #0
-                sta BOMB1-3,Y
+                ;--sta BOMB1-3,Y
+                sta ScoreMsg,Y
 
                 jsr RenderScore
 

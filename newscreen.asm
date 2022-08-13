@@ -22,8 +22,8 @@ NewScreen       .proc
                 sta ROCKS
                 jsr ClearPlayer         ; clear players
 
-                lda #0                  ; set players on screen=false
-                sta ONSCR
+                lda #FALSE              ; set players on screen=false
+                sta onScreen
                 ;sta AUDF4
 
                 lda #1                  ; set start positions of players
@@ -34,7 +34,7 @@ NewScreen       .proc
                 ;sta HITCLR             ; clear collisions
 
                 lda #8                  ; # of rocks per bomb
-                sta RKILL               ; (max) = 8
+                sta RocksPerBomb        ; (max) = 8
 
                 lda DELYVAL             ; speed up the game just a bit
                 cmp #$AF

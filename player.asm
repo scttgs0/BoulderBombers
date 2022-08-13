@@ -4,7 +4,7 @@
 ; ship types
 ;======================================
 MovePlayer      .proc
-                lda ONSCR               ; if not on screen, set sound
+                lda onScreen            ; if not on screen, set sound
                 bne _ADDCLOK
 
 ;   do the appropriate sound effect based on the ship type
@@ -12,15 +12,15 @@ MovePlayer      .proc
                 cmp #stBalloon
                 beq _STBLSND            ;   yes, do that
 
-                lda #$96                ; set plane sound
+                ;lda #$96               ; set plane sound
                 ;sta AUDF4
-                lda #$24
+                ;lda #$24
                 ;sta AUDC4
-                bne _ADDCLOK            ; & goto clock add
+                bra _ADDCLOK            ; & goto clock add
 
-_STBLSND        lda #0                  ; set wind sound
+_STBLSND        ;lda #0                 ; set wind sound
                 ;sta AUDF4
-                lda #2
+                ;lda #2
                 ;sta AUDC4
 
 _ADDCLOK        inc CLOCK               ; add to clock
@@ -28,7 +28,7 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 and zpShipType          ; mask<>0 then don't move
                 beq _cont1
 
-               jmp _DODELAY
+                jmp _DODELAY
 
 ;   move the players
 _cont1          lda PlayerPosX          ; first player 1
@@ -124,8 +124,8 @@ _wait1          cmp JIFFYCLOCK
                 bne _wait1
 
 ;   players are now on screen, but check to see if they aren't
-                lda #1
-                sta ONSCR
+                lda #TRUE
+                sta onScreen
 
                 lda PlayerPosX
                 beq _OFFSCR
@@ -139,7 +139,7 @@ _OFFSCR         lda #0                  ; else, turn off explosions and bkg soun
                 sta SID_CTRL3
                 ;sta AUDC4
                 sta EXPLODE
-                sta ONSCR               ; set onscreen false
+                sta onScreen            ; set onscreen=false
 
                 ldx #1
 _next5          lda zpBombDrop,X        ; if a bomb is in the air, and
@@ -198,7 +198,7 @@ _CKNBR          dex
                 lda #stPlane            ; set move rate mask
                 sta zpShipType
                 lda #4                  ; plane bombs get max of 4 rocks
-                sta RKILL
+                sta RocksPerBomb
 
 _XIT            rts
                 .endproc
@@ -211,14 +211,6 @@ _XIT            rts
 ;======================================
 ClearPlayer     .proc
                 lda #0
-;                tay
-;_next1          sta PL0,Y               ; clear all players
-;                sta PL1,Y
-;                sta PL2,Y
-;                sta PL3,Y
-;                dey
-;                bne _next1
-
                 sta zpBombDrop          ; clear bomb y position & bombs dropped this pass
                 sta zpBombDrop+1
                 sta BRUN
@@ -226,5 +218,11 @@ ClearPlayer     .proc
 
                 sta SID_CTRL1           ; turn off bomb fall sounds
                 sta SID_CTRL2
+
+                .m16
+                lda #0                  ; clear bombs
+                sta SP02_Y_POS
+                sta SP03_Y_POS
+                .m8
                 rts
                 .endproc

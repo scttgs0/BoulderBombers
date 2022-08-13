@@ -95,7 +95,7 @@ RESTART         .proc
                 sta zpWaitForPlay       ; waiting for play to start
 
                 lda #0                  ; players not on screen
-                sta ONSCR
+                sta onScreen
 
                 jsr InitIRQs
 
@@ -124,7 +124,7 @@ _wait1          lda CONSOL              ;   yes, wait for key release
 _chkSTART       cmp #2                  ; if START then start game
                 beq START
 
-_moveT          lda ONSCR               ; if on screen, then move
+_moveT          lda onScreen            ; if on screen, then move
                 bne _moveIt
 
                 .randomByte             ; else, pick out new ship type

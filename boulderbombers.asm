@@ -6,10 +6,16 @@
 ;*                     *
 ;***********************
 
-;   SP00        Player1
-;   SP01        Player2
-;   SP02        Player1 Bomb
-;   SP03        Player2 Bomb
+;   SP00                Player1
+;   SP01                Player2
+;   SP02                Player1 Bomb
+;   SP03                Player2 Bomb
+
+;   PlayerPosX[0,1]     byte [1,151]
+;   PlayerPosY[0,1]     byte [70,90]
+;   SP0[0,1]_X_POS      word PlayerPosX*2+32 [34,334]
+;   SP0[0,1]_Y_POS      word [70,90]
+
 
                 .cpu "65816"
 

@@ -21,10 +21,10 @@ zpShipType          .byte ?
 stPlane         = 1
 stBalloon       = 3
 
-ONSCR               .byte ?
+onScreen            .byte ?
 zpWaitForPlay       .byte ?             ; 0 = game in play, 1 = not in play
 PlayerCount         .byte ?             ; 0 = 1-player, 1 = 2-player
-RKILL               .byte ?
+RocksPerBomb        .byte ?             ; max=8
 tmpDIR              .byte ?
 XCOUNT              .byte ?
 YCOUNT              .byte ?

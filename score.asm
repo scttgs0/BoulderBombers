@@ -76,7 +76,7 @@ _UPDTFM         inc FREMEN,X            ; set for next
 
 _STRKHT         inc RCKHIT,X            ; if new # of rocks hit = max, kill bomb else, lower it
                 lda RCKHIT,X
-                cmp RKILL
+                cmp RocksPerBomb
                 bne LowerBomb
 
                 jmp MovePlayer
