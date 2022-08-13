@@ -31,7 +31,8 @@ NewScreen       .proc
                 lda #151
                 sta PlayerPosX+1
 
-                ;sta HITCLR             ; clear collisions
+                stz P2PF                ; clear collisions
+                stz P3PF
 
                 lda #8                  ; # of rocks per bomb
                 sta RocksPerBomb        ; (max) = 8

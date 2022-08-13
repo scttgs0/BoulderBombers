@@ -158,7 +158,8 @@ _DROPIT         lda PlayerPosY,X        ; drop: set bomb Y to player Y+8
                 sta DRPFREQ,X
                 bne DoNextBomb          ; and do next
 
-_DOPLMV         ;sta HITCLR             ; clear collisions
+_DOPLMV         stz P2PF                ; clear collisions
+                stz P3PF
 
                 jsr MovePlayer          ; move players
 

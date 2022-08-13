@@ -2,7 +2,7 @@
 ; bomb movement, hit checks,
 ; score and highscore set
 ;--------------------------------------
-BombLoop        ldx #1                  ; get player index
+BombLoop        ldx #1                  ; set player index
 
                 ;[fall-through]
 
@@ -16,9 +16,8 @@ BombNextLoop    .proc
 
                 jmp CheckDrop           ; check trigger
 
-_chkHits        ;lda P2PF,X             ; bomb hit anything?
-                ;bne _chkRockOK
-                ;bra _chkRockOK  ; HACK:
+_chkHits        lda P2PF,X              ; bomb hit anything?
+                bne _chkRockOK
 
                 jmp LowerBomb           ;   no, move bomb
 
@@ -27,9 +26,8 @@ _chkRockOK      and #7                  ; if hit only color 3, it gets erased
 
                 jmp HideBomb
 
-_chkHitRock
 ;   set pointer into screen ram where the rock hit is
-                lda #0
+_chkHitRock     lda #0
                 sta SCRPTR+1
                 lda zpBombDrop,X
 
