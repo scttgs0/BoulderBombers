@@ -176,20 +176,20 @@ InitTiles       .proc
 
                 .m16i16
                 lda #$FFFF              ; Set the size
-                sta SIZE
+                sta zpSize
                 lda #$00
-                sta SIZE+2
+                sta zpSize+2
 
                 lda #<>tiles            ; Set the source address
-                sta SOURCE
+                sta zpSource
                 lda #`tiles
-                sta SOURCE+2
+                sta zpSource+2
 
                 lda #<>(TILESET-VRAM)   ; Set the destination address
-                sta DEST
+                sta zpDest
                 sta TILESET0_ADDR       ; And set the Vicky register
                 lda #`(TILESET-VRAM)
-                sta DEST+2
+                sta zpDest+2
                 .m8
                 sta TILESET0_ADDR+2
 
@@ -327,17 +327,17 @@ InitSprites     .proc
 
                 .m16i16
                 lda #StampSprites_end-StampSprites
-                sta SIZE
+                sta zpSize
                 lda #$00
-                sta SIZE+2
+                sta zpSize+2
 
                 lda #<>SPR_Ballon       ; Set the source address
-                sta SOURCE
+                sta zpSource
                 lda #`SPR_Ballon
-                sta SOURCE+2
+                sta zpSource+2
 
                 lda #<>(SPRITES-VRAM)   ; Set the destination address
-                sta DEST
+                sta zpDest
                 sta SP00_ADDR           ; And set the Vicky register
                 sta SP01_ADDR
 
@@ -347,7 +347,7 @@ InitSprites     .proc
                 sta SP03_ADDR
 
                 lda #`(SPRITES-VRAM)
-                sta DEST+2
+                sta zpDest+2
 
                 .m8
                 sta SP00_ADDR+2
@@ -392,21 +392,21 @@ InitBitmap      .proc
 
                 .m16i16
                 lda #$B000              ; Set the size
-                sta SIZE
+                sta zpSize
                 lda #$04
-                sta SIZE+2
+                sta zpSize+2
 
                 lda #<>HeaderPanel      ; Set the source address
-                sta SOURCE
+                sta zpSource
                 lda #`HeaderPanel
-                sta SOURCE+2
+                sta zpSource+2
 
                 lda #<>(BITMAP-VRAM)   ; Set the destination address
-                sta DEST
+                sta zpDest
                 sta BITMAP0_START_ADDR ; And set the Vicky register
 
                 lda #`(BITMAP-VRAM)
-                sta DEST+2
+                sta zpDest+2
 
                 .m8
                 sta BITMAP0_START_ADDR+2
@@ -1072,7 +1072,7 @@ _XIT            .m8i8
 ; Blit bitmap text to VRAM
 ;--------------------------------------
 ; on entry:
-;   DEST        set by caller
+;   zpDest      set by caller
 ;======================================
 BlitText        .proc
                 php
@@ -1080,14 +1080,14 @@ BlitText        .proc
                 .m16i16
 
                 lda #640*16             ; Set the size
-                sta SIZE
+                sta zpSize
                 lda #$00
-                sta SIZE+2
+                sta zpSize+2
 
                 lda #<>Text2Bitmap      ; Set the source address
-                sta SOURCE
+                sta zpSource
                 lda #`Text2Bitmap
-                sta SOURCE+2
+                sta zpSource+2
 
                 jsr Copy2VRAM
 
@@ -1098,20 +1098,18 @@ BlitText        .proc
 
 
 ;======================================
-; Copying data from system RAM to VRAM
+; Copye data from system RAM to VRAM
 ;--------------------------------------
-; Inputs (pushed to stack, listed top down)
-;   SOURCE = address of source data (should be system RAM)
-;   DEST = address of destination (should be in video RAM)
-;   SIZE = number of bytes to transfer
-;
-; Outputs:
-;   None
+;   zpSource    address of source data
+;               (system RAM)
+;   zpDest      address of destination
+;               (video RAM)
+;   zpSize      number of bytes
 ;======================================
 Copy2VRAM       .proc
                 php
                 .setbank `SDMA_SRC_ADDR
-                .setdp SOURCE
+                .setdp zpSource
                 .m8
 
     ; Set SDMA to go from system to video RAM, 1D copy
@@ -1123,21 +1121,21 @@ Copy2VRAM       .proc
                 sta VDMA_CTRL
 
                 .m16i8
-                lda SOURCE              ; Set the source address
+                lda zpSource            ; Set the source address
                 sta SDMA_SRC_ADDR
-                ldx SOURCE+2
+                ldx zpSource+2
                 stx SDMA_SRC_ADDR+2
 
-                lda DEST                ; Set the destination address
+                lda zpDest              ; Set the destination address
                 sta VDMA_DST_ADDR
-                ldx DEST+2
+                ldx zpDest+2
                 stx VDMA_DST_ADDR+2
 
                 .m16
-                lda SIZE                ; Set the size of the block
+                lda zpSize              ; Set the size of the block
                 sta SDMA_SIZE
                 sta VDMA_SIZE
-                lda SIZE+2
+                lda zpSize+2
                 sta SDMA_SIZE+2
                 sta VDMA_SIZE+2
 
@@ -1185,8 +1183,8 @@ InitIRQs        .proc
 
                 .m8i8
                 ldx #HandleIrq_END-HandleIrq
-_relocate       ;lda @l $024000,X        ; HandleIrq address
-                ;sta @l $002000,X        ; new address within Bank 00
+_relocate       ;lda @l $024000,X       ; HandleIrq address
+                ;sta @l $002000,X       ; new address within Bank 00
                 ;dex
                 ;bpl _relocate
 
