@@ -1,6 +1,9 @@
 ;--------------------------------------
 ; check for high score
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 CheckHiScore    .proc
                 lda #<SCORE1
                 sta SCRPTR              ; set pointer to score for player 1
@@ -55,27 +58,30 @@ _next1          lda (SCRPTR),Y
 
 ;======================================
 ; check for getting extra bombs
+;--------------------------------------
+; on entry
+;   X           player index [0,1]
 ;======================================
 CheckFreeMan    .proc
                 ldy ScoreIndex,X        ; get score in thousands
                 lda SCORE1-3,Y
-                cmp FREMEN,X            ; if not free bomb yet, skip.
-                bne _STRKHT
+                cmp zpFreeManTarget,X   ; if not free bomb yet, skip.
+                bne _strikeHit
 
-                inc BombCount,X         ; else, up bombs by 1
-                lda BombCount,X
+                inc zpBombCount,X       ; else, up bombs by 1
+                lda zpBombCount,X
                 cmp #4                  ; if bombs>=4, keep in reserve
-                bcs _UPDTFM
+                bcs _updateTarget
 
                 clc                     ; if bombs less than 4, then set extra on screen
                 adc ScoreIndex,X
                 tay
                 lda #$CD
                 sta BOMB1-4,Y
-_UPDTFM         inc FREMEN,X            ; set for next
+_updateTarget   inc zpFreeManTarget,X   ; set for next
 
-_STRKHT         inc RCKHIT,X            ; if new # of rocks hit = max, kill bomb else, lower it
-                lda RCKHIT,X
+_strikeHit      inc zpRockHit,X         ; if new # of rocks hit = max, kill bomb else, lower it
+                lda zpRockHit,X
                 cmp RocksPerBomb
                 bne LowerBomb
 

@@ -10,6 +10,9 @@ BombLoop        ldx #1                  ; set player index
 ;--------------------------------------
 ;
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 BombNextLoop    .proc
                 lda zpBombDrop,X        ; if bomb not dropped
                 bne _chkHits
@@ -62,6 +65,7 @@ _gtpA           clc                     ; add screen start address
                 lda SCRPTR+1
                 adc #>CANYON
                 sta SCRPTR+1
+
                 ldy #0                  ; clear index
                 lda (SCRPTR),Y          ; & get char if it's blank
                 beq _gtp1
@@ -96,27 +100,32 @@ _gckrck         cmp #4
 
 _gotChr         asl A                   ; hold score= char * 2
                 sta HOLDIT
+
                 lda #0                  ; erase rock on screen
                 sta (SCRPTR),Y
+
                 lda ROCKS               ; decrement # of rocks remaining
                 sec
                 sbc #1
                 sta ROCKS
+
                 bcs _got1
 
                 dec ROCKS+1
+
 _got1           lda #$FE                ; start explosion sound
                 sta EXPLODE
 
 ; add on to score
-
                 ldy ScoreIndex,X        ; get base index to scores, and add to score
                 lda HOLDIT
                 clc
                 adc SCORE1,Y
                 sta SCORE1,Y
+
                 lda #3                  ; set digit # for rollover prot.
                 sta HOLDIT
+
 _next1          lda SCORE1,Y            ; done?
                 beq CheckHiScore        ;   yes, check high
 

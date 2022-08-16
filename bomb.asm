@@ -1,40 +1,35 @@
 ;--------------------------------------
 ; Remove bomb from screen
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 HideBomb        .proc
                 .m16
-                lda #$00
+                lda #0
                 cpx #1
                 beq _player2
 
                 sta SP02_Y_POS
-                bra _XIT
+                bra _1
 
 _player2        sta SP03_Y_POS
 
-_XIT           .m8
-                .endproc
+_1              .m8
 
-                ;[fall-through]
-
-
-;--------------------------------------
-;
-;--------------------------------------
-KillBomb        .proc
-                txa                     ; turn off sound for this bomb
+_killbomb       txa                     ; turn off sound for this bomb
                 .mult7
                 tay
 
-                .setbank $AF
                 lda #0
+                .setbank $AF
                 sta SID_FREQ1,Y
                 sta SID_CTRL1,Y
                 .setbank $00
 
                 sta zpBombDrop,X        ; set flag off
 
-                lda RCKHIT,X            ; if it didn't hit anything,
+                lda zpRockHit,X         ; if it didn't hit anything,
                 bne _hop
 
                 jsr DecrementMissile    ; lower # bombs
@@ -47,11 +42,14 @@ _hop            jmp DoNextBomb          ; & do next
 ;--------------------------------------
 ; decend the bombs
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 LowerBomb       .proc
                 lda zpBombDrop,X
 
-                inc DRPRATE,X           ; up drop speed
-                lda DRPRATE,X
+                inc zpDropRate,X        ; up drop speed
+                lda zpDropRate,X
                 lsr A                   ; update position
                 lsr A
                 lsr A
@@ -61,7 +59,7 @@ LowerBomb       .proc
                 clc
                 adc zpBombDrop,X
                 cmp #212                ; out of range?
-                bcs KillBomb            ;   yes, kill it
+                bcs HideBomb            ;   yes, kill it
 
                 sta zpBombDrop,X        ;   no, set the bomb
 
@@ -83,8 +81,9 @@ _cont           .m8
 
                 lda HOLDIT              ; update sound of dropping bomb
                 clc
-                adc DRPFREQ,X
-                sta DRPFREQ,X
+                adc zpDropFreq,X
+                sta zpDropFreq,X
+
                 .setbank $AF
                 sta SID_FREQ1,Y
                 .setbank $00
@@ -92,6 +91,7 @@ _cont           .m8
                 lda #$A8
                 sec
                 sbc HOLDIT
+
                 .setbank $AF
                 sta SID_CTRL1,Y
                 .setbank $00
@@ -103,9 +103,12 @@ _cont           .m8
 ;--------------------------------------
 ;
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 DoNextBomb      .proc
                 dex                     ; reset index if both not done
-                bmi CheckDrop._DOPLMV
+                bmi CheckDrop._doPlyrMove
 
                 jmp BombNextLoop        ; do next
 
@@ -115,8 +118,11 @@ DoNextBomb      .proc
 ;--------------------------------------
 ; check & drop bombs
 ;--------------------------------------
+; on entry
+;   X           player index [0,1]
+;--------------------------------------
 CheckDrop       .proc
-                lda BombCount,X         ; if no bombs left then do next
+                lda zpBombCount,X       ; if no bombs left then do next
                 beq DoNextBomb
 
                 txa                     ; if not the computer, check trigger
@@ -124,47 +130,50 @@ CheckDrop       .proc
                 sbc PlayerCount
                 bne _chkTrigger         ; it's player!
 
-                lda DIR                 ; going left?
-                bmi _GOING_R            ;   no!
+                lda DIR                 ; going right?
+                bmi _going_left         ;   no!
 
                 lda PlayerPosX,X        ; get ship x
-                cmp #1                  ; too far left?
+                cmp #152                ; too far right?
                 bcc DoNextBomb          ;   yes!
-                bcs _TRYDRP             ;   no, try drop!
+                bra _tryDrop            ;   no, try drop!
 
-_GOING_R        lda PlayerPosX,X        ; get computer x
-                cmp #151                ; too far right?
+_going_left     lda PlayerPosX,X        ; get computer x
+                cmp #1                  ; too far left?
                 bcs DoNextBomb          ;   yes!
 
-_TRYDRP         .randomByte             ; computer drops a bomb if random says to
+_tryDrop        .randomByte             ; computer drops a bomb if random says to
                 and #15
-                beq _DROPIT
+                beq _dropIt
                 bne DoNextBomb          ; else do next
 
 _chkTrigger     lda InputFlags,X        ; trig pushed?
                 and #$10
                 bne DoNextBomb          ;   no, do next
 
-_DROPIT         lda PlayerPosY,X        ; drop: set bomb Y to player Y+8
+_dropIt         lda PlayerPosY,X        ; drop: set bomb Y to player Y+8
                 clc
                 adc #8
                 sta zpBombDrop,X
 
                 lda #0                  ; clear drop rate
-                sta DRPRATE,X
-                sta RCKHIT,X            ; and rocks hit
-                inc BRUN,X              ; increment bombs dropped
+                sta zpDropRate,X
+                sta zpRockHit,X         ; and rocks hit
+                inc zpBombRunDrops,X    ; increment bombs dropped
+
                 lda #50                 ; set the sound flag
-                sta DRPFREQ,X
+                sta zpDropFreq,X
                 bne DoNextBomb          ; and do next
 
-_DOPLMV         stz P2PF                ; clear collisions
+_doPlyrMove     stz P2PF                ; clear collisions
                 stz P3PF
 
+                phx
                 jsr MovePlayer          ; move players
+                plx
 
                 lda EXPLODE             ; explosion going?
-                beq _CKRSTRT            ;   no, skip
+                beq _chkRestart         ;   no, skip
 
                 dec EXPLODE             ; update explosion sound
                 dec EXPLODE
@@ -176,23 +185,24 @@ _DOPLMV         stz P2PF                ; clear collisions
                 lsr A
                 eor #$8F
                 sta SID_CTRL3
-_CKRSTRT        lda CONSOL              ; any console buttons pushed?
+
+_chkRestart     lda CONSOL              ; any console buttons pushed?
                 cmp #7
-                beq _CKNSCR             ;   no
+                beq _chkNewScrn         ;   no
 
                 jmp RESTART             ;   yes, re-start
 
-_CKNSCR         lda ROCKS               ; # of rocks left
-                bne _CHKPAUS            ; = zero?
+_chkNewScrn     lda ROCKS               ; # of rocks left
+                bne _chkPause           ; = zero?
 
                 lda ROCKS+1
-                bne _CHKPAUS            ;   no
+                bne _chkPause           ;   no
 
                 jmp NewScreen           ;   yes, set up a new screen
 
-_CHKPAUS        lda KEYCHAR             ; spacebar pressed?
+_chkPause       lda KEYCHAR             ; spacebar pressed?
                 cmp #33
-                bne _CKDRRCK            ;   no, continue
+                bne _chkRockDrop        ;   no, continue
 
                 lda #0                  ;   yes, pause game
                 sta SID_CTRL1           ; turn off main sounds
@@ -207,15 +217,16 @@ _wait1          lda InputFlags          ; wait for stick movement
                 lda #$FF                ; reset for another pause
                 sta KEYCHAR
 
-_CKDRRCK        lda CLOCK               ; time to drop
+_chkRockDrop    lda CLOCK               ; time to drop
                 and #15                 ; suspended
-                beq _DRPROCK            ; rocks?
+                beq _dropRock           ; rocks?
 
                 jmp BombLoop            ;   no, do bombs
 
-_DRPROCK        lda #39                 ; set column to 39
+_dropRock       lda #39                 ; set column to 39
                 sta XCOUNT
 
+                phx
 _next1          lda #8                  ; row to 8
                 sta YCOUNT              ; and set pointer
                 lda #<CANYON+360        ; to xcount
@@ -228,12 +239,12 @@ _next1          lda #8                  ; row to 8
 
 _next2          ldy #0                  ; rock fall loop:
                 lda (SCRPTR),Y          ; nothing there then try next up
-                beq _DONXRCK
+                beq _doNextRock
 
                 tax                     ; else hold it & look underneath
                 ldy #$28
                 lda (SCRPTR),Y
-                bne _DONXRCK            ; not blank-do next
+                bne _doNextRock         ; not blank-do next
 
                 txa                     ; blank, move rock above down
                 sta (SCRPTR),Y
@@ -244,25 +255,26 @@ _next2          ldy #0                  ; rock fall loop:
                 sec
                 sbc #$28
                 sta SCRPTR
-                bcs _NOVER
+                bcs _notOver
 
                 dec SCRPTR+1
-_NOVER          dec YCOUNT              ; last row done?
-                bmi _DONXCOL            ;   yes, do next col
+_notOver        dec YCOUNT              ; last row done?
+                bmi _doNextColumn       ;   yes, do next col
 
-_DONXRCK        lda SCRPTR              ; go up one row
+_doNextRock     lda SCRPTR              ; go up one row
                 sec
                 sbc #$28
                 sta SCRPTR
-                bcs _NOVER2
+                bcs _notOver2
 
                 dec SCRPTR+1
-_NOVER2         dec YCOUNT              ; last row done?
+_notOver2       dec YCOUNT              ; last row done?
                 bpl _next2              ;   yes, do next col
 
-_DONXCOL        dec XCOUNT              ; last col done?
+_doNextColumn   dec XCOUNT              ; last col done?
                 bpl _next1              ;   no, do next
 
+                plx
                 jmp BombLoop            ; do bombs again
 
                 .endproc
@@ -272,14 +284,14 @@ _DONXCOL        dec XCOUNT              ; last col done?
 ; lower number of bombs remaining
 ;--------------------------------------
 ; on entry
-;   X           Player owning bomb [0,1]
+;   X           player index [0,1]
 ;======================================
 DecrementMissile .proc
-                lda BombCount,X         ; if already zero, exit
+                lda zpBombCount,X       ; if already zero, exit
                 beq _XIT
 
-                dec BombCount,X         ; lower bombs left
-                lda BombCount,X         ; if at least 3 remain, return
+                dec zpBombCount,X       ; lower bombs left
+                lda zpBombCount,X       ; if at least 3 remain, return
                 cmp #3
                 bcs _XIT
 

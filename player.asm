@@ -72,9 +72,7 @@ _cont1          lda PlayerPosX          ; first player 1
                 sta tmpDIR              ; (will be killed)
 
                 ldx #1
-_next3          phx
-
-                lda CLOCK               ; get image index from clock
+_next3          lda CLOCK               ; get image index from clock
                 and #4
                 asl A
                 sta HOLDIT              ; and hold it
@@ -83,8 +81,8 @@ _next3          phx
                 and #$10
                 clc
                 adc HOLDIT              ; & add 'em to get index.
-                stx HOLDIT
-                tax                     ; save player #
+
+                stx HOLDIT              ; save player #
 
 ;   calculate stamp address
                 .m16
@@ -98,8 +96,8 @@ _nextMult       asl A                   ; *128
                 clc
                 adc #$400
 
-                plx
-                cpx #$00
+                ldx HOLDIT
+                cpx #0
                 beq _plyr00
 
                 sta SP01_ADDR
@@ -119,7 +117,6 @@ _cont2          .m8
 ;   wait for a while to make game playable
 _DODELAY        lda JIFFYCLOCK
                 inc A
-                ;inc A
 _wait1          cmp JIFFYCLOCK
                 bne _wait1
 
@@ -145,12 +142,12 @@ _OFFSCR         lda #0                  ; else, turn off explosions and bkg soun
 _next5          lda zpBombDrop,X        ; if a bomb is in the air, and
                 beq _CKBRN
 
-                lda RCKHIT,X            ; it hasn't hit anything yet,
+                lda zpRockHit,X         ; it hasn't hit anything yet,
                 bne _CKBRN
 
                 jsr DecrementMissile    ; it's a miss
 
-_CKBRN          lda BRUN,X              ; if no bombs dropped this pass,
+_CKBRN          lda zpBombRunDrops,X    ; if no bombs dropped this pass,
                 bne _CKNBR
 
                 jsr DecrementMissile    ; it's a miss
@@ -161,9 +158,9 @@ _CKNBR          dex
                 jsr ClearPlayer         ; clear out players
 
                 ldx PlayerCount         ; if the actual players have no more bombs,
-                lda BombCount
+                lda zpBombCount
                 clc
-                adc BombCount,X
+                adc zpBombCount,X
                 adc zpWaitForPlay       ; and we're on a game, end it
                                         ; zpWaitForPlay = [0] means a game is in progress
                 beq EndGame
@@ -213,8 +210,8 @@ ClearPlayer     .proc
                 lda #0
                 sta zpBombDrop          ; clear bomb y position & bombs dropped this pass
                 sta zpBombDrop+1
-                sta BRUN
-                sta BRUN+1
+                sta zpBombRunDrops
+                sta zpBombRunDrops+1
 
                 sta SID_CTRL1           ; turn off bomb fall sounds
                 sta SID_CTRL2

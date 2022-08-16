@@ -143,7 +143,9 @@ _moveT          lda onScreen            ; if on screen, then move
                 sta SP01_ADDR
                 .m8
 
-_moveIt         jsr MovePlayer          ; move players
+_moveIt         phx
+                jsr MovePlayer          ; move players
+                plx
 
                 jmp _next1              ; do check again
 
@@ -184,12 +186,12 @@ _next2          sta BOMB1,X
                 bpl _next2
 
                 lda #3
-                sta BombCount
-                sta BombCount+1
+                sta zpBombCount
+                sta zpBombCount+1
 
                 lda #$11                ; set next free bomb at 1000
-                sta FREMEN
-                sta FREMEN+1
+                sta zpFreeManTarget
+                sta zpFreeManTarget+1
 
 ;   set second player message to 'player 2' or 'computer'
                 lda PlayerCount

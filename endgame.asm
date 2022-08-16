@@ -3,7 +3,7 @@
 ; final score
 ;--------------------------------------
 EndGame         .proc
-                pla                     ; get rid of return address
+                pla                     ; discard the return address
                 pla
 
                 lda #8

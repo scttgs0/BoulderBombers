@@ -13,6 +13,7 @@ DELYVAL             .byte ?
 DIR                 .byte ?
 dirLeft         = $FF                   ; =-1
 dirRight        = 1
+tmpDIR              .byte ?
 
 EXPLODE             .byte ?
 HOLDIT              .byte ?
@@ -25,21 +26,20 @@ onScreen            .byte ?
 zpWaitForPlay       .byte ?             ; 0 = game in play, 1 = not in play
 PlayerCount         .byte ?             ; 0 = 1-player, 1 = 2-player
 RocksPerBomb        .byte ?             ; max=8
-tmpDIR              .byte ?
 XCOUNT              .byte ?
 YCOUNT              .byte ?
 
 zpBombDrop          .byte ?             ; 0 = not dropping bomb; !0 = bomb Y position
                     .byte ?
-BRUN                .byte ?
+zpBombRunDrops      .byte ?             ; number of bombs dropped during this pass
                     .byte ?
-DRPFREQ             .byte ?
+zpDropFreq          .byte ?
                     .byte ?
-DRPRATE             .byte ?
+zpDropRate          .byte ?
                     .byte ?
-FREMEN              .byte ?
+zpFreeManTarget     .byte ?
                     .byte ?
-BombCount           .byte ?
+zpBombCount         .byte ?
                     .byte ?
 
 PlayerPosX          .byte ?             ; low-byte= player 1
@@ -47,7 +47,8 @@ PlayerPosX          .byte ?             ; low-byte= player 1
 PlayerPosY          .byte ?
                     .byte ?
 
-RCKHIT              .word ?
+zpRockHit           .byte ?
+                    .byte ?
 ROCKS               .word ?
 SCRPTR              .word ?
 
