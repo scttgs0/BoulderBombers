@@ -42,6 +42,7 @@ BOOT            clc
                 .m8i8
                 .setdp $0000
                 .setbank $00
+                cld
 
                 jmp INIT
 

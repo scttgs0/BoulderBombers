@@ -4,6 +4,7 @@
 ; ship types
 ;======================================
 MovePlayer      .proc
+                ;.m8
                 lda onScreen            ; if not on screen, set sound
                 bne _ADDCLOK
 

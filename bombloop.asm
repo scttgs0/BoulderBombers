@@ -14,6 +14,7 @@ BombLoop        ldx #1                  ; set player index
 ;   X           player index [0,1]
 ;--------------------------------------
 BombNextLoop    .proc
+                .m8
                 lda zpBombDrop,X        ; if bomb not dropped
                 bne _chkHits
 
@@ -36,22 +37,22 @@ _chkHitRock     lda #0
 
 ;   1st, get bomb's y-pos translated into row number and multiply it by 40
                 sec
-                sbc #103
+                sbc #103                ; A=(Y-103)&$F8
                 and #$F8
-                sta SCRPTR
+                sta SCRPTR              ; SCRPTR=A
+                asl SCRPTR              ; *4
                 asl SCRPTR
-                asl SCRPTR
-                rol SCRPTR+1
+                rol SCRPTR+1            ; roll into high-byte
                 clc
-                adc SCRPTR
+                adc SCRPTR              ; *5
                 sta SCRPTR
                 bcc _gtp0
 
-                inc SCRPTR+1
+                inc SCRPTR+1            ; into high-byte
 _gtp0           lda PlayerPosX,X        ; then, change x-pos into the column number
-                sec
-                sbc #47
-                lsr A
+                ;sec
+                ;sbc #47
+                lsr A                   ; /4
                 lsr A
                 clc                     ; and add it on
                 adc SCRPTR
