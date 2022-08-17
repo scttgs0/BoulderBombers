@@ -2,6 +2,7 @@
 ;
 ;--------------------------------------
 INIT            .proc
+                .m8i8
                 jsr Random_Seed
 
                 .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode320
@@ -34,18 +35,35 @@ INIT            .proc
 ;   initialize sprites
                 jsr InitSprites
 
-                lda #0                  ; init vars
-                ldy #SCRPTR+1-CLOCK
-_next5          sta CLOCK,Y
+;   zero out all variables (37 bytes)
+                lda #0
+                ldy #P3PF+1-CLOCK
+_next1          sta CLOCK,Y
                 dey
-                bpl _next5
+                bpl _next1
 
-                ldy #$27                ; set screen display
-_next6          sta CANYON,Y
+;   zero out the top line of CANYON
+                ldy #39                 ; set screen display
+_next2          sta CANYON,Y
                 dey
-                bpl _next6
+                bpl _next2
 
-                jsr DrawScreen
+                jsr ResetCanyon
+
+                .endproc
+
+                ;[fall-through]
+
+
+;--------------------------------------
+;
+;--------------------------------------
+RESTART         .proc
+                .m8i8
+                lda #1                  ; set player start positions
+                sta PlayerPosX
+                lda #151
+                sta PlayerPosX+1
 
                 ldx #70                 ; set player lanes
                 stx PlayerPosY
@@ -60,19 +78,6 @@ _next6          sta CANYON,Y
                 and #$FF
                 sta SP01_Y_POS
                 .m8
-                .endproc
-
-                ;[fall-through]
-
-
-;--------------------------------------
-;
-;--------------------------------------
-RESTART         .proc
-                lda #1                  ; set player start positions
-                sta PlayerPosX
-                lda #151
-                sta PlayerPosX+1
 
                 lda #0                  ; turn off explosions, and bkg sound
                 sta SID_CTRL3

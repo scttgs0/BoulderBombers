@@ -2,7 +2,8 @@
 ;
 ;--------------------------------------
 NewScreen       .proc
-                jsr DrawScreen          ; set canyon
+                .m8
+                jsr ResetCanyon         ; set canyon
 
                 lda #stBalloon          ; set type to Balloon
                 sta zpShipType
