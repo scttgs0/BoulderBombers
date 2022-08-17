@@ -168,155 +168,6 @@ Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green  [Editor Text bg]
 
 
 ;======================================
-; Load the tiles into VRAM
-;======================================
-InitTiles       .proc
-                php
-                phb
-
-                .m16i16
-                lda #$FFFF              ; Set the size
-                sta zpSize
-                lda #$00
-                sta zpSize+2
-
-                lda #<>tiles            ; Set the source address
-                sta zpSource
-                lda #`tiles
-                sta zpSource+2
-
-                lda #<>(TILESET-VRAM)   ; Set the destination address
-                sta zpDest
-                sta TILESET0_ADDR       ; And set the Vicky register
-                lda #`(TILESET-VRAM)
-                sta zpDest+2
-                .m8
-                sta TILESET0_ADDR+2
-
-                jsr Copy2VRAM
-
-                ; set tileset layout to linear-vertical (16x4096)
-                .m8
-                lda #tclVertical
-                sta TILESET0_ADDR_CFG
-
-                plb
-                plp
-                rts
-                .endproc
-
-
-;======================================
-; Initialize the Title Screen layer
-;======================================
-InitTitleScreen .proc
-                php
-                phb
-
-                jsr RefreshTitleScreen
-
-                .m16
-                lda #<>(TILEMAP-VRAM)   ; Set the pointer to the tile map
-                sta TILE3_START_ADDR
-                .m8
-                lda #`(TILEMAP-VRAM)
-                sta TILE3_START_ADDR+2
-
-                .m16
-                lda #MAPWIDTH                ; Set the size of the tile map
-                sta TILE3_X_SIZE
-                lda #MAPHEIGHT
-                sta TILE3_Y_SIZE
-
-                lda #$00
-                sta TILE3_WINDOW_X_POS
-                sta TILE3_WINDOW_Y_POS
-
-                .m8
-                lda #tcEnable           ; Enable the tileset, LUT0
-                sta TILE3_CTRL
-
-                plb
-                plp
-                rts
-                .endproc
-
-
-;======================================
-;
-;======================================
-RefreshTitleScreen .proc
-                php
-                .setbank `TitleScreenData
-
-                .m8i16
-                ldx #0
-                ldy #0
-_nextTile       lda TitleScreenData,Y   ; Get the tile code
-                and #$7F
-                sta TILEMAP,X           ; save it to the tile map
-                inx                     ; Note: writes to video RAM need to be 8-bit only
-                lda #0
-                sta TILEMAP,X
-
-                inx                     ; move to the next tile
-                iny
-                cpy #MAPWIDTH*18        ; top 18 lines are graphic
-                bne _nextTile
-
-_nextGlyph      lda TitleScreenData,Y   ; Get the tile code
-                ora #$80
-                sta TILEMAP,X           ; save it to the tile map
-                inx                     ; Note: writes to video RAM need to be 8-bit only
-                lda #0
-                sta TILEMAP,X
-
-                inx                     ; move to the next tile
-                iny
-                cpy #MAPWIDTH*MAPHEIGHT-18  ; bottom lines are text
-                bne _nextGlyph
-
-                .setbank $00
-                plp
-                rts
-                .endproc
-
-
-;======================================
-; Initialize the Unit layer (troops)
-;======================================
-InitUnitOverlay .proc
-                php
-
-                jsr RefreshUnitOverlay
-
-                .m16
-                lda #<>(TILEMAPUNITS-VRAM)   ; Set the pointer to the tile map
-                sta TILE2_START_ADDR
-                .m8
-                lda #`(TILEMAPUNITS-VRAM)
-                sta TILE2_START_ADDR+2
-
-                .m16
-                lda #MAPWIDTH           ; Set the size of the tile map
-                sta TILE2_X_SIZE
-                lda #MAPHEIGHT
-                sta TILE2_Y_SIZE
-
-                lda #$00
-                sta TILE2_WINDOW_X_POS
-                sta TILE2_WINDOW_Y_POS
-
-                .m8
-                lda #tcEnable           ; Enable the tileset, LUT0
-                sta TILE2_CTRL
-
-                plp
-                rts
-                .endproc
-
-
-;======================================
 ; Initialize the Sprite layer
 ;--------------------------------------
 ; sprites dimensions are 32x32 (1024)
@@ -386,40 +237,65 @@ InitSprites     .proc
 ;======================================
 ;
 ;======================================
-InitBitmap      .proc
-                php
-                phb
-
-                .m16i16
-                lda #$B000              ; Set the size
-                sta zpSize
-                lda #$04
-                sta zpSize+2
-
-                lda #<>HeaderPanel      ; Set the source address
-                sta zpSource
-                lda #`HeaderPanel
-                sta zpSource+2
-
-                lda #<>(BITMAP-VRAM)   ; Set the destination address
-                sta zpDest
-                sta BITMAP0_START_ADDR ; And set the Vicky register
-
-                lda #`(BITMAP-VRAM)
-                sta zpDest+2
-
-                .m8
-                sta BITMAP0_START_ADDR+2
-
-                jsr Copy2VRAM
-
-                lda #bmcEnable
-                sta BITMAP0_CTRL
-
-                plb
-                plp
-                rts
-                .endproc
+;CheckCollision  .proc
+;                pha
+;                phx
+;                phy
+;
+;                ldx #1                  ; Given: SP02_Y_POS=112
+;_nextBomb       lda zpBombDrop,X        ; A=112
+;                beq _nextPlayer
+;
+;                cmp #104
+;                bcs _withinRange
+;
+;                bra _nextPlayer
+;
+;_withinRange    sec
+;                sbc #104                ; A=8
+;                lsr A           ; /2    ; A=4
+;                lsr A           ; /4    ; A=2
+;                lsr A           ; /8    ; A=1
+;                sta zpTemp1             ; zpTemp1=1 (row)
+;
+;                lda PlayerPosX,X
+;                lsr A           ; /2
+;                lsr A           ; /4
+;                sta zpTemp2             ; (column)
+;
+;                lda #<CANYON
+;                sta zpSource
+;                lda #>CANYON
+;                sta zpSource+1
+;
+;                ldy zpTemp1
+;_nextRow        beq _checkRock
+;                lda zpSource
+;                clc
+;                adc #40
+;                bcc _1
+;
+;                inc zpSource+1
+;_1              dey
+;                bra _nextRow
+;
+;                ldy zpTemp1
+;_checkRock      lda (zpSource),Y
+;                beq _nextPlayer
+;
+;                cmp #3
+;                bcs _nextPlayer
+;
+;                sta P2PF,X
+;
+;_nextPlayer     dex
+;                bpl _nextBomb
+;
+;                ply
+;                plx
+;                pla
+;                rts
+;                .endproc
 
 
 ;======================================
@@ -434,6 +310,9 @@ v_TextColor     .var $40
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   clear color
@@ -476,6 +355,9 @@ _next1T         sta [zpDest],Y
                 dex
                 bne _nextPageT
 
+                ply
+                plx
+                pla
                 plp
                 rts
                 .endproc
@@ -491,6 +373,9 @@ v_RenderLine    .var 24*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
                 lda #<CS_COLOR_MEM_PTR+v_RenderLine
@@ -523,6 +408,9 @@ _next2          sta [zpDest],Y
                 cpy #$F0                ; 6 lines
                 bne _next2
 
+                ply
+                plx
+                pla
                 plp
                 rts
                 .endproc
@@ -536,6 +424,9 @@ v_RenderLine    .var 2*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for the 40-char line
@@ -597,7 +488,10 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
@@ -610,6 +504,9 @@ v_RenderLine    .var 24*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for the 40-char line
@@ -671,7 +568,10 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
@@ -684,6 +584,9 @@ v_RenderLine    .var 24*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for twp 40-char lines
@@ -712,7 +615,10 @@ _nextChar       inx
 
                 bra _nextChar
 
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
@@ -783,6 +689,9 @@ v_RenderLine    .var 27*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for the 40-char line
@@ -844,7 +753,10 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
@@ -857,6 +769,9 @@ v_RenderLine    .var 26*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for the 40-char line
@@ -918,19 +833,28 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render Player Scores & Bombs
+;--------------------------------------
+; preserves:
+;   X Y
 ;======================================
 RenderScore     .proc
 v_RenderLine    .var 27*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i8
 
 ;   reset color for the 40-char line
@@ -1001,7 +925,10 @@ _bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
-_XIT            plp
+_XIT            ply
+                plx
+                pla
+                plp
                 rts
                 .endproc
 
@@ -1014,13 +941,16 @@ v_RenderLine    .var 13*CharResX
 ;---
 
                 php
+                pha
+                phx
+                phy
                 .m8i16
 
                 ldx #$FFFF
                 ldy #$FFFF
 _nextChar       inx
                 iny
-                cpy #400
+                cpy #440
                 beq _XIT
 
                 lda CANYON,Y
@@ -1063,35 +993,9 @@ _boulder        phy
                 bra _nextChar
 
 _XIT            .m8i8
-                plp
-                rts
-                .endproc
-
-
-;======================================
-; Blit bitmap text to VRAM
-;--------------------------------------
-; on entry:
-;   zpDest      set by caller
-;======================================
-BlitText        .proc
-                php
-                phb
-                .m16i16
-
-                lda #640*16             ; Set the size
-                sta zpSize
-                lda #$00
-                sta zpSize+2
-
-                lda #<>Text2Bitmap      ; Set the source address
-                sta zpSource
-                lda #`Text2Bitmap
-                sta zpSource+2
-
-                jsr Copy2VRAM
-
-                plb
+                ply
+                plx
+                pla
                 plp
                 rts
                 .endproc
