@@ -46,14 +46,14 @@ _hop            jmp DoNextBomb          ; & do next
 ;   X           player index [0,1]
 ;--------------------------------------
 LowerBomb       .proc
-                lda zpBombDrop,X
+                ;lda zpBombDrop,X
 
                 inc zpDropRate,X        ; up drop speed
                 lda zpDropRate,X
                 lsr A                   ; update position
                 lsr A
                 lsr A
-                lsr A
+                lsr A                   ; /16
                 sta HOLDIT
 
                 clc
@@ -62,6 +62,8 @@ LowerBomb       .proc
                 bcs HideBomb            ;   yes, kill it
 
                 sta zpBombDrop,X        ;   no, set the bomb
+
+                ;jsr CheckCollision
 
                 .m16
                 and #$FF
@@ -201,7 +203,7 @@ _chkNewScrn     lda ROCKS               ; # of rocks left
                 jmp NewScreen           ;   yes, set up a new screen
 
 _chkPause       lda KEYCHAR             ; spacebar pressed?
-                cmp #33
+                cmp #$39
                 bne _chkRockDrop        ;   no, continue
 
                 lda #0                  ;   yes, pause game
