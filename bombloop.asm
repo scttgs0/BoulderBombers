@@ -20,7 +20,7 @@ BombNextLoop    .proc
 
                 jmp CheckDrop           ; check trigger
 
-_chkHits        ;--jsr CheckCollision
+_chkHits        jsr CheckCollision
 
                 lda P2PF,X              ; bomb hit anything?
                 bne _chkRockOK
@@ -80,7 +80,7 @@ _got1           lda #$FE                ; start explosion sound
 _next1          lda SCORE1,Y            ; done?
                 beq CheckHiScore        ;   yes, check high
 
-                cmp #26                 ; digit >10?
+                cmp #$3A                ; digit >10?
                 bcc _scundx             ;   no, go right
 
                 sec                     ; sub 10 from this digit
@@ -93,15 +93,15 @@ _next1          lda SCORE1,Y            ; done?
                 lda SCORE1,Y            ; get digit
                 bne _scbrk              ; if blank, set to zero
 
-                lda #$10
+                lda #$30
 _scbrk          clc                     ; add 1
                 adc #1
                 sta SCORE1,Y            ; and save it
                 bne _next1              ; check this digit
 
-_scundx         iny                     ; go right one digit
-                inc HOLDIT
-                bne _next1
+_scundx         ;iny                     ; go right one digit
+                ;inc HOLDIT
+                ;bne _next1
 
                 jmp CheckHiScore
 

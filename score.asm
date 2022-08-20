@@ -85,6 +85,6 @@ _strikeHit      inc zpRockHit,X         ; if new # of rocks hit = max, kill bomb
                 cmp RocksPerBomb
                 bne LowerBomb
 
-                jmp MovePlayer
+                jmp HideBomb
 
                 .endproc

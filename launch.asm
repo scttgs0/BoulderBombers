@@ -212,6 +212,7 @@ _next3          lda P2COMPT,Y
                 dex
                 bpl _next3
 
+                jsr ClearScreen
                 jsr ClearGamePanel
                 jsr RenderHiScore2
                 jsr RenderPlayers

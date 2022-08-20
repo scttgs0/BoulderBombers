@@ -73,8 +73,8 @@ HighScoreMsg    .text "     HIGH:    0     "
 
 HighScoreColor  .byte $00,$00,$00,$00,$00
                 .byte $C0,$C0,$C0,$C0,$C0
-                .byte $00,$00,$00,$00
-                .byte $C0,$C0,$C0,$C0,$C0
+                .byte $00,$C0,$C0,$C0
+                .byte $C0,$00,$00,$00,$00
                 .byte $00
 
 ;   titles above score line
