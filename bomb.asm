@@ -58,12 +58,10 @@ LowerBomb       .proc
 
                 clc
                 adc zpBombDrop,X
-                cmp #212                ; out of range?
+                cmp #224                ; out of range?
                 bcs HideBomb            ;   yes, kill it
 
                 sta zpBombDrop,X        ;   no, set the bomb
-
-                ;jsr CheckCollision
 
                 .m16
                 and #$FF
@@ -299,11 +297,10 @@ DecrementMissile .proc
 
                 clc                     ; get index for screen to erase bomb
                 adc ScoreIndex,X
-                adc #5                  ; bomb icons are 5 chars from the score index
+                adc #2                  ; bomb icons are 2 chars from the score index
                 tay
                 lda #0
-                ;--sta BOMB1-3,Y
-                sta ScoreMsg,Y
+                sta SCORE1,Y
 
                 jsr RenderScore
 

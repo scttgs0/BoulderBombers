@@ -84,6 +84,10 @@ RESTART         .proc
                 sta EXPLODE
                 ;sta AUDC4
 
+                lda #dirRight           ; set start direction
+                sta DIR
+                sta zpWaitForPlay       ; waiting for play to start
+
                 jsr ClearPlayer         ; clear players
 
                 jsr RenderHiScore
@@ -94,10 +98,6 @@ RESTART         .proc
 
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL
-
-                lda #dirRight           ; set start direction
-                sta DIR
-                sta zpWaitForPlay       ; waiting for play to start
 
                 lda #0                  ; players not on screen
                 sta onScreen
@@ -172,7 +172,7 @@ _wait1          lda CONSOL
                 lda #0                  ; we're now in play, clear the wait flag
                 sta zpWaitForPlay
 
-                lda #$20
+                lda #0
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
                 sta SCORE2,X

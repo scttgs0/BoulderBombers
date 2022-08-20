@@ -237,65 +237,79 @@ InitSprites     .proc
 ;======================================
 ;
 ;======================================
-;CheckCollision  .proc
-;                pha
-;                phx
-;                phy
-;
-;                ldx #1                  ; Given: SP02_Y_POS=112
-;_nextBomb       lda zpBombDrop,X        ; A=112
-;                beq _nextPlayer
-;
-;                cmp #104
-;                bcs _withinRange
-;
-;                bra _nextPlayer
-;
-;_withinRange    sec
-;                sbc #104                ; A=8
-;                lsr A           ; /2    ; A=4
-;                lsr A           ; /4    ; A=2
-;                lsr A           ; /8    ; A=1
-;                sta zpTemp1             ; zpTemp1=1 (row)
-;
-;                lda PlayerPosX,X
-;                lsr A           ; /2
-;                lsr A           ; /4
-;                sta zpTemp2             ; (column)
-;
-;                lda #<CANYON
-;                sta zpSource
-;                lda #>CANYON
-;                sta zpSource+1
-;
-;                ldy zpTemp1
-;_nextRow        beq _checkRock
-;                lda zpSource
-;                clc
-;                adc #40
-;                bcc _1
-;
-;                inc zpSource+1
-;_1              dey
-;                bra _nextRow
-;
-;                ldy zpTemp1
-;_checkRock      lda (zpSource),Y
-;                beq _nextPlayer
-;
-;                cmp #3
-;                bcs _nextPlayer
-;
-;                sta P2PF,X
-;
-;_nextPlayer     dex
-;                bpl _nextBomb
-;
-;                ply
-;                plx
-;                pla
-;                rts
-;                .endproc
+CheckCollision  .proc
+                .m8i8
+                pha
+                phx
+                phy
+
+                ldx #1                  ; Given: SP02_Y_POS=112
+_nextBomb       lda zpBombDrop,X        ; A=112
+                beq _nextPlayer
+
+                cmp #132
+                bcs _withinRange
+
+                bra _nextPlayer
+
+_withinRange    sec
+                sbc #132                ; A=8
+                lsr A           ; /2    ; A=4
+                lsr A           ; /4    ; A=2
+                lsr A           ; /8    ; A=1
+                sta zpTemp1             ; zpTemp1=1 (row)
+
+                lda PlayerPosX,X
+                lsr A           ; /2
+                lsr A           ; /4
+                sta zpTemp2             ; (column)
+
+                lda #<CANYON
+                sta zpSource
+                lda #>CANYON
+                sta zpSource+1
+
+                ldy zpTemp1
+_nextRow        beq _checkRock
+                lda zpSource
+                clc
+                adc #40
+                sta zpSource
+                bcc _1
+
+                inc zpSource+1
+_1              dey
+                bra _nextRow
+
+_checkRock      ldy zpTemp2
+                lda (zpSource),Y
+                beq _nextPlayer
+
+                ;cmp #4
+                ;bcs _nextPlayer
+
+                sta P2PF,X
+
+                .m16
+                txa
+                and #$FF
+                asl A
+                tay
+                lda zpSource
+                stz zpTemp2+1
+                clc
+                adc zpTemp2
+                sta P2PFaddr,Y
+                .m8
+
+_nextPlayer     dex
+                bpl _nextBomb
+
+                ply
+                plx
+                pla
+                rts
+                .endproc
 
 
 ;======================================
@@ -857,6 +871,10 @@ v_RenderLine    .var 27*CharResX
                 phy
                 .m8i8
 
+;   if game is not in progress then exit
+                lda zpWaitForPlay
+                bne _XIT
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -925,6 +943,7 @@ _bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
+
 _XIT            ply
                 plx
                 pla

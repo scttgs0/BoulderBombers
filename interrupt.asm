@@ -328,9 +328,10 @@ _1              lda JOYSTICK1           ; read joystick1
                 lda #itJoystick
                 sta InputType+1
 
-                jsr RenderCanyon
+_XIT            jsr RenderCanyon
+                jsr RenderScore
 
-_XIT            .m16i16
+                .m16i16
                 ply
                 plx
                 pla
