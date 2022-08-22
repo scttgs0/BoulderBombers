@@ -281,7 +281,7 @@ _8r             pla
                 stz KEYCHAR
                 bra _XIT
 
-_CleanUpXIT     ;stz KEYCHAR    HACK:
+_CleanUpXIT     stz KEYCHAR
                 pla
 
 _XIT            .m16i16
