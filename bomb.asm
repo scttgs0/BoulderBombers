@@ -130,22 +130,24 @@ CheckDrop       .proc
                 sbc PlayerCount
                 bne _chkTrigger         ; it's player!
 
-                lda DIR                 ; going right?
-                bmi _going_left         ;   no!
+;   computer only code -- note: computer direction is opposite of player
+                lda DIR                 ; going left?
+                bmi _going_right        ;   no!
 
                 lda PlayerPosX,X        ; get ship x
-                cmp #152                ; too far right?
+                cmp #1                  ; too far left?
                 bcc DoNextBomb          ;   yes!
                 bra _tryDrop            ;   no, try drop!
 
-_going_left     lda PlayerPosX,X        ; get computer x
-                cmp #1                  ; too far left?
+_going_right    lda PlayerPosX,X        ; get computer x
+                cmp #152                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
 _tryDrop        .randomByte             ; computer drops a bomb if random says to
                 and #15
                 beq _dropIt
                 bne DoNextBomb          ; else do next
+;--- END computer only code
 
 _chkTrigger     lda InputFlags,X        ; trig pushed?
                 and #$10
