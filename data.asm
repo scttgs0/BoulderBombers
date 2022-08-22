@@ -69,7 +69,7 @@ PlyrQtyColor    .byte $00,$00,$00,$00,$00
 ; bottom of game screen
 ;======================================
 
-HighScoreMsg    .text "     HIGH:    0     "
+HighScoreMsg    .text "     HIGH: ",0,0,0,"0     "  ; warning: must use zero for space within score and hiscore
 
 HighScoreColor  .byte $00,$00,$00,$00,$00
                 .byte $C0,$C0,$C0,$C0,$C0

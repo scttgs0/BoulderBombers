@@ -20,6 +20,7 @@ CheckHiScore    .proc
                 bcc _chkScore
 
                 inc SCRPTR+1
+
 _chkScore       ldy #0                  ; begin at hi end
 _next1          lda (SCRPTR),Y
                 cmp HighScoreMsg+11,Y   ; compare 'em
@@ -32,11 +33,9 @@ _chkNxtDgt      iny                     ; do next digit
                 cpy #4                  ; if all done, then it's the same, skip
                 bne _next1
 
-                beq CheckFreeMan
+                bra CheckFreeMan
 
                 .endproc
-
-                ;[fall-through]
 
 
 ;--------------------------------------

@@ -172,6 +172,7 @@ _wait1          lda CONSOL
                 lda #0                  ; we're now in play, clear the wait flag
                 sta zpWaitForPlay
 
+;   warning: must use zero for space within score and hiscore
                 lda #0
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
