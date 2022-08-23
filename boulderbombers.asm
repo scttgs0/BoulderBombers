@@ -17,16 +17,16 @@
 ;   SP0[0,1]_Y_POS      word [70,90]
 
 
-                .cpu "65816"
+                .cpu "65c02"
 
-                .include "equates_system_c256.asm"
+                .include "equates_system_c256jr.asm"
                 .include "equates_zeropage.asm"
                 .include "equates_game.asm"
 
-                .include "macros_65816.asm"
-                .include "macros_frs_graphic.asm"
-                .include "macros_frs_mouse.asm"
+                .include "macros_frs_jr_graphic.asm"
+                .include "macros_frs_jr_mouse.asm"
                 .include "macros_frs_random.asm"
+                .include "macros_game.asm"
 
 
 ;--------------------------------------
@@ -37,13 +37,7 @@
                 .byte $01
                 .dword BOOT
 
-BOOT            clc
-                xce
-                .m8i8
-                .setdp $0000
-                .setbank $00
-                cld
-
+BOOT            cld
                 jmp INIT
 
 

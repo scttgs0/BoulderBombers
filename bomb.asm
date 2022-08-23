@@ -5,29 +5,25 @@
 ;   X           player index [0,1]
 ;--------------------------------------
 HideBomb        .proc
-                .m16
-                lda #0
                 cpx #1
                 beq _player2
 
-                sta SP02_Y_POS
-                bra _1
+                stz SP02_Y_POS
+                stz SP02_Y_POS+1
+                bra _killbomb
 
-_player2        sta SP03_Y_POS
-
-_1              .m8
+_player2        stz SP03_Y_POS
+                stz SP03_Y_POS+1
 
 _killbomb       txa                     ; turn off sound for this bomb
                 .mult7
                 tay
 
                 lda #0
-                .setbank $AF
-                sta SID_FREQ1,Y
-                sta SID_CTRL1,Y
-                .setbank $00
+                sta SID1_FREQ1,Y
+                sta SID1_CTRL1,Y
 
-                sta zpBombDrop,X        ; set flag off
+                stz zpBombDrop,X        ; set flag off
 
                 lda zpRockHit,X         ; if it didn't hit anything,
                 bne _hop
@@ -46,8 +42,6 @@ _hop            jmp DoNextBomb          ; & do next
 ;   X           player index [0,1]
 ;--------------------------------------
 LowerBomb       .proc
-                ;lda zpBombDrop,X
-
                 inc zpDropRate,X        ; up drop speed
                 lda zpDropRate,X
                 lsr A                   ; update position
@@ -63,19 +57,17 @@ LowerBomb       .proc
 
                 sta zpBombDrop,X        ;   no, set the bomb
 
-                .m16
-                and #$FF
-
                 cpx #1
                 beq _player2
 
                 sta SP02_Y_POS
+                stz SP02_Y_POS+1
                 bra _cont
 
 _player2        sta SP03_Y_POS
+                stz SP03_Y_POS+1
 
-_cont           .m8
-                txa                     ; set y to index the sound regs
+_cont           txa                     ; set y to index the sound regs
                 .mult7
                 tay
 
@@ -84,17 +76,13 @@ _cont           .m8
                 adc zpDropFreq,X
                 sta zpDropFreq,X
 
-                .setbank $AF
-                sta SID_FREQ1,Y
-                .setbank $00
+                sta SID1_FREQ1,Y
 
                 lda #$A8
                 sec
                 sbc HOLDIT
 
-                .setbank $AF
-                sta SID_CTRL1,Y
-                .setbank $00
+                sta SID1_CTRL1,Y
                 .endproc
 
                 ;[fall-through]
@@ -180,13 +168,13 @@ _doPlyrMove     stz P2PF                ; clear collisions
                 dec EXPLODE             ; update explosion sound
                 dec EXPLODE
                 eor #$F0
-                sta SID_FREQ3
+                sta SID1_FREQ3
                 lsr A
                 lsr A
                 lsr A
                 lsr A
                 eor #$8F
-                sta SID_CTRL3
+                sta SID1_CTRL3
 
 _chkRestart     lda CONSOL              ; any console buttons pushed?
                 cmp #7
@@ -207,9 +195,9 @@ _chkPause       lda KEYCHAR             ; spacebar pressed?
                 bne _chkRockDrop        ;   no, continue
 
                 lda #0                  ;   yes, pause game
-                sta SID_CTRL1           ; turn off main sounds
-                sta SID_CTRL2
-                sta SID_CTRL3
+                sta SID1_CTRL1          ; turn off main sounds
+                sta SID1_CTRL2
+                sta SID1_CTRL3
 
 _wait1          lda InputFlags          ; wait for stick movement
                 and #$0F

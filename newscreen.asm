@@ -2,18 +2,16 @@
 ;
 ;--------------------------------------
 NewScreen       .proc
-                .m8
                 jsr ResetCanyon         ; set canyon
 
                 lda #stBalloon          ; set type to Balloon
                 sta zpShipType
                 sta CLOCK               ; and begin clock
 
-                .m16
-                lda #$0000
-                sta SP00_ADDR
-                sta SP01_ADDR
-                .m8
+                stz SP00_ADDR
+                stz SP00_ADDR+1
+                stz SP01_ADDR
+                stz SP01_ADDR+1
 
                 lda #dirRight
                 sta DIR
@@ -25,7 +23,7 @@ NewScreen       .proc
 
                 lda #FALSE              ; set players on screen=false
                 sta onScreen
-                ;sta AUDF4
+                sta SID2_FREQ1
 
                 lda #1                  ; set start positions of players
                 sta PlayerPosX

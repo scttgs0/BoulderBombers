@@ -13,16 +13,16 @@ MovePlayer      .proc
                 cmp #stBalloon
                 beq _STBLSND            ;   yes, do that
 
-                ;lda #$96               ; set plane sound
-                ;sta AUDF4
-                ;lda #$24
-                ;sta AUDC4
+                lda #$96                ; set plane sound
+                sta SID2_FREQ1
+                lda #$24
+                sta SID2_CTRL1
                 bra _ADDCLOK            ; & goto clock add
 
-_STBLSND        ;lda #0                 ; set wind sound
-                ;sta AUDF4
-                ;lda #2
-                ;sta AUDC4
+_STBLSND        lda #0                  ; set wind sound
+                sta SID2_FREQ1
+                lda #2
+                sta SID2_CTRL1
 
 _ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
@@ -37,28 +37,40 @@ _cont1          lda PlayerPosX          ; first player 1
                 adc DIR
                 sta PlayerPosX
 
-                .m16
-                and #$FF
+                stz zpTemp1
                 asl A
+                rol zpTemp1
                 clc
                 adc #32
-                sta SP00_X_POS
+                bcc _1
+
+                inc zpTemp1
+
+_1              sta SP00_X_POS
                 sta SP02_X_POS
-                .m8
+                lda zpTemp1
+                sta SP00_X_POS+1
+                sta SP02_X_POS+1
 
                 lda #152                ; then player 2
                 sec
                 sbc PlayerPosX
                 sta PlayerPosX+1
 
-                .m16
-                and #$FF
+                stz zpTemp1
                 asl A
+                rol zpTemp1
                 clc
                 adc #32
-                sta SP01_X_POS
+                bcc _2
+
+                inc zpTemp1
+
+_2              sta SP01_X_POS
                 sta SP03_X_POS
-                .m8
+                lda zpTemp1
+                sta SP01_X_POS+1
+                sta SP03_X_POS+1
 
 ;   player animation
                 lda zpShipType          ; if on planes then check if time to animate
@@ -86,28 +98,39 @@ _next3          lda CLOCK               ; get image index from clock
                 stx HOLDIT              ; save player #
 
 ;   calculate stamp address
-                .m16
-                and #$FF
+                sta zpTemp1
+                stz zpTemp2
 
                 ldy #6
-_nextMult       asl A                   ; *128
-                dey
+_nextMult       asl zpTemp1             ; *128
+                bcc _3
+
+                inc zpTemp2
+
+_3              dey
                 bpl _nextMult
 
+                lda zpTemp2
                 clc
-                adc #$400
+                adc #$4
+                sta zpTemp2
 
                 ldx HOLDIT
                 cpx #0
                 beq _plyr00
 
+                lda zpTemp1
                 sta SP01_ADDR
+                lda zpTemp2
+                sta SP01_ADDR+1
                 bra _cont2
 
-_plyr00         sta SP00_ADDR
+_plyr00         lda zpTemp1
+                sta SP00_ADDR
+                lda zpTemp2
+                sta SP00_ADDR+1
 
-_cont2          .m8
-                lda tmpDIR              ; reverse tdir
+_cont2          lda tmpDIR              ; reverse tdir
                 eor #$FE
                 sta tmpDIR
 
@@ -134,8 +157,8 @@ _wait1          cmp JIFFYCLOCK
                 bra _XIT                ; if on, return
 
 _OFFSCR         lda #0                  ; else, turn off explosions and bkg sound
-                sta SID_CTRL3
-                ;sta AUDC4
+                sta SID1_CTRL3
+                sta SID2_CTRL1
                 sta EXPLODE
                 sta onScreen            ; set onscreen=false
 
@@ -173,16 +196,9 @@ _CKNBR          dex
                 ldx PlayerPosY          ; change player lanes
                 ldy PlayerPosY+1
                 stx PlayerPosY+1
+                stx SP01_Y_POS
                 sty PlayerPosY
-
-                .m16
-                tya
-                and #$FF
-                sta SP00_Y_POS
-                txa
-                and #$FF
-                sta SP01_Y_POS
-                .m8
+                sty SP00_Y_POS
 
                 lda #3                  ; reset clock
                 sta CLOCK
@@ -208,19 +224,17 @@ _XIT            rts
 ; turn off bomb sounds
 ;======================================
 ClearPlayer     .proc
-                lda #0
-                sta zpBombDrop          ; clear bomb y position & bombs dropped this pass
-                sta zpBombDrop+1
-                sta zpBombRunDrops
-                sta zpBombRunDrops+1
+                stz zpBombDrop          ; clear bomb y position & bombs dropped this pass
+                stz zpBombDrop+1
+                stz zpBombRunDrops
+                stz zpBombRunDrops+1
 
-                sta SID_CTRL1           ; turn off bomb fall sounds
-                sta SID_CTRL2
+                stz SID1_CTRL1          ; turn off bomb fall sounds
+                stz SID1_CTRL2
 
-                .m16
-                lda #0                  ; clear bombs
-                sta SP02_Y_POS
-                sta SP03_Y_POS
-                .m8
+                stz SP02_Y_POS          ; clear bombs
+                stz SP02_Y_POS+1
+                stz SP03_Y_POS
+                stz SP03_Y_POS+1
                 rts
                 .endproc

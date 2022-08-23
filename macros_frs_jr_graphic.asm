@@ -1,22 +1,23 @@
 frsGraphics     .macro
+                pha
+
                 lda #\1
                 sta MASTER_CTRL_L
-
                 lda #\2
                 sta MASTER_CTRL_H
+
+                pla
                 .endmacro
 
 frsBorder_off   .macro
-                lda #0
-                sta BORDER_CTRL
-                sta BORDER_X_SIZE
-                sta BORDER_Y_SIZE
+                stz BORDER_CTRL
+                stz BORDER_X_SIZE
+                stz BORDER_Y_SIZE
                 .endmacro
 
-frsBorder_on    .macro color, xSize, ySize
-                php
+frsBorder_on    .macro color,xSize,ySize
+                pha
 
-                .m8
                 lda #$01
                 sta BORDER_CTRL_REG
 
@@ -33,5 +34,5 @@ frsBorder_on    .macro color, xSize, ySize
                 lda \color&$FF
                 sta BORDER_COLOR_B
 
-                plp
+                pla
                 .endmacro

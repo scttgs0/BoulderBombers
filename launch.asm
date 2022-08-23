@@ -2,7 +2,6 @@
 ;
 ;--------------------------------------
 INIT            .proc
-                .m8i8
                 jsr Random_Seed
 
                 .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode320
@@ -59,7 +58,6 @@ _next2          sta CANYON,Y
 ;
 ;--------------------------------------
 RESTART         .proc
-                .m8i8
                 lda #1                  ; set player start positions
                 sta PlayerPosX
                 lda #151
@@ -70,19 +68,19 @@ RESTART         .proc
                 ldy #90
                 sty PlayerPosY+1
 
-                .m16
-                txa
-                and #$FF
-                sta SP00_Y_POS
-                tya
-                and #$FF
-                sta SP01_Y_POS
-                .m8
+                ;.m16
+                ;txa
+                ;and #$FF
+                stx SP00_Y_POS
+                ;tya
+                ;and #$FF
+                sty SP01_Y_POS
+                ;.m8
 
                 lda #0                  ; turn off explosions, and bkg sound
-                sta SID_CTRL3
+                sta SID1_CTRL3
                 sta EXPLODE
-                ;sta AUDC4
+                sta SID2_CTRL1
 
                 lda #dirRight           ; set start direction
                 sta DIR
@@ -138,7 +136,7 @@ _moveT          lda onScreen            ; if on screen, then move
                 lda ShipTypeTbl,X
                 sta zpShipType          ; & set it
 
-                .m16i8
+                ;.m16i8
                 txa
                 and #1
                 asl A
@@ -146,7 +144,7 @@ _moveT          lda onScreen            ; if on screen, then move
                 lda ShipSprOffset,X
                 sta SP00_ADDR
                 sta SP01_ADDR
-                .m8
+                ;.m8
 
 _moveIt         phx
                 jsr MovePlayer          ; move players

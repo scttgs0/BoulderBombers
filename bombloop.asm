@@ -14,7 +14,6 @@ BombLoop        ldx #1                  ; set player index
 ;   X           player index [0,1]
 ;--------------------------------------
 BombNextLoop    .proc
-                .m8
                 lda zpBombDrop,X        ; if bomb not dropped
                 bne _chkHits
 

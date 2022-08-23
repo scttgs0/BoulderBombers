@@ -12,13 +12,11 @@ BITMAPTXT3      = $B31400
 ; seed = elapsed seconds this hour
 ;======================================
 Random_Seed     .proc
-                .m8
                 lda RTC_MIN
                 sta RND_MIN
                 lda RTC_SEC
                 sta RND_SEC
 
-                .m16
 ;   elapsed minutes * 60
                 lda RND_MIN
                 asl A
@@ -49,7 +47,6 @@ Random_Seed     .proc
 
                 sta GABE_RNG_SEED_LO
 
-                .m8
                 lda #grcEnable|grcDV
                 sta GABE_RNG_CTRL
                 lda #grcEnable
@@ -63,32 +60,35 @@ Random_Seed     .proc
 InitSID         .proc
                 pha
                 phx
-                .m8i8
 
 ;   reset the SID
-                lda #$00
+                lda #0
                 ldx #$18
-_next1          sta $AF_E400,X
+_next1          sta $D400,X
+                sta $D500,X
                 dex
                 bpl _next1
 
                 lda #$09                ; Attack/Decay = 9
-                sta SID_ATDCY1
-                sta SID_ATDCY2
-                sta SID_ATDCY3
+                sta SID1_ATDCY1
+                sta SID1_ATDCY2
+                sta SID1_ATDCY3
+                sta SID2_ATDCY1
 
-                lda #$00                ; Susatain/Release = 0
-                sta SID_SUREL1
-                sta SID_SUREL2
-                sta SID_SUREL3
+                stz SID1_SUREL1         ; Susatain/Release = 0
+                stz SID1_SUREL2
+                stz SID1_SUREL3
+                stz SID2_SUREL1
 
                 ;lda #$21
-                ;sta SID_CTRL1
-                ;sta SID_CTRL2
-                ;sta SID_CTRL3
+                ;sta SID1_CTRL1
+                ;sta SID1_CTRL2
+                ;sta SID1_CTRL3
+                ;sta SID2_CTRL1
 
                 lda #$0F                ; Volume = 15 (max)
-                sta SID_SIGVOL
+                sta SID1_SIGVOL
+                sta SID2_SIGVOL
 
                 plx
                 pla
@@ -101,21 +101,20 @@ _next1          sta $AF_E400,X
 ;======================================
 InitLUT         .proc
                 php
-                phb
 
-                .m16i16
-                lda #Palette_end-Palette        ; Copy the palette to LUT0
-                ldx #<>Palette
-                ldy #<>GRPH_LUT0_PTR
-                mvn `Palette,`GRPH_LUT0_PTR
+;   TODO:
+                ;.m16i16
+                ;lda #Palette_end-Palette        ; Copy the palette to LUT0
+                ;ldx #<>Palette
+                ;ldy #<>GRPH_LUT0_PTR
+                ;mvn `Palette,`GRPH_LUT0_PTR
 
-                lda #Palette_end-Palette-64     ; ... LUT1
-                ldx #<>Palette+64
-                ldy #<>GRPH_LUT1_PTR
-                mvn `Palette,`GRPH_LUT1_PTR
+                ;lda #Palette_end-Palette-64     ; ... LUT1
+                ;ldx #<>Palette+64
+                ;ldy #<>GRPH_LUT1_PTR
+                ;mvn `Palette,`GRPH_LUT1_PTR
 
-                .m8i8
-                plb
+                ;.m8i8
                 plp
                 rts
                 .endproc
@@ -130,7 +129,6 @@ v_LUTSize       .var 64                 ; 4-byte color * 16 colors
 
                 pha
                 phx
-                .m8i8
 
                 ldx #$00
 _next1          lda Custom_LUT,x
@@ -174,33 +172,33 @@ Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green  [Editor Text bg]
 ;======================================
 InitSprites     .proc
                 php
-                phb
 
-                .m16i16
-                lda #StampSprites_end-StampSprites
-                sta zpSize
-                lda #$00
-                sta zpSize+2
+;   TODO:
+                ;.m16i16
+                ;lda #StampSprites_end-StampSprites
+                ;sta zpSize
+                ;lda #$00
+                ;sta zpSize+2
 
-                lda #<>SPR_Ballon       ; Set the source address
-                sta zpSource
-                lda #`SPR_Ballon
-                sta zpSource+2
+                ;lda #<>SPR_Ballon       ; Set the source address
+                ;sta zpSource
+                ;lda #`SPR_Ballon
+                ;sta zpSource+2
 
-                lda #<>(SPRITES-VRAM)   ; Set the destination address
-                sta zpDest
-                sta SP00_ADDR           ; And set the Vicky register
-                sta SP01_ADDR
+                ;lda #<>(SPRITES-VRAM)   ; Set the destination address
+                ;sta zpDest
+                ;sta SP00_ADDR           ; And set the Vicky register
+                ;sta SP01_ADDR
 
-                clc
-                adc #$1400              ; 5*1024
-                sta SP02_ADDR
-                sta SP03_ADDR
+                ;clc
+                ;adc #$1400              ; 5*1024
+                ;sta SP02_ADDR
+                ;sta SP03_ADDR
 
-                lda #`(SPRITES-VRAM)
-                sta zpDest+2
+                ;lda #`(SPRITES-VRAM)
+                ;sta zpDest+2
 
-                .m8
+                ;.m8
                 sta SP00_ADDR+2
                 sta SP01_ADDR+2
                 sta SP02_ADDR+2
@@ -208,18 +206,23 @@ InitSprites     .proc
 
                 jsr Copy2VRAM
 
-                .m16
-                lda #00
-                sta SP00_X_POS
-                sta SP00_Y_POS
-                sta SP01_X_POS
-                sta SP01_Y_POS
-                sta SP02_X_POS
-                sta SP02_Y_POS
-                sta SP03_X_POS
-                sta SP03_Y_POS
+                stz SP00_X_POS
+                stz SP00_X_POS+1
+                stz SP00_Y_POS
+                stz SP00_Y_POS+1
+                stz SP01_X_POS
+                stz SP01_X_POS+1
+                stz SP01_Y_POS
+                stz SP01_Y_POS+1
+                stz SP02_X_POS
+                stz SP02_X_POS+1
+                stz SP02_Y_POS
+                stz SP02_Y_POS+1
+                stz SP03_X_POS
+                stz SP03_X_POS+1
+                stz SP03_Y_POS
+                stz SP03_Y_POS+1
 
-                .m8
                 lda #scEnable
                 sta SP00_CTRL
                 sta SP02_CTRL
@@ -228,7 +231,6 @@ InitSprites     .proc
                 lda #scEnable|scLUT1
                 sta SP01_CTRL
 
-                plb
                 plp
                 rts
                 .endproc
@@ -238,7 +240,6 @@ InitSprites     .proc
 ;
 ;======================================
 CheckCollision  .proc
-                .m8i8
                 pha
                 phx
                 phy
@@ -290,17 +291,18 @@ _checkRock      ldy zpTemp2
 
                 sta P2PF,X
 
-                .m16
+                ;.m16
+                stz zpTemp1
                 txa
-                and #$FF
                 asl A
+                rol zpTemp1     ; TODO:
                 tay
                 lda zpSource
                 stz zpTemp2+1
                 clc
                 adc zpTemp2
                 sta P2PFaddr,Y
-                .m8
+                ;.m8
 
 _nextPlayer     dex
                 bpl _nextBomb
@@ -327,7 +329,6 @@ v_TextColor     .var $40
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   clear color
                 lda #<CS_COLOR_MEM_PTR
@@ -335,12 +336,12 @@ v_TextColor     .var $40
                 lda #>CS_COLOR_MEM_PTR
                 sta zpDest+1
                 lda #`CS_COLOR_MEM_PTR
-                sta zpDest+2
+                sta zpDest+2                ; TODO:
 
                 ldx #v_QtyPages
                 lda #v_TextColor
 _nextPageC      ldy #$00
-_next1C         sta [zpDest],Y
+_next1C         sta (zpDest),Y
 
                 iny
                 bne _next1C
@@ -355,12 +356,12 @@ _next1C         sta [zpDest],Y
                 lda #>CS_TEXT_MEM_PTR
                 sta zpDest+1
                 lda #`CS_TEXT_MEM_PTR
-                sta zpDest+2
+                sta zpDest+2                ; TODO:
 
                 ldx #v_QtyPages
                 lda #v_EmptyText
 _nextPageT      ldy #$00
-_next1T         sta [zpDest],Y
+_next1T         sta (zpDest),Y
 
                 iny
                 bne _next1T
@@ -390,18 +391,17 @@ v_RenderLine    .var 24*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
                 lda #<CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest
                 lda #>CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest+1
                 lda #`CS_COLOR_MEM_PTR+v_RenderLine
-                sta zpDest+2
+                sta zpDest+2                            ; TODO:
 
                 lda #v_TextColor
                 ldy #$00
-_next1          sta [zpDest],Y
+_next1          sta (zpDest),Y
 
                 iny
                 cpy #$F0                ; 6 lines
@@ -412,11 +412,11 @@ _next1          sta [zpDest],Y
                 lda #>CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest+1
                 lda #`CS_TEXT_MEM_PTR+v_RenderLine
-                sta zpDest+2
+                sta zpDest+2                            ; TODO:
 
                 lda #v_EmptyText
                 ldy #$00
-_next2          sta [zpDest],Y
+_next2          sta (zpDest),Y
 
                 iny
                 cpy #$F0                ; 6 lines
@@ -441,7 +441,6 @@ v_RenderLine    .var 2*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   reset color for the 40-char line
                 ldx #$FF
@@ -521,7 +520,6 @@ v_RenderLine    .var 24*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   reset color for the 40-char line
                 ldx #$FF
@@ -601,7 +599,6 @@ v_RenderLine    .var 24*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   reset color for twp 40-char lines
                 ldx #$FF
@@ -645,7 +642,6 @@ v_RenderLine    .var 26*CharResX
 ;---
 
                 php
-                .m8i8
 
 ;   reset color for the 40-char line
                 ldx #$FF
@@ -706,7 +702,6 @@ v_RenderLine    .var 27*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   reset color for the 40-char line
                 ldx #$FF
@@ -786,7 +781,6 @@ v_RenderLine    .var 26*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   reset color for the 40-char line
                 ldx #$FF
@@ -869,7 +863,6 @@ v_RenderLine    .var 27*CharResX
                 pha
                 phx
                 phy
-                .m8i8
 
 ;   if game is not in progress then exit
                 lda zpWaitForPlay
@@ -963,13 +956,15 @@ v_RenderLine    .var 13*CharResX
                 pha
                 phx
                 phy
-                .m8i16
+                ;.m8i16
 
-                ldx #$FFFF
-                ldy #$FFFF
+                ;ldx #$FFFF         ; TODO:
+                ;ldy #$FFFF
+                ldx #$FF
+                ldy #$FF
 _nextChar       inx
                 iny
-                cpy #440
+                ;cpy #440           ; TODO:
                 beq _XIT
 
                 lda CANYON,Y
@@ -998,9 +993,6 @@ _space          lda #$00
                 bra _nextChar
 
 _boulder        phy
-                xba
-                lda #$00
-                xba
                 tay
                 lda CanyonColors,Y
                 sta CS_COLOR_MEM_PTR+v_RenderLine,X
@@ -1011,8 +1003,7 @@ _boulder        phy
 
                 bra _nextChar
 
-_XIT            .m8i8
-                ply
+_XIT            ply
                 plx
                 pla
                 plp
@@ -1031,9 +1022,6 @@ _XIT            .m8i8
 ;======================================
 Copy2VRAM       .proc
                 php
-                .setbank `SDMA_SRC_ADDR
-                .setdp zpSource
-                .m8
 
     ; Set SDMA to go from system to video RAM, 1D copy
                 lda #sdcSysRAM_Src|sdcEnable
@@ -1043,26 +1031,30 @@ Copy2VRAM       .proc
                 lda #vdcSysRAM_Src|vdcEnable
                 sta VDMA_CTRL
 
-                .m16i8
                 lda zpSource            ; Set the source address
                 sta SDMA_SRC_ADDR
+                ldx zpSource+1
+                stx SDMA_SRC_ADDR+1
                 ldx zpSource+2
                 stx SDMA_SRC_ADDR+2
 
                 lda zpDest              ; Set the destination address
                 sta VDMA_DST_ADDR
+                ldx zpDest+1
+                stx VDMA_DST_ADDR+1
                 ldx zpDest+2
                 stx VDMA_DST_ADDR+2
 
-                .m16
                 lda zpSize              ; Set the size of the block
                 sta SDMA_SIZE
                 sta VDMA_SIZE
+                lda zpSize+1
+                sta SDMA_SIZE+1
+                sta VDMA_SIZE+1
                 lda zpSize+2
                 sta SDMA_SIZE+2
                 sta VDMA_SIZE+2
 
-                .m8
                 lda VDMA_CTRL           ; Start the VDMA
                 ora #vdcStart_TRF
                 sta VDMA_CTRL
@@ -1086,9 +1078,6 @@ wait_vdma       lda VDMA_STATUS         ; Get the VDMA status
                 sta SDMA0_CTRL
                 sta VDMA_CTRL
 
-                .setdp $0000
-                .setbank $00
-                .m8i8
                 plp
                 rts
 
@@ -1104,23 +1093,24 @@ InitIRQs        .proc
 
 ;   enable vertical blank interrupt
 
-                .m8i8
-                ldx #HandleIrq_END-HandleIrq
-_relocate       ;lda @l $024000,X       ; HandleIrq address
-                ;sta @l $002000,X       ; new address within Bank 00
+                ldx #HandleIrq.HandleIrq_END-HandleIrq
+_relocate       ;lda $024000,X       ; HandleIrq address
+                ;sta $002000,X       ; new address within Bank 00
                 ;dex
                 ;bpl _relocate
 
                 sei                     ; disable IRQ
 
-                .m16
-                ;lda @l vecIRQ
+                ;lda #<vecIRQ_BRK
                 ;sta IRQ_PRIOR
+                ;lda #>vecIRQ_BRK
+                ;sta IRQ_PRIOR+1
 
-                lda #<>HandleIrq
-                sta @l vecIRQ
+                lda #<HandleIrq
+                sta vecIRQ_BRK
+                lda #>HandleIrq
+                sta vecIRQ_BRK+1
 
-                .m8
                 lda #$07                ; reset consol
                 sta CONSOL
 
@@ -1128,13 +1118,13 @@ _relocate       ;lda @l $024000,X       ; HandleIrq address
                 sta InputFlags
                 stz InputType           ; joystick
 
-                lda @l INT_MASK_REG0
+                lda INT_MASK_REG0
                 and #~FNX0_INT00_SOF    ; enable Start-of-Frame IRQ
-                sta @l INT_MASK_REG0
+                sta INT_MASK_REG0
 
-                lda @l INT_MASK_REG1
+                lda INT_MASK_REG1
                 and #~FNX1_INT00_KBD    ; enable Keyboard IRQ
-                sta @l INT_MASK_REG1
+                sta INT_MASK_REG1
 
                 cli                     ; enable IRQ
 
@@ -1164,12 +1154,12 @@ SetFont         .proc
                 lda #>FONT_MEMORY_BANK0
                 sta zpDest+1
                 lda #`FONT_MEMORY_BANK0
-                sta zpDest+2
+                sta zpDest+2                ; TODO:
 
                 ldx #$07                ; 7 pages
 _nextPage       ldy #$00
-_next1          lda [zpSource],Y
-                sta [zpDest],Y
+_next1          lda (zpSource),Y
+                sta (zpDest),Y
 
                 iny
                 bne _next1

@@ -1,37 +1,34 @@
-HandleIrq       .m16i16
+HandleIrq       .proc
                 pha
                 phx
                 phy
 
-                .m8i8
-                lda @l INT_PENDING_REG1
-                and #FNX1_INT00_KBD
-                cmp #FNX1_INT00_KBD
-                bne _1
+                lda INT_PENDING_REG1
+                bit #FNX1_INT00_KBD
+                beq _1
 
-                jsl KeyboardHandler
+                jsr KeyboardHandler
 
-                lda @l INT_PENDING_REG1
-                sta @l INT_PENDING_REG1
+                lda INT_PENDING_REG1
+                sta INT_PENDING_REG1
 
-_1              lda @l INT_PENDING_REG0
-                and #FNX0_INT00_SOF
-                cmp #FNX0_INT00_SOF
-                bne _XIT
+_1              lda INT_PENDING_REG0
+                bit #FNX0_INT00_SOF
+                beq _XIT
 
-                jsl VbiHandler
+                jsr VbiHandler
 
-                lda @l INT_PENDING_REG0
-                sta @l INT_PENDING_REG0
+                lda INT_PENDING_REG0
+                sta INT_PENDING_REG0
 
-_XIT            .m16i16
-                ply
+_XIT            ply
                 plx
                 pla
 
-                .m8i8
 HandleIrq_END   rti
                 ;jmp IRQ_PRIOR
+
+                .endproc
 
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,13 +56,9 @@ KEY_DOWN        = $50
 KEY_CTRL        = $1D                   ; fire button
 ;---
 
-                .m16i16
                 pha
                 phx
                 phy
-
-                .m8i8
-                .setbank $00
 
                 lda KBD_INPT_BUF
                 pha
@@ -284,13 +277,10 @@ _8r             pla
 _CleanUpXIT     stz KEYCHAR
                 pla
 
-_XIT            .m16i16
-                ply
+_XIT            ply
                 plx
                 pla
-
-                .m8i8
-                rtl
+                rts
                 .endproc
 
 
@@ -298,13 +288,9 @@ _XIT            .m16i16
 ; Handle Vertical Blank Interrupt (SOF)
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 VbiHandler      .proc
-                .m16i16
                 pha
                 phx
                 phy
-
-                .m8i8
-                .setbank $00
 
                 lda JIFFYCLOCK
                 inc A
@@ -331,11 +317,8 @@ _1              lda JOYSTICK1           ; read joystick1
 _XIT            jsr RenderCanyon
                 jsr RenderScore
 
-                .m16i16
                 ply
                 plx
                 pla
-
-                .m8i8
-                rtl
+                rts
                 .endproc

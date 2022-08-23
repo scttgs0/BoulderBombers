@@ -1,5 +1,4 @@
-64tass  --m65816 \
-        --long-address \
+64tass  --m65c02 \
         --flat \
         --nostart \
         -o bbombers.pgx \
