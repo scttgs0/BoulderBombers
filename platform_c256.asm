@@ -172,6 +172,7 @@ Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green  [Editor Text bg]
 ;======================================
 InitSprites     .proc
                 php
+                pha
 
 ;   TODO:
                 ;.m16i16
@@ -231,6 +232,7 @@ InitSprites     .proc
                 lda #scEnable|scLUT1
                 sta SP01_CTRL
 
+                pla
                 plp
                 rts
                 .endproc
@@ -1081,7 +1083,13 @@ wait_vdma       lda VDMA_STATUS         ; Get the VDMA status
                 plp
                 rts
 
-vdma_err        brk
+vdma_err        lda #0                  ; Make sure DMA registers are cleared
+                sta SDMA0_CTRL
+                sta VDMA_CTRL
+
+                plp
+
+                jmp Copy2VRAM           ; retry
                 .endproc
 
 
@@ -1142,6 +1150,9 @@ SetFont         .proc
                 phx
                 phy
 
+;   DEBUG: helpful if you need to see the trace
+                ; bra _XIT
+
                 lda #<GameFont
                 sta zpSource
                 lda #>GameFont
@@ -1170,7 +1181,7 @@ _next1          lda (zpSource),Y
                 dex
                 bne _nextPage
 
-                ply
+_XIT            ply
                 plx
                 pla
                 plp
