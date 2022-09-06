@@ -4,7 +4,7 @@
 INIT            .proc
                 jsr Random_Seed
 
-                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode320
+                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode240
                 .frsMouse_off
                 .frsBorder_off
 

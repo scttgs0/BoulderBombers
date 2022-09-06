@@ -10,19 +10,29 @@ LINES_MAX               = $0015         ; 2-byte The number of rows in memory fo
 ;---------------------------------------
 
 MASTER_CTRL_L           = $D000
-mcTextOn            = $01               ; Enable the Text Mode
-mcOverlayOn         = $02               ; Enable the Overlay of the text mode on top of Graphic Mode (the Background Color is ignored)
-mcGraphicsOn        = $04               ; Enable the Graphic Mode
-mcBitmapOn          = $08               ; Enable the Bitmap Module In Vicky
-mcTileMapOn         = $10               ; Enable the Tile Module in Vicky
-mcSpriteOn          = $20               ; Enable the Sprite Module in Vicky
-mcDisableVideo      = $80               ; This will disable the Scanning of the Video hence giving 100% bandwith to the CPU
+mcTextOn            = $01               ; Enable Text Mode
+mcOverlayOn         = $02               ; Overlay Text on top of Graphics (Text Background Color is transparent)
+mcGraphicsOn        = $04               ; Enable Graphic Mode
+mcBitmapOn          = $08               ; Enable the Bitmap Module
+mcTileMapOn         = $10               ; Enable the Tile Module
+mcSpriteOn          = $20               ; Enable the Sprite Module
+mcGammaOn           = $40               ; Enable Gamma Correction
+mcDisableVideo      = $80               ; Disable the scanning of the video (hence giving 100% bandwith to the CPU)
 
 MASTER_CTRL_H           = $D001
-mcVideoMode640      = $00               ; 0 - 640x480 (Clock @ 25.175Mhz)
-mcVideoMode800      = $01               ; 1 - 800x600 (Clock @ 40Mhz)
-mcVideoMode320      = $02               ; 2 - 320x240 pixel-doubling (Clock @ 25.175Mhz)
-mcVideoMode400      = $03               ; 3 - 400x300 pixel-doubling (Clock @ 40Mhz)
+mcVideoMode240      = $00               ; 0 - 640x480 (Clock @ 60Mhz)                  - Text Mode only
+                                        ; 0 - 320x240 w/pixel-doubling (Clock @ 60Mhz) - Graphics/Text Mode
+mcVideoMode200      = $01               ; 1 - 640x400 (Clock @ 70Mhz)                  - Text Mode only
+                                        ; 1 - 320x200 w/pixel-doubling (Clock @ 70Mhz) - Graphics/Text Mode             
+mcTextXDouble       = $02               ; X Pixel Doubling - Text Mode only
+mcTextYDouble       = $04               ; Y Pixel Doubling - Text Mode only
+
+;---------------------------------------
+
+LAYER_ORDER_CTRL_0      = $D002
+LAYER_ORDER_CTRL_1      = $D003
+
+;---------------------------------------
 
 BORDER_CTRL             = $D004         ; Bit[0] - Enable (1 by default)
 bcEnable            = $01               ; Bit[4..6]: X Scroll Offset (Will scroll Left)
@@ -47,9 +57,17 @@ VKY_LINE_Y_POS_HI       = $D01B
 
 BITMAP0_CTRL            = $D100
 bmcEnable           = $01
+bmcLUT0             = $02
+bmcLUT1             = $04
+bmcLUT2             = $08
+bmcLUT3             = $10
 BITMAP0_START_ADDR      = $D101
+
 BITMAP1_CTRL            = $D108
 BITMAP1_START_ADDR      = $D109
+
+BITMAP2_CTRL            = $D110
+BITMAP2_START_ADDR      = $D111
 
 ;---------------------------------------
 
@@ -168,6 +186,11 @@ SID2_ENV3               = $D51C
 
 ;---------------------------------------
 
+KBD_INPT_BUF            = $D640
+irqKBD          = $01                   ; keyboard Interrupt
+
+;---------------------------------------
+
 INT_PENDING_REG0        = $D660
 INT_PENDING_REG1        = $D661
 INT_MASK_REG0           = $D66C
@@ -201,7 +224,7 @@ BG_CHAR_LUT_PTR		    = $D840         ; 16 entries = ARGB
 
 ;---------------------------------------
 
-SP00_CTRL               = $DA00
+SP00_CTRL               = $D900
 scEnable            = $01
 
 scLUT0              = $00
@@ -221,29 +244,24 @@ scDEPTH4            = $40
 scDEPTH5            = $50
 scDEPTH6            = $60
 
-SP00_ADDR               = $DA01      ; [long]
-SP00_X_POS              = $DA04      ; [word]
-SP00_Y_POS              = $DA06      ; [word]
+SP00_ADDR               = $D901      ; [long]
+SP00_X_POS              = $D904      ; [word]
+SP00_Y_POS              = $D906      ; [word]
 
-SP01_CTRL               = $DA08
-SP01_ADDR               = $DA09
-SP01_X_POS              = $DA0C
-SP01_Y_POS              = $DA0E
+SP01_CTRL               = $D908
+SP01_ADDR               = $D909
+SP01_X_POS              = $D90C
+SP01_Y_POS              = $D90E
 
-SP02_CTRL               = $DA10
-SP02_ADDR               = $DA11
-SP02_X_POS              = $DA14
-SP02_Y_POS              = $DA16
+SP02_CTRL               = $D910
+SP02_ADDR               = $D911
+SP02_X_POS              = $D914
+SP02_Y_POS              = $D916
 
-SP03_CTRL               = $DA18
-SP03_ADDR               = $DA19
-SP03_X_POS              = $DA1C
-SP03_Y_POS              = $DA1E
-
-;---------------------------------------
-
-KBD_INPT_BUF            = $D640
-irqKBD          = $01                   ; keyboard Interrupt
+SP03_CTRL               = $D918
+SP03_ADDR               = $D919
+SP03_X_POS              = $D91C
+SP03_Y_POS              = $D91E
 
 
 ;---------------------------------------
