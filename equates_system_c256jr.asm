@@ -30,7 +30,16 @@ mcTextYDouble       = $04               ; Y Pixel Doubling - Text Mode only
 ;---------------------------------------
 
 LAYER_ORDER_CTRL_0      = $D002
+locLayer0_BM0       = $00
+locLayer0_BM1       = $01
+locLayer0_BM2       = $02
+locLayer1_BM0       = $00
+locLayer1_BM1       = $01
+locLayer1_BM2       = $02
 LAYER_ORDER_CTRL_1      = $D003
+locLayer2_BM0       = $00
+locLayer2_BM1       = $01
+locLayer2_BM2       = $02
 
 ;---------------------------------------
 
