@@ -1,3 +1,4 @@
+
 ;--------------------------------------
 ;
 ;--------------------------------------
@@ -8,19 +9,11 @@ INIT            .proc
                 .frsMouse_off
                 .frsBorder_off
 
-                lda #<CharResX
-                sta COLS_PER_LINE
-                lda #>CharResX
-                sta COLS_PER_LINE+1
-                lda #CharResX
-                sta COLS_VISIBLE
-
-                lda #<CharResY
-                sta LINES_MAX
-                lda #>CharResY
-                sta LINES_MAX+1
-                lda #CharResY
-                sta LINES_VISIBLE
+                stz BITMAP0_CTRL        ; disable all bitmaps
+                stz BITMAP1_CTRL
+                stz BITMAP2_CTRL
+                stz LAYER_ORDER_CTRL_0
+                stz LAYER_ORDER_CTRL_1
 
                 jsr InitLUT
                 jsr InitCharLUT
@@ -68,14 +61,10 @@ RESTART         .proc
                 ldy #90
                 sty PlayerPosY+1
 
-                ;.m16
-                ;txa
-                ;and #$FF
                 stx SP00_Y_POS
-                ;tya
-                ;and #$FF
+                stz SP00_Y_POS+1
                 sty SP01_Y_POS
-                ;.m8
+                stz SP01_Y_POS+1
 
                 lda #0                  ; turn off explosions, and bkg sound
                 sta SID1_CTRL3
@@ -136,15 +125,16 @@ _moveT          lda onScreen            ; if on screen, then move
                 lda ShipTypeTbl,X
                 sta zpShipType          ; & set it
 
-                ;.m16i8
                 txa
                 and #1
-                asl A
+                asl A                   ; *2
                 tax
                 lda ShipSprOffset,X
                 sta SP00_ADDR
                 sta SP01_ADDR
-                ;.m8
+                lda ShipSprOffset+1,X
+                sta SP00_ADDR+1
+                sta SP01_ADDR+1
 
 _moveIt         phx
                 jsr MovePlayer          ; move players
