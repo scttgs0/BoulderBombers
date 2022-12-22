@@ -1,3 +1,4 @@
+
 frsMouse_off    .macro
                 stz MOUSE_PTR_CTRL
                 .endmacro

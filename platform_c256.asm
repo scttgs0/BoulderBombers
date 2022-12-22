@@ -1,3 +1,4 @@
+
 VRAM            = $B00000               ; First byte of video RAM
 
 SPRITES         = VRAM
@@ -145,22 +146,22 @@ _next1          lda Custom_LUT,x
 
 ;--------------------------------------
 
-Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green  [Editor Text bg]
-                .dword $00DDDDDD        ; 1: Gainsboro          [Editor Text fg]
-                .dword $00143382        ; 2: Saint Patrick Blue [Editor Info bg][Dialog bg]
-                .dword $006B89D7        ; 3: Blue Gray          [Editor Info fg][Dialog fg]
-                .dword $00693972        ; 4: Indigo             [Monitor Info bg]
-                .dword $00B561C2        ; 5: Deep Fuchsia       [Monitor Info fg][Window Split]
-                .dword $00352BB0        ; 6: Blue Pigment       [Reserved Word]
-                .dword $007A7990        ; 7: Fern Green         [Comment]
-                .dword $0074D169        ; 8: Moss Green         [Constant]
-                .dword $00E6E600        ; 9: Peridot            [String]
-                .dword $00C563BD        ; A: Pastel Violet      [Loop Control]
-                .dword $005B8B46        ; B: Han Blue           [ProcFunc Name]
-                .dword $00BC605E        ; C: Medium Carmine     [Define]
-                .dword $00C9A765        ; D: Satin Sheen Gold   [Type]
-                .dword $0004750E        ; E: Hookers Green      [Highlight]
-                .dword $00BC605E        ; F: Medium Carmine     [Warning]
+Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green
+                .dword $00DDDDDD        ; 1: Gainsboro
+                .dword $00143382        ; 2: Saint Patrick Blue
+                .dword $006B89D7        ; 3: Blue Gray
+                .dword $00693972        ; 4: Indigo
+                .dword $00B561C2        ; 5: Deep Fuchsia
+                .dword $00352BB0        ; 6: Blue Pigment
+                .dword $007A7990        ; 7: Fern Green
+                .dword $0074D169        ; 8: Moss Green
+                .dword $00E6E600        ; 9: Peridot
+                .dword $00C563BD        ; A: Pastel Violet
+                .dword $005B8B46        ; B: Han Blue
+                .dword $00BC605E        ; C: Medium Carmine
+                .dword $00C9A765        ; D: Satin Sheen Gold
+                .dword $0004750E        ; E: Hookers Green
+                .dword $00BC605E        ; F: Medium Carmine
 
                 .endproc
 

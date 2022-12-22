@@ -1,3 +1,4 @@
+
 mult7           .macro
                 sta zpTemp1             ; *1
                 asl A

@@ -1,3 +1,4 @@
+
 ;--------------------------------------
 ; bomb movement, hit checks,
 ; score and highscore set

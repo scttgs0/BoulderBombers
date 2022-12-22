@@ -1,3 +1,4 @@
+
 ;***********************
 ;*                     *
 ;*  'BOULDER BOMBERS'  *
@@ -31,13 +32,15 @@
 
 ;--------------------------------------
 ;--------------------------------------
-                * = INIT-40
+                * = INIT-32
 ;--------------------------------------
                 .text "PGX"
                 .byte $01
                 .dword BOOT
 
-BOOT            cld
+BOOT            cld                     ; clear decimal
+                ldx #$FF                ; initialize the stack
+                txs
                 jmp INIT
 
 
