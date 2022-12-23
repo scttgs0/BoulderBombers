@@ -1097,6 +1097,47 @@ vdma_err        lda #0                  ; Make sure DMA registers are cleared
 ;======================================
 ;
 ;======================================
+InitSystemVectors .proc
+                pha
+                sei
+
+                lda #<DefaultHandler
+                sta vecCOP
+                lda #>DefaultHandler
+                sta vecCOP+1
+
+                lda #<DefaultHandler
+                sta vecABORT
+                lda #>DefaultHandler
+                sta vecABORT+1
+
+                lda #<DefaultHandler
+                sta vecNMI
+                lda #>DefaultHandler
+                sta vecNMI+1
+
+                lda #<DefaultHandler
+                sta vecRESET
+                lda #>DefaultHandler
+                sta vecRESET+1
+
+                lda #<DefaultHandler
+                sta vecIRQ_BRK
+                lda #>DefaultHandler
+                sta vecIRQ_BRK+1
+
+                cli
+                pla
+                .endproc
+
+;--------------------------------------
+
+DefaultHandler  rti
+
+
+;======================================
+;
+;======================================
 InitIRQs        .proc
                 pha
 

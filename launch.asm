@@ -3,6 +3,9 @@
 ;
 ;--------------------------------------
 INIT            .proc
+;   set system vectors
+                ;--jsr InitSystemVectors
+
                 jsr Random_Seed
 
                 .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode240
