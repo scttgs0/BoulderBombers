@@ -1,3 +1,4 @@
+
 VRAM            = $B00000               ; First byte of video RAM
 
 SPRITES         = VRAM
@@ -1103,7 +1104,6 @@ InitIRQs        .proc
                 pha
 
 ;   enable vertical blank interrupt
-
                 .m8i8
                 ldx #HandleIrq.HandleIrq_END-HandleIrq
 _relocate       ;lda @l $024000,X       ; HandleIrq address
@@ -1152,6 +1152,10 @@ SetFont         .proc
                 phx
                 phy
 
+;   DEBUG: helpful if you need to see the trace
+                ; bra _XIT
+
+                .m8i8
                 lda #<GameFont
                 sta zpSource
                 lda #>GameFont
@@ -1180,7 +1184,7 @@ _next1          lda [zpSource],Y
                 dex
                 bne _nextPage
 
-                ply
+_XIT            ply
                 plx
                 pla
                 plp
