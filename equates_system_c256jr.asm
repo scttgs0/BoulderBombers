@@ -10,6 +10,30 @@ LINES_MAX               = $0015         ; 2-byte The number of rows in memory fo
 
 ;---------------------------------------
 
+MMU_CTRL                = $0000
+mmuActivePage0      = $00
+mmuActivePage1      = $01
+mmuActivePage2      = $02
+mmuActivePage3      = $03
+mmuEditPage0        = $00
+mmuEditPage1        = $10
+mmuEditPage2        = $20
+mmuEditPage3        = $30
+mmuEditMode         = $80
+
+IOPAGE_CTRL             = $0001
+
+MMUBlock0               = $0008
+MMUBlock1               = $0009
+MMUBlock2               = $000A
+MMUBlock3               = $000B
+MMUBlock4               = $000C
+MMUBlock5               = $000D
+MMUBlock6               = $000E
+MMUBlock7               = $000F
+
+;---------------------------------------
+
 MASTER_CTRL_L           = $D000
 mcTextOn            = $01               ; Enable Text Mode
 mcOverlayOn         = $02               ; Overlay Text on top of Graphics (Text Background Color is transparent)

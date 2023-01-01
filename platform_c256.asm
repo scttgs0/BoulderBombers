@@ -1116,9 +1116,9 @@ InitSystemVectors .proc
                 lda #>DefaultHandler
                 sta vecNMI+1
 
-                lda #<DefaultHandler
+                lda #<INIT
                 sta vecRESET
-                lda #>DefaultHandler
+                lda #>INIT
                 sta vecRESET+1
 
                 lda #<DefaultHandler
@@ -1128,11 +1128,48 @@ InitSystemVectors .proc
 
                 cli
                 pla
+                rts
                 .endproc
 
 ;--------------------------------------
 
 DefaultHandler  rti
+
+
+;======================================
+;
+;======================================
+InitMMU         .proc
+                pha
+                sei
+
+                lda #mmuEditMode|mmuEditPage0|mmuActivePage0
+                sta MMU_CTRL
+
+                lda #$00                ; [0000:1FFF]
+                sta MMUBlock0
+                lda #$20                ; [2000:3FFF]
+                sta MMUBlock1
+                lda #$40                ; [4000:5FFF]
+                sta MMUBlock2
+                lda #$60                ; [6000:7FFF]
+                sta MMUBlock3
+                lda #$80                ; [8000:9FFF]
+                sta MMUBlock4
+                lda #$A0                ; [A000:BFFF]
+                sta MMUBlock5
+                lda #$C0                ; [C000:DFFF]
+                sta MMUBlock6
+                lda #$E0                ; [E000:FFFF]
+                sta MMUBlock7
+
+                lda #mmuActivePage0
+                sta MMU_CTRL
+
+                cli
+                pla
+                rts
+                .endproc
 
 
 ;======================================

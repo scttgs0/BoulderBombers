@@ -30,18 +30,18 @@
                 .include "macros_game.asm"
 
 
-;--------------------------------------
-;--------------------------------------
-                * = INIT-32
-;--------------------------------------
-                .text "PGX"
-                .byte $01
-                .dword BOOT
+; ;--------------------------------------
+; ;--------------------------------------
+;                 * = INIT-32
+; ;--------------------------------------
+;                 .text "PGX"
+;                 .byte $01
+;                 .dword BOOT
 
-BOOT            cld                     ; clear decimal
-                ldx #$FF                ; initialize the stack
-                txs
-                jmp INIT
+; BOOT            cld                     ; clear decimal
+;                 ldx #$FF                ; initialize the stack
+;                 txs
+;                 jmp INIT
 
 
 ;--------------------------------------
