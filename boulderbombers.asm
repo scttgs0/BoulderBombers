@@ -20,9 +20,9 @@
 
                 .cpu "65c02"
 
-                .include "equates_system_c256jr.asm"
-                .include "equates_zeropage.asm"
-                .include "equates_game.asm"
+                .include "equates_system_c256jr.inc"
+                .include "equates_zeropage.inc"
+                .include "equates_game.inc"
 
                 .include "macros_frs_jr_graphic.asm"
                 .include "macros_frs_jr_mouse.asm"
