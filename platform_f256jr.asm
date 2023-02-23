@@ -1,57 +1,99 @@
 
-VRAM            = $B00000               ; First byte of video RAM
+;======================================
+; seed = quick and dirty
+;======================================
+RandomSeedQuick .proc
+                lda RTC_MIN
+                sta RNG_SEED_HI
 
-SPRITES         = VRAM
-BITMAP          = $B30000
-BITMAPTXT0      = $B6F200
-BITMAPTXT1      = $B71A00
-BITMAPTXT2      = $B74C00
-BITMAPTXT3      = $B31400
+                lda RTC_SEC
+                sta RNG_SEED_LO
+
+                lda #rcEnable|rcDV      ; cycle the DV bit
+                sta RNG_CTRL
+                lda #rcEnable
+                sta RNG_CTRL
+                .endproc
 
 
 ;======================================
 ; seed = elapsed seconds this hour
 ;======================================
-Random_Seed     .proc
+RandomSeed      .proc
                 lda RTC_MIN
+                jsr Bcd2Bin
                 sta RND_MIN
+
                 lda RTC_SEC
+                jsr Bcd2Bin
                 sta RND_SEC
 
 ;   elapsed minutes * 60
                 lda RND_MIN
-                asl A
-                asl A
+                asl
+                asl
                 pha
-                asl A
+                asl
                 pha
-                asl A
+                asl
                 pha
-                asl A
+                asl
                 sta RND_RESULT      ; *32
+
                 pla
                 clc
                 adc RND_RESULT      ; *16
                 sta RND_RESULT
+
                 pla
                 clc
                 adc RND_RESULT      ; *8
                 sta RND_RESULT
+
                 pla
                 clc
                 adc RND_RESULT      ; *4
                 sta RND_RESULT
 
-;   + elapsed seconds
+;   add the elapsed seconds
+                clc
                 lda RND_SEC
                 adc RND_RESULT
 
-                sta GABE_RNG_SEED_LO
+                sta RNG_SEED_LO
+                stz RNG_SEED_HI
 
-                lda #grcEnable|grcDV
-                sta GABE_RNG_CTRL
-                lda #grcEnable
-                sta GABE_RNG_CTRL
+                lda #rcEnable|rcDV      ; cycle the DV bit
+                sta RNG_CTRL
+                lda #rcEnable
+                sta RNG_CTRL
+                .endproc
+
+
+;======================================
+; Convert BCD to Binary
+;======================================
+Bcd2Bin         .proc
+                pha
+
+;   upper-nibble * 10
+                lsr                     ; n*8
+                pha
+                lsr
+                lsr
+                sta zpTemp1             ; n*2
+
+                pla
+                clc
+                adc zpTemp1
+                sta zpTemp1
+
+;   add the lower-nibble
+                pla
+                and #$0F
+                clc
+                adc zpTemp1
+
                 .endproc
 
 
@@ -62,11 +104,11 @@ InitSID         .proc
                 pha
                 phx
 
-;   reset the SID
-                lda #0
-                ldx #$18
-_next1          sta $D400,X
-                sta $D500,X
+                lda #0                  ; reset the SID registers
+                ldx #$1F
+_next1          sta SID1_BASE,X
+                sta SID2_BASE,X
+
                 dex
                 bpl _next1
 
@@ -76,7 +118,7 @@ _next1          sta $D400,X
                 sta SID1_ATDCY3
                 sta SID2_ATDCY1
 
-                stz SID1_SUREL1         ; Susatain/Release = 0
+                stz SID1_SUREL1         ; Susatain/Release = 0 [square wave]
                 stz SID1_SUREL2
                 stz SID1_SUREL3
                 stz SID2_SUREL1
@@ -87,7 +129,7 @@ _next1          sta $D400,X
                 ;sta SID1_CTRL3
                 ;sta SID2_CTRL1
 
-                lda #$0F                ; Volume = 15 (max)
+                lda #$08                ; Volume = 8 (mid-range)
                 sta SID1_SIGVOL
                 sta SID2_SIGVOL
 
@@ -98,55 +140,51 @@ _next1          sta $D400,X
 
 
 ;======================================
-; Create the lookup table (LUT)
+; Initialize PSG
 ;======================================
-InitLUT         .proc
-                php
+InitPSG         .proc
+                pha
+                phx
 
-;   TODO:
-                ;.m16i16
-                ;lda #Palette_end-Palette        ; Copy the palette to LUT0
-                ;ldx #<>Palette
-                ;ldy #<>GRPH_LUT0_PTR
-                ;mvn `Palette,`GRPH_LUT0_PTR
+                lda #0                  ; reset the PSG registers
+                ldx #$07
+_next1          sta PSG1_BASE,X
+                sta PSG2_BASE,X
 
-                ;lda #Palette_end-Palette-64     ; ... LUT1
-                ;ldx #<>Palette+64
-                ;ldy #<>GRPH_LUT1_PTR
-                ;mvn `Palette,`GRPH_LUT1_PTR
+                dex
+                bpl _next1
 
-                ;.m8i8
-                plp
+                plx
+                pla
                 rts
                 .endproc
 
 
 ;======================================
-; Initialize the CHAR_LUT tables
+; Create the palette lookup table (LUT)
 ;======================================
-InitCharLUT     .proc
-v_LUTSize       .var 64                 ; 4-byte color * 16 colors
-;---
-
+InitGfxPalette  .proc
                 pha
-                phx
+                phy
 
-                ldx #$00
-_next1          lda Custom_LUT,x
-                sta FG_CHAR_LUT_PTR,x
-                sta BG_CHAR_LUT_PTR,x
+;   switch to graphic map
+                lda #$01
+                sta IOPAGE_CTRL
 
-                inx
-                cpx #v_LUTSize
-                bne _next1
+                ldy #$3F
+_next1          lda _Custom_LUT,Y
+                sta GRPH_LUT0_PTR,Y
 
-                plx
+                dey
+                bpl _next1
+
+                ply
                 pla
                 rts
 
 ;--------------------------------------
 
-Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green
+_Custom_LUT     .dword $00282828        ; 0: Dark Jungle Green
                 .dword $00DDDDDD        ; 1: Gainsboro
                 .dword $00143382        ; 2: Saint Patrick Blue
                 .dword $006B89D7        ; 3: Blue Gray
@@ -167,6 +205,32 @@ Custom_LUT      .dword $00282828        ; 0: Dark Jungle Green
 
 
 ;======================================
+; Initialize the CHAR_LUT tables
+;======================================
+InitCharPalette .proc
+                pha
+                phy
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ldy #$3F
+_next1          lda Palette,Y
+                sta FG_CHAR_LUT_PTR,Y
+
+                lda Palette+64,Y
+                sta BG_CHAR_LUT_PTR,Y
+
+                dey
+                bpl _next1
+
+                ply
+                pla
+                rts
+                .endproc
+
+
+;======================================
 ; Initialize the Sprite layer
 ;--------------------------------------
 ; sprites dimensions are 32x32 (1024)
@@ -175,55 +239,45 @@ InitSprites     .proc
                 php
                 pha
 
-;   TODO:
-                ;.m16i16
-                ;lda #StampSprites_end-StampSprites
-                ;sta zpSize
-                ;lda #$00
-                ;sta zpSize+2
+;   setup player sprites (sprite-00 & sprint-01)
+                lda #<SPR_Ballon
+                sta SP00_ADDR
+                sta SP01_ADDR
+                lda #>SPR_Ballon
+                sta SP00_ADDR+1
+                sta SP01_ADDR+1
+                stz SP00_ADDR+2
+                stz SP01_ADDR+2
 
-                ;lda #<>SPR_Ballon       ; Set the source address
-                ;sta zpSource
-                ;lda #`SPR_Ballon
-                ;sta zpSource+2
+                stz SP00_X
+                stz SP00_X+1
+                stz SP00_Y
+                stz SP00_Y+1
 
-                ;lda #<>(SPRITES-VRAM)   ; Set the destination address
-                ;sta zpDest
-                ;sta SP00_ADDR           ; And set the Vicky register
-                ;sta SP01_ADDR
+                stz SP01_X
+                stz SP01_X+1
+                stz SP01_Y
+                stz SP01_Y+1
 
-                ;clc
-                ;adc #$1400              ; 5*1024
-                ;sta SP02_ADDR
-                ;sta SP03_ADDR
+;   setup bomb sprites (sprite-02 & sprint-03)
+                lda #<SPR_Bomb
+                sta SP02_ADDR
+                sta SP03_ADDR
+                lda #>SPR_Bomb
+                sta SP02_ADDR+1
+                sta SP03_ADDR+1
+                stz SP02_ADDR+2
+                stz SP03_ADDR+2
 
-                ;lda #`(SPRITES-VRAM)
-                ;sta zpDest+2
+                stz SP02_X
+                stz SP02_X+1
+                stz SP02_Y
+                stz SP02_Y+1
 
-                ;.m8
-                sta SP00_ADDR+2
-                sta SP01_ADDR+2
-                sta SP02_ADDR+2
-                sta SP03_ADDR+2
-
-                jsr Copy2VRAM
-
-                stz SP00_X_POS
-                stz SP00_X_POS+1
-                stz SP00_Y_POS
-                stz SP00_Y_POS+1
-                stz SP01_X_POS
-                stz SP01_X_POS+1
-                stz SP01_Y_POS
-                stz SP01_Y_POS+1
-                stz SP02_X_POS
-                stz SP02_X_POS+1
-                stz SP02_Y_POS
-                stz SP02_Y_POS+1
-                stz SP03_X_POS
-                stz SP03_X_POS+1
-                stz SP03_Y_POS
-                stz SP03_Y_POS+1
+                stz SP03_X
+                stz SP03_X+1
+                stz SP03_Y
+                stz SP03_Y+1
 
                 lda #scEnable
                 sta SP00_CTRL
@@ -297,7 +351,7 @@ _checkRock      ldy zpTemp2
                 ;.m16
                 stz zpTemp1
                 txa
-                asl A
+                asl
                 rol zpTemp1     ; TODO:
                 tay
                 lda zpSource
@@ -333,43 +387,50 @@ v_TextColor     .var $40
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   clear color
                 lda #<CS_COLOR_MEM_PTR
                 sta zpDest
                 lda #>CS_COLOR_MEM_PTR
                 sta zpDest+1
-                lda #`CS_COLOR_MEM_PTR
-                sta zpDest+2                ; TODO:
+                stz zpDest+2
 
                 ldx #v_QtyPages
                 lda #v_TextColor
 _nextPageC      ldy #$00
-_next1C         sta (zpDest),Y
+_nextByteC      sta (zpDest),Y
 
                 iny
-                bne _next1C
+                bne _nextByteC
 
                 inc zpDest+1            ; advance to next memory page
+
                 dex
                 bne _nextPageC
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
 
 ;   clear text
                 lda #<CS_TEXT_MEM_PTR
                 sta zpDest
                 lda #>CS_TEXT_MEM_PTR
                 sta zpDest+1
-                lda #`CS_TEXT_MEM_PTR
-                sta zpDest+2                ; TODO:
 
                 ldx #v_QtyPages
                 lda #v_EmptyText
 _nextPageT      ldy #$00
-_next1T         sta (zpDest),Y
+_nextByteT      sta (zpDest),Y
 
                 iny
-                bne _next1T
+                bne _nextByteT
 
                 inc zpDest+1            ; advance to next memory page
+
                 dex
                 bne _nextPageT
 
@@ -395,12 +456,16 @@ v_RenderLine    .var 24*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
+;   text color
                 lda #<CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest
                 lda #>CS_COLOR_MEM_PTR+v_RenderLine
                 sta zpDest+1
-                lda #`CS_COLOR_MEM_PTR+v_RenderLine
-                sta zpDest+2                            ; TODO:
+                stz zpDest+2
 
                 lda #v_TextColor
                 ldy #$00
@@ -410,12 +475,15 @@ _next1          sta (zpDest),Y
                 cpy #$F0                ; 6 lines
                 bne _next1
 
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
                 lda #<CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest
                 lda #>CS_TEXT_MEM_PTR+v_RenderLine
                 sta zpDest+1
-                lda #`CS_TEXT_MEM_PTR+v_RenderLine
-                sta zpDest+2                            ; TODO:
+                stz zpDest+2
 
                 lda #v_EmptyText
                 ldy #$00
@@ -445,6 +513,10 @@ v_RenderLine    .var 2*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -460,7 +532,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -485,7 +563,7 @@ _space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
 ;   (ascii-30)*2+$A0
 _number         sec
                 sbc #$30
-                asl A
+                asl
 
                 clc
                 adc #$A0
@@ -524,6 +602,10 @@ v_RenderLine    .var 24*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -539,7 +621,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -564,7 +652,7 @@ _space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
 ;   (ascii-30)*2+$A0
 _number         sec
                 sbc #$30
-                asl A
+                asl
 
                 clc
                 adc #$A0
@@ -603,6 +691,10 @@ v_RenderLine    .var 24*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for twp 40-char lines
                 ldx #$FF
                 ldy #$FF
@@ -617,7 +709,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -646,6 +744,10 @@ v_RenderLine    .var 26*CharResX
 
                 php
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -661,7 +763,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -706,6 +814,10 @@ v_RenderLine    .var 27*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -721,7 +833,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -746,7 +864,7 @@ _space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
 ;   (ascii-30)*2+$A0
 _number         sec
                 sbc #$30
-                asl A
+                asl
 
                 clc
                 adc #$A0
@@ -785,6 +903,10 @@ v_RenderLine    .var 26*CharResX
                 phx
                 phy
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -800,7 +922,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -825,7 +953,7 @@ _space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
 ;   (ascii-30)*2+$A0
 _number         sec
                 sbc #$30
-                asl A
+                asl
 
                 clc
                 adc #$A0
@@ -871,6 +999,10 @@ v_RenderLine    .var 27*CharResX
                 lda zpWaitForPlay
                 bne _XIT
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
 ;   reset color for the 40-char line
                 ldx #$FF
                 ldy #$FF
@@ -886,7 +1018,13 @@ _nextColor      inx
                 bra _nextColor
 
 ;   process the text
-_processText    ldx #$FF
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
                 ldy #$FF
 _nextChar       inx
                 iny
@@ -914,7 +1052,7 @@ _space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
 ;   (ascii-30)*2+$A0
 _number         sec
                 sbc #$30
-                asl A
+                asl
 
                 clc
                 adc #$A0
@@ -981,25 +1119,54 @@ _nextChar       inx
 _earth          eor #$80
                 pha
 
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
                 lda #$E0
                 sta CS_COLOR_MEM_PTR+v_RenderLine,X
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
 
                 pla
                 sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_space          lda #$00
+_space
+
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
+                lda #$00
                 sta CS_COLOR_MEM_PTR+v_RenderLine,X
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
                 sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_boulder        phy
+_boulder
+
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
+                phy
                 tay
                 lda CanyonColors,Y
                 sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 ply
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
 
                 lda #$01
                 sta CS_TEXT_MEM_PTR+v_RenderLine,X
@@ -1015,91 +1182,15 @@ _XIT            ply
 
 
 ;======================================
-; Copye data from system RAM to VRAM
-;--------------------------------------
-;   zpSource    address of source data
-;               (system RAM)
-;   zpDest      address of destination
-;               (video RAM)
-;   zpSize      number of bytes
-;======================================
-Copy2VRAM       .proc
-                php
-
-    ; Set SDMA to go from system to video RAM, 1D copy
-                lda #sdcSysRAM_Src|sdcEnable
-                sta SDMA0_CTRL
-
-    ; Set VDMA to go from system to video RAM, 1D copy
-                lda #vdcSysRAM_Src|vdcEnable
-                sta VDMA_CTRL
-
-                lda zpSource            ; Set the source address
-                sta SDMA_SRC_ADDR
-                ldx zpSource+1
-                stx SDMA_SRC_ADDR+1
-                ldx zpSource+2
-                stx SDMA_SRC_ADDR+2
-
-                lda zpDest              ; Set the destination address
-                sta VDMA_DST_ADDR
-                ldx zpDest+1
-                stx VDMA_DST_ADDR+1
-                ldx zpDest+2
-                stx VDMA_DST_ADDR+2
-
-                lda zpSize              ; Set the size of the block
-                sta SDMA_SIZE
-                sta VDMA_SIZE
-                lda zpSize+1
-                sta SDMA_SIZE+1
-                sta VDMA_SIZE+1
-                lda zpSize+2
-                sta SDMA_SIZE+2
-                sta VDMA_SIZE+2
-
-                lda VDMA_CTRL           ; Start the VDMA
-                ora #vdcStart_TRF
-                sta VDMA_CTRL
-
-                lda SDMA0_CTRL          ; Start the SDMA
-                ora #sdcStart_TRF
-                sta SDMA0_CTRL
-
-                nop                     ; VDMA involving system RAM will stop the processor
-                nop                     ; These NOPs give Vicky time to initiate the transfer and pause the processor
-                nop                     ; Note: even interrupt handling will be stopped during the DMA
-                nop
-
-wait_vdma       lda VDMA_STATUS         ; Get the VDMA status
-                bit #vdsSize_Err|vdsDst_Add_Err|vdsSrc_Add_Err
-                bne vdma_err            ; Go to monitor if there is a VDMA error
-                bit #vdsVDMA_IPS        ; Is it still in process?
-                bne wait_vdma           ; Yes: keep waiting
-
-                lda #0                  ; Make sure DMA registers are cleared
-                sta SDMA0_CTRL
-                sta VDMA_CTRL
-
-                plp
-                rts
-
-vdma_err        lda #0                  ; Make sure DMA registers are cleared
-                sta SDMA0_CTRL
-                sta VDMA_CTRL
-
-                plp
-
-                jmp Copy2VRAM           ; retry
-                .endproc
-
-
-;======================================
 ;
 ;======================================
 InitSystemVectors .proc
                 pha
                 sei
+
+                cld                     ; clear decimal
+                ldx #$FF                ; initialize the stack
+                txs
 
                 lda #<DefaultHandler
                 sta vecCOP
@@ -1131,8 +1222,10 @@ InitSystemVectors .proc
                 rts
                 .endproc
 
-;--------------------------------------
 
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Default IRQ Handler
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DefaultHandler  rti
 
 
@@ -1143,27 +1236,27 @@ InitMMU         .proc
                 pha
                 sei
 
-                lda #mmuEditMode|mmuEditPage0|mmuActivePage0
+                lda #mmuEditMode|mmuEditPage0|mmuPage0
                 sta MMU_CTRL
 
                 lda #$00                ; [0000:1FFF]
-                sta MMUBlock0
+                sta MMU_Block0
                 lda #$20                ; [2000:3FFF]
-                sta MMUBlock1
+                sta MMU_Block1
                 lda #$40                ; [4000:5FFF]
-                sta MMUBlock2
+                sta MMU_Block2
                 lda #$60                ; [6000:7FFF]
-                sta MMUBlock3
+                sta MMU_Block3
                 lda #$80                ; [8000:9FFF]
-                sta MMUBlock4
+                sta MMU_Block4
                 lda #$A0                ; [A000:BFFF]
-                sta MMUBlock5
+                sta MMU_Block5
                 lda #$C0                ; [C000:DFFF]
-                sta MMUBlock6
+                sta MMU_Block6
                 lda #$E0                ; [E000:FFFF]
-                sta MMUBlock7
+                sta MMU_Block7
 
-                lda #mmuActivePage0
+                lda #mmuPage0
                 sta MMU_CTRL
 
                 cli
@@ -1236,15 +1329,16 @@ SetFont         .proc
                 sta zpSource
                 lda #>GameFont
                 sta zpSource+1
-                lda #`GameFont
-                sta zpSource+2
+
+;   switch to charset map
+                ;lda #iopPage1
+                ;sta IOPAGE_CTRL
 
                 lda #<FONT_MEMORY_BANK0
                 sta zpDest
                 lda #>FONT_MEMORY_BANK0
                 sta zpDest+1
-                lda #`FONT_MEMORY_BANK0
-                sta zpDest+2                ; TODO:
+                stz zpDest+2
 
                 ldx #$07                ; 7 pages
 _nextPage       ldy #$00

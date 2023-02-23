@@ -1,5 +1,7 @@
 
-                .dword $00000000    ;   LUT0
+;--- LUT0 ------------------------------
+
+                .dword $00000000
                 .dword $00806C12    ; [11] balloon primary
                 .dword $00411280    ; [12] balloon secondary
                 .dword $00745720    ; [13] balloon basket
@@ -16,9 +18,9 @@
                 .dword $00400000
                 .dword $009B4884
 
-;--------------------------------------
+;--- LUT1 ------------------------------
 
-                .dword $00000000    ;   LUT1
+                .dword $00000000
                 .dword $000000e2    ; [01] balloon primary
                 .dword $0053b8da    ; [02] balloon secondary
                 .dword $00745720    ; [03] balloon basket
