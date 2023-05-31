@@ -20,33 +20,39 @@
 
                 .cpu "65c02"
 
-                .include "equates_system_c256jr.inc"
-                .include "equates_zeropage.inc"
-                .include "equates_game.inc"
+                .include "system_f256jr.equ"
+                .include "zeropage.equ"
+                .include "game.equ"
 
-                .include "macros_frs_jr_graphic.asm"
-                .include "macros_frs_jr_mouse.asm"
-                .include "macros_frs_random.asm"
-                .include "macros_game.asm"
-
-
-; ;--------------------------------------
-; ;--------------------------------------
-;                 * = INIT-32
-; ;--------------------------------------
-;                 .text "PGX"
-;                 .byte $01
-;                 .dword BOOT
-
-; BOOT            cld                     ; clear decimal
-;                 ldx #$FF                ; initialize the stack
-;                 txs
-;                 jmp INIT
+                .include "frs_jr_graphic.mac"
+                .include "frs_jr_mouse.mac"
+                .include "frs_jr_random.mac"
+                .include "game.mac"
 
 
 ;--------------------------------------
 ;--------------------------------------
-                * = $2000
+                * = $8000
+;--------------------------------------
+
+;   Boot from RAM data block
+
+                .byte $F2,$56           ; signature
+                .byte $02               ; block count
+                .byte $04               ; start at block1
+                .addr BOOT              ; execute address
+                .word $0000             ; version
+                .word $0000             ; kernel
+                                        ; binary name
+                .text 'Boulder Bombers',$00
+
+;--------------------------------------
+
+BOOT            cld                     ; clear decimal
+                ldx #$FF                ; initialize the stack
+                txs
+                jmp INIT
+
 ;--------------------------------------
 
                 .include "launch.asm"
@@ -60,7 +66,7 @@
 
                 .include "endgame.asm"
 
-                .include "data.asm"
+                .include "data.inc"
 
 
 ;--------------------------------------
@@ -68,17 +74,17 @@
 ;--------------------------------------
 
                 .include "interrupt.asm"
-                .include "platform_c256.asm"
+                .include "platform_f256jr.asm"
 
 
 ;--------------------------------------
                 .align $100
 ;--------------------------------------
 
-GameFont        .include "FONT.asm"
+GameFont        .include "FONT.inc"
 GameFont_end
 
-Palette         .include "PALETTE.asm"
+Palette         .include "PALETTE.inc"
 Palette_end
 
 
@@ -86,5 +92,5 @@ Palette_end
                 .align $100
 ;--------------------------------------
 
-StampSprites    .include "SPRITES.asm"
+StampSprites    .include "SPRITES.inc"
 StampSprites_end
