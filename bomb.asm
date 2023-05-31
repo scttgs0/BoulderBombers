@@ -9,12 +9,12 @@ HideBomb        .proc
                 cpx #1
                 beq _player2
 
-                stz SP02_Y_POS
-                stz SP02_Y_POS+1
+                stz SP02_Y
+                stz SP02_Y+1
                 bra _killbomb
 
-_player2        stz SP03_Y_POS
-                stz SP03_Y_POS+1
+_player2        stz SP03_Y
+                stz SP03_Y+1
 
 _killbomb       txa                     ; turn off sound for this bomb
                 .mult7
@@ -61,12 +61,12 @@ LowerBomb       .proc
                 cpx #1
                 beq _player2
 
-                sta SP02_Y_POS
-                stz SP02_Y_POS+1
+                sta SP02_Y
+                stz SP02_Y+1
                 bra _cont
 
-_player2        sta SP03_Y_POS
-                stz SP03_Y_POS+1
+_player2        sta SP03_Y
+                stz SP03_Y+1
 
 _cont           txa                     ; set y to index the sound regs
                 .mult7

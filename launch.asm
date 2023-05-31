@@ -3,12 +3,12 @@
 ;
 ;--------------------------------------
 INIT            .proc
-;   set system vectors
-                jsr InitSystemVectors
-                jsr InitMMU
-                jsr Random_Seed
+                ; jsr InitSystemVectors
+                ; jsr InitMMU
 
-                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode240
+                jsr RandomSeedQuick
+
+                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode240|mcTextDoubleX|mcTextDoubleY
                 .frsMouse_off
                 .frsBorder_off
 
@@ -18,14 +18,15 @@ INIT            .proc
                 stz LAYER_ORDER_CTRL_0
                 stz LAYER_ORDER_CTRL_1
 
-                jsr InitLUT
-                jsr InitCharLUT
+                jsr InitGfxPalette
+                jsr InitTextPalette
 
                 jsr SetFont
                 jsr ClearScreen
                 jsr ClearGamePanel
 
-                jsr InitSID             ; init sound
+                ; jsr InitSID             ; initialize SID sound
+                ; jsr InitPSG             ; initialize PSG sound
 
 ;   initialize sprites
                 jsr InitSprites
@@ -34,12 +35,14 @@ INIT            .proc
                 lda #0
                 ldy #P3PF+1-CLOCK
 _next1          sta CLOCK,Y
+
                 dey
                 bpl _next1
 
 ;   zero out the top line of CANYON
                 ldy #39                 ; set screen display
 _next2          sta CANYON,Y
+
                 dey
                 bpl _next2
 
@@ -64,10 +67,10 @@ RESTART         .proc
                 ldy #90
                 sty PlayerPosY+1
 
-                stx SP00_Y_POS
-                stz SP00_Y_POS+1
-                sty SP01_Y_POS
-                stz SP01_Y_POS+1
+                stx SP00_Y
+                stz SP00_Y+1
+                sty SP01_Y
+                stz SP01_Y+1
 
                 lda #0                  ; turn off explosions, and bkg sound
                 sta SID1_CTRL3
@@ -92,7 +95,7 @@ RESTART         .proc
                 lda #0                  ; players not on screen
                 sta onScreen
 
-                jsr InitIRQs
+                ; jsr InitIRQs
 
                 lda #3                  ; init clock
                 sta CLOCK
@@ -192,7 +195,7 @@ _next2          sta BOMB1,X
 
 ;   set second player message to 'player 2' or 'computer'
                 lda PlayerCount
-                asl A
+                asl A                   ; *8
                 asl A
                 asl A
 
@@ -200,6 +203,7 @@ _next2          sta BOMB1,X
                 tay
 _next3          lda P2COMPT,Y
                 sta P2MSG,X
+
                 iny
                 dex
                 bpl _next3

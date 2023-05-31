@@ -46,11 +46,11 @@ _cont1          lda PlayerPosX          ; first player 1
 
                 inc zpTemp1
 
-_1              sta SP00_X_POS
-                sta SP02_X_POS
+_1              sta SP00_X
+                sta SP02_X
                 lda zpTemp1
-                sta SP00_X_POS+1
-                sta SP02_X_POS+1
+                sta SP00_X+1
+                sta SP02_X+1
 
                 lda #152                ; then player 2
                 sec
@@ -66,11 +66,11 @@ _1              sta SP00_X_POS
 
                 inc zpTemp1
 
-_2              sta SP01_X_POS
-                sta SP03_X_POS
+_2              sta SP01_X
+                sta SP03_X
                 lda zpTemp1
-                sta SP01_X_POS+1
-                sta SP03_X_POS+1
+                sta SP01_X+1
+                sta SP03_X+1
 
 ;   player animation
                 lda zpShipType          ; if on planes then check if time to animate
@@ -196,9 +196,9 @@ _CKNBR          dex
                 ldx PlayerPosY          ; change player lanes
                 ldy PlayerPosY+1
                 stx PlayerPosY+1
-                stx SP01_Y_POS
+                stx SP01_Y
                 sty PlayerPosY
-                sty SP00_Y_POS
+                sty SP00_Y
 
                 lda #3                  ; reset clock
                 sta CLOCK
@@ -232,9 +232,9 @@ ClearPlayer     .proc
                 stz SID1_CTRL1          ; turn off bomb fall sounds
                 stz SID1_CTRL2
 
-                stz SP02_Y_POS          ; clear bombs
-                stz SP02_Y_POS+1
-                stz SP03_Y_POS
-                stz SP03_Y_POS+1
+                stz SP02_Y              ; clear bombs
+                stz SP02_Y+1
+                stz SP03_Y
+                stz SP03_Y+1
                 rts
                 .endproc
