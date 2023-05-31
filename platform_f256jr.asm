@@ -161,19 +161,19 @@ _next1          sta PSG1_BASE,X
 
 
 ;======================================
-; Create the palette lookup table (LUT)
+; Initialize the text-color LUT
 ;======================================
-InitGfxPalette  .proc
+InitTextPalette .proc
                 pha
                 phy
 
-;   switch to graphic map
-                lda #$01
-                sta IOPAGE_CTRL
+;   switch to system map
+                stz IOPAGE_CTRL
 
                 ldy #$3F
-_next1          lda _Custom_LUT,Y
-                sta GRPH_LUT0_PTR,Y
+_next1          lda _Text_CLUT,Y
+                sta FG_CHAR_LUT_PTR,Y   ; same palette for foreground and background
+                sta BG_CHAR_LUT_PTR,Y
 
                 dey
                 bpl _next1
@@ -184,7 +184,7 @@ _next1          lda _Custom_LUT,Y
 
 ;--------------------------------------
 
-_Custom_LUT     .dword $00282828        ; 0: Dark Jungle Green
+_Text_CLUT      .dword $00282828        ; 0: Dark Jungle Green
                 .dword $00DDDDDD        ; 1: Gainsboro
                 .dword $00143382        ; 2: Saint Patrick Blue
                 .dword $006B89D7        ; 3: Blue Gray
@@ -205,24 +205,28 @@ _Custom_LUT     .dword $00282828        ; 0: Dark Jungle Green
 
 
 ;======================================
-; Initialize the CHAR_LUT tables
+; Create the graphic-color LUT
 ;======================================
-InitCharPalette .proc
+InitGfxPalette  .proc
                 pha
                 phy
 
-;   switch to system map
-                stz IOPAGE_CTRL
+;   switch to graphic map
+                lda #$01
+                sta IOPAGE_CTRL
 
                 ldy #$3F
 _next1          lda Palette,Y
-                sta FG_CHAR_LUT_PTR,Y
+                sta GRPH_LUT0_PTR,Y
 
-                lda Palette+64,Y
-                sta BG_CHAR_LUT_PTR,Y
+                lda Palette+$40,Y
+                sta GRPH_LUT1_PTR,Y
 
                 dey
                 bpl _next1
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
                 ply
                 pla
@@ -238,6 +242,9 @@ _next1          lda Palette,Y
 InitSprites     .proc
                 php
                 pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
 ;   setup player sprites (sprite-00 & sprint-01)
                 lda #<SPR_Ballon
@@ -279,12 +286,12 @@ InitSprites     .proc
                 stz SP03_Y
                 stz SP03_Y+1
 
-                lda #scEnable
+                lda #scEnable|scLUT0|scDEPTH0|scSIZE_16
                 sta SP00_CTRL
                 sta SP02_CTRL
                 sta SP03_CTRL
 
-                lda #scEnable|scLUT1
+                lda #scEnable|scLUT1|scDEPTH0|scSIZE_16
                 sta SP01_CTRL
 
                 pla
@@ -434,6 +441,9 @@ _nextByteT      sta (zpDest),Y
                 dex
                 bne _nextPageT
 
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 ply
                 plx
                 pla
@@ -492,6 +502,9 @@ _next2          sta (zpDest),Y
                 iny
                 cpy #$F0                ; 6 lines
                 bne _next2
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
                 ply
                 plx
@@ -582,7 +595,11 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -671,7 +688,11 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -710,7 +731,6 @@ _nextColor      inx
 
 ;   process the text
 _processText
-
 ;   switch to text map
                 lda #iopPage2
                 sta IOPAGE_CTRL
@@ -727,7 +747,11 @@ _nextChar       inx
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -797,7 +821,11 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            plp
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                plp
                 rts
                 .endproc
 
@@ -883,7 +911,11 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -972,7 +1004,11 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -1078,7 +1114,11 @@ _bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT            ply
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 plx
                 pla
                 plp
@@ -1088,35 +1128,81 @@ _XIT            ply
 
 ;======================================
 ; Render Canyon
+;--------------------------------------
+; codes $01-$03 are boulders (destructible)
+; codes $84-$85 are canyon (not destructible)
 ;======================================
 RenderCanyon    .proc
-v_RenderLine    .var 13*CharResX
+v_RenderLine    .var 13*CharResX    ; skip 13 lines
+v_QtyLines      = zpTemp1
 ;---
 
                 php
                 pha
-                phx
                 phy
-                ;.m8i16
 
-                ;ldx #$FFFF         ; TODO:
-                ;ldy #$FFFF
-                ldx #$FF
-                ldy #$FF
-_nextChar       inx
-                iny
-                ;cpy #440           ; TODO:
+                lda #11             ; 11 lines
+                sta v_QtyLines
+
+                lda #<CANYON
+                sta zpSource
+                lda #>CANYON
+                sta zpSource+1
+
+;   pointer to text-color memory
+                lda #<CS_COLOR_MEM_PTR+v_RenderLine
+                sta zpDest
+                lda #>CS_COLOR_MEM_PTR+v_RenderLine
+                sta zpDest+1
+
+;   pointer to text-character memory
+                lda #<CS_TEXT_MEM_PTR+v_RenderLine
+                sta zpDest+2
+                lda #>CS_TEXT_MEM_PTR+v_RenderLine
+                sta zpDest+3
+
+                ldy #40             ; 40 characters per line
+_nextChar       dey
+                bpl _1
+
+                dec v_QtyLines
                 beq _XIT
 
-                lda CANYON,Y
-                beq _space
+                ldy #40             ; reset index
+
+                lda zpSource
+                clc
+                adc #40
+                sta zpSource
+                lda zpSource+1
+                adc #0
+                sta zpSource+1
+
+                lda zpDest
+                clc
+                adc #40
+                sta zpDest
+                lda zpDest+1
+                adc #0
+                sta zpDest+1
+
+                lda zpDest+2
+                clc
+                adc #40
+                sta zpDest+2
+                lda zpDest+3
+                adc #0
+                sta zpDest+3
+
+_1              lda (zpSource),Y
+                beq _space          ; 0 or ' ' are processed as a space
                 cmp #$20
                 beq _space
 
-                cmp #$84
+                cmp #$84            ; is code < $84?
                 bcc _boulder
 
-_earth          eor #$80
+_earth          eor #$80            ; clear the high-bit (to convert the data into the ascii code)
                 pha
 
 ;   switch to color map
@@ -1124,57 +1210,62 @@ _earth          eor #$80
                 sta IOPAGE_CTRL
 
                 lda #$E0
-                sta CS_COLOR_MEM_PTR+v_RenderLine,X
+                sta (zpDest),Y
 
 ;   switch to text map
                 lda #iopPage2
                 sta IOPAGE_CTRL
 
                 pla
-                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                sta (zpDest+2),Y
 
                 bra _nextChar
 
-_space
+_space          pha
 
 ;   switch to color map
                 lda #iopPage3
                 sta IOPAGE_CTRL
 
                 lda #$00
-                sta CS_COLOR_MEM_PTR+v_RenderLine,X
+                sta (zpDest),Y
 
 ;   switch to text map
                 lda #iopPage2
                 sta IOPAGE_CTRL
 
-                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                pla
+                sta (zpDest+2),Y
 
                 bra _nextChar
 
-_boulder
+_boulder        pha
 
 ;   switch to color map
                 lda #iopPage3
                 sta IOPAGE_CTRL
 
+                pla
                 phy
                 tay
                 lda CanyonColors,Y
-                sta CS_COLOR_MEM_PTR+v_RenderLine,X
                 ply
+                sta (zpDest),Y
 
 ;   switch to text map
                 lda #iopPage2
                 sta IOPAGE_CTRL
 
                 lda #$01
-                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                sta (zpDest+2),Y
 
                 bra _nextChar
 
-_XIT            ply
-                plx
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
                 pla
                 plp
                 rts
@@ -1331,8 +1422,8 @@ SetFont         .proc
                 sta zpSource+1
 
 ;   switch to charset map
-                ;lda #iopPage1
-                ;sta IOPAGE_CTRL
+                lda #iopPage1
+                sta IOPAGE_CTRL
 
                 lda #<FONT_MEMORY_BANK0
                 sta zpDest
@@ -1353,6 +1444,9 @@ _next1          lda (zpSource),Y
 
                 dex
                 bne _nextPage
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
 _XIT            ply
                 plx
