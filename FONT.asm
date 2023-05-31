@@ -31,7 +31,7 @@ GameStamps      ;.byte $00,$00,$00,$00,$00,$00,$00,$00      [00]
                 .byte %11111111         ; ########
                 .byte %11111111         ; ########
 
-                ;.byte $FC,$FC,$FC,$FC,$FC,$FC,$FC,$FC      [05]    solid right-edge
+                ;.byte $FC,$FC,$FC,$FC,$FC,$FC,$FC,$FC      [05]    solid earth (right-edge has a gap to pair up with an adjacent boulder)
                 .byte %11111100         ; ######..
                 .byte %11111100         ; ######..
                 .byte %11111100         ; ######..
