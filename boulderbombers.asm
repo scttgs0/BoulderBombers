@@ -54,6 +54,7 @@ BOOT            cld                     ; clear decimal
                 jmp INIT
 
 ;--------------------------------------
+;--------------------------------------
 
                 .include "launch.asm"
 
@@ -74,7 +75,6 @@ BOOT            cld                     ; clear decimal
 ;--------------------------------------
 
                 .include "interrupt.asm"
-                .include "platform_f256jr.asm"
 
 
 ;--------------------------------------
@@ -94,3 +94,5 @@ Palette_end
 
 StampSprites    .include "SPRITES.inc"
 StampSprites_end
+
+                .include "platform_f256jr.asm"

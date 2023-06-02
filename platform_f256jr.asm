@@ -205,7 +205,7 @@ _Text_CLUT      .dword $00282828        ; 0: Dark Jungle Green
 
 
 ;======================================
-; Create the graphic-color LUT
+; Initialize the graphic-color LUT
 ;======================================
 InitGfxPalette  .proc
                 pha
@@ -240,7 +240,6 @@ _next1          lda Palette,Y
 ; sprites dimensions are 32x32 (1024)
 ;======================================
 InitSprites     .proc
-                php
                 pha
 
 ;   switch to system map
@@ -295,7 +294,6 @@ InitSprites     .proc
                 sta SP01_CTRL
 
                 pla
-                plp
                 rts
                 .endproc
 
@@ -713,7 +711,7 @@ v_RenderLine    .var 24*CharResX
                 lda #iopPage3
                 sta IOPAGE_CTRL
 
-;   reset color for twp 40-char lines
+;   reset color for two 40-char lines
                 ldx #$FF
                 ldy #$FF
 _nextColor      inx
@@ -1404,10 +1402,10 @@ InitSystemVectors .proc
                 ; lda #>INIT
                 ; sta vecRESET+1
 
-                ; lda #<DefaultHandler
-                ; sta vecIRQ_BRK
-                ; lda #>DefaultHandler
-                ; sta vecIRQ_BRK+1
+                lda #<DefaultHandler
+                sta vecIRQ_BRK
+                lda #>DefaultHandler
+                sta vecIRQ_BRK+1
 
                 cli
                 pla
@@ -1462,6 +1460,7 @@ InitMMU         .proc
 ;======================================
 InitIRQs        .proc
                 pha
+
                 sei                     ; disable IRQ
 
 ;   enable IRQ handler
@@ -1486,12 +1485,12 @@ InitIRQs        .proc
 
 ;   enable Start-of-Frame IRQ
                 lda INT_MASK_REG0
-                and #~FNX0_INT00_SOF    
+                and #~FNX0_INT00_SOF
                 sta INT_MASK_REG0
 
 ;   enable Keyboard IRQ
                 lda INT_MASK_REG1
-                and #~FNX1_INT00_KBD    
+                and #~FNX1_INT00_KBD
                 sta INT_MASK_REG1
 
                 cli                     ; enable IRQ

@@ -298,7 +298,7 @@ VbiHandler      .proc
                 phx
                 phy
 
-                lda JIFFYCLOCK
+                lda JIFFYCLOCK          ; increment the jiffy clock each VBI
                 inc A
                 sta JIFFYCLOCK
 

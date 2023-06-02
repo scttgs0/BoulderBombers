@@ -1,6 +1,6 @@
 
 ;--------------------------------------
-;
+; Initialize the hardware
 ;--------------------------------------
 INIT            .proc
                 jsr InitSystemVectors
@@ -25,11 +25,36 @@ INIT            .proc
                 jsr ClearScreen
                 jsr ClearGamePanel
 
-                jsr InitSID             ; initialize SID sound
-                jsr InitPSG             ; initialize PSG sound
+                ; jsr InitSID             ; initialize SID sound
+                ; jsr InitPSG             ; initialize PSG sound
 
 ;   initialize sprites
                 jsr InitSprites
+
+;   DEBUG:
+                ; lda #40
+                ; sta SP00_X
+                ; stz SP00_X+1
+                ; lda #80
+                ; sta SP01_X
+                ; stz SP01_X+1
+                ; lda #120
+                ; sta SP02_X
+                ; stz SP02_X+1
+                ; lda #160
+                ; sta SP03_X
+                ; stz SP03_X+1
+
+;   DEBUG:
+                ; lda #40
+                ; sta SP00_Y
+                ; stz SP00_Y+1
+                ; sta SP01_Y
+                ; stz SP01_Y+1
+                ; sta SP02_Y
+                ; stz SP02_Y+1
+                ; sta SP03_Y
+                ; stz SP03_Y+1
 
 ;   zero out all variables (37 bytes)
                 lda #0
@@ -89,17 +114,13 @@ RESTART         .proc
                 jsr RenderSelect
                 jsr RenderCanyon
 
-                ; DEBUG:
-                ; lda #SP00_ADDR
-                ; jsr RenderDebug
-
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL
 
                 lda #0                  ; players not on screen
                 sta onScreen
 
-                jsr InitIRQs
+                ; jsr InitIRQs
 
                 lda #3                  ; init clock
                 sta CLOCK
