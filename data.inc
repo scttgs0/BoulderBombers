@@ -14,7 +14,7 @@ P2COMPT         .text "RETUPMOC"        ; "COMPUTER" spelled backwards
 ScoreIndex      .byte 3,13              ; char positions within the screen score line
 ShipTypeTbl     .byte stPlane
                 .byte stBalloon
-ShipSprOffset   .word $0400
+ShipSprOffset   .word $0100
                 .word $0000
 
 ;======================================
@@ -107,6 +107,10 @@ ScoreMsgColor   .byte $00
                 .byte $00
                 .byte $E0,$E0,$E0
                 .byte $00
+
+DebugMsg        .text "TEST"
+                .fill 40," "
+DebugMsgColor   .fill 40,$90
 
 
 ;======================================
