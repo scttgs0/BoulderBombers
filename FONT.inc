@@ -19,7 +19,7 @@ GameStamps      ;.byte $00,$00,$00,$00,$00,$00,$00,$00      [00]
                 .byte %11111100         ; ######..
                 .byte %00000000         ; ........
 
-                .fill 2*8,$00                       ;  [02]-[03]
+                .fill 2*8,$00                       ;       [02]-[03]  these colored blocks are rendered as ascii=[01]
 
                 ;.byte $FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF      [04]    solid earth
                 .byte %11111111         ; ########

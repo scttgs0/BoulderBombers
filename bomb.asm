@@ -45,10 +45,10 @@ _hop            jmp DoNextBomb          ; & do next
 LowerBomb       .proc
                 inc zpDropRate,X        ; up drop speed
                 lda zpDropRate,X
-                lsr A                   ; update position
-                lsr A
-                lsr A
-                lsr A                   ; /16
+                lsr                     ; update position
+                lsr
+                lsr
+                lsr                     ; /16
                 sta HOLDIT
 
                 clc
@@ -170,10 +170,10 @@ _doPlyrMove     stz P2PF                ; clear collisions
                 dec EXPLODE
                 eor #$F0
                 sta SID1_FREQ3
-                lsr A
-                lsr A
-                lsr A
-                lsr A
+                lsr                     ; /16
+                lsr
+                lsr
+                lsr
                 eor #$8F
                 sta SID1_CTRL3
 

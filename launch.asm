@@ -3,7 +3,7 @@
 ;
 ;--------------------------------------
 INIT            .proc
-                ; jsr InitSystemVectors
+                jsr InitSystemVectors
                 ; jsr InitMMU
 
                 jsr RandomSeedQuick
@@ -25,8 +25,8 @@ INIT            .proc
                 jsr ClearScreen
                 jsr ClearGamePanel
 
-                ; jsr InitSID             ; initialize SID sound
-                ; jsr InitPSG             ; initialize PSG sound
+                jsr InitSID             ; initialize SID sound
+                jsr InitPSG             ; initialize PSG sound
 
 ;   initialize sprites
                 jsr InitSprites
@@ -89,20 +89,24 @@ RESTART         .proc
                 jsr RenderSelect
                 jsr RenderCanyon
 
+                ; DEBUG:
+                ; lda #SP00_ADDR
+                ; jsr RenderDebug
+
                 lda #$FF                ; set game speed for titles
                 sta DELYVAL
 
                 lda #0                  ; players not on screen
                 sta onScreen
 
-                ; jsr InitIRQs
+                jsr InitIRQs
 
                 lda #3                  ; init clock
                 sta CLOCK
 
 _next1          lda CONSOL              ; check consol switches
                 and #3
-                cmp #1                  ; SELECT pressed?
+                cmp #1                  ; SELECT <F3> pressed?
                 bne _chkSTART           ;   no, try START
 
 _wait1          lda CONSOL              ;   yes, wait for key release
@@ -119,7 +123,7 @@ _wait1          lda CONSOL              ;   yes, wait for key release
 
                 bra _moveT              ; (move players)
 
-_chkSTART       cmp #2                  ; if START then start game
+_chkSTART       cmp #2                  ; if START <F4> then start game
                 beq START
 
 _moveT          lda onScreen            ; if on screen, then move
@@ -133,7 +137,7 @@ _moveT          lda onScreen            ; if on screen, then move
 
                 txa
                 and #1
-                asl A                   ; *2
+                asl                     ; *2
                 tax
                 lda ShipSprOffset,X
                 sta SP00_ADDR
@@ -166,7 +170,7 @@ _wait1          lda CONSOL
                 lda #0                  ; we're now in play, clear the wait flag
                 sta zpWaitForPlay
 
-;   warning: must use zero for space within score and hiscore
+;   warning: must use zero for a space character within score and hiscore
                 lda #0
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
@@ -189,15 +193,15 @@ _next2          sta BOMB1,X
                 sta zpBombCount
                 sta zpBombCount+1
 
-                lda #$11                ; set next free bomb at 1000
+                lda #$11                ; set next free bomb at score=1000
                 sta zpFreeManTarget
                 sta zpFreeManTarget+1
 
 ;   set second player message to 'player 2' or 'computer'
                 lda PlayerCount
-                asl A                   ; *8
-                asl A
-                asl A
+                asl                     ; *8
+                asl
+                asl
 
                 ldx #7
                 tay

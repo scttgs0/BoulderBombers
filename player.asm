@@ -38,7 +38,7 @@ _cont1          lda PlayerPosX          ; first player 1
                 sta PlayerPosX
 
                 stz zpTemp1
-                asl A
+                asl
                 rol zpTemp1
                 clc
                 adc #32
@@ -58,7 +58,7 @@ _1              sta SP00_X
                 sta PlayerPosX+1
 
                 stz zpTemp1
-                asl A
+                asl
                 rol zpTemp1
                 clc
                 adc #32
@@ -87,7 +87,7 @@ _2              sta SP01_X
                 ldx #1
 _next3          lda CLOCK               ; get image index from clock
                 and #4
-                asl A
+                asl
                 sta HOLDIT              ; and hold it
 
                 lda tmpDIR              ; get direction index from dir
@@ -144,7 +144,7 @@ _DODELAY        lda JIFFYCLOCK
 _wait1          cmp JIFFYCLOCK
                 bne _wait1
 
-;   players are now on screen, but check to see if they aren't
+;   players should now be on screen, but check to see if they aren't
                 lda #TRUE
                 sta onScreen
 
@@ -236,5 +236,6 @@ ClearPlayer     .proc
                 stz SP02_Y+1
                 stz SP03_Y
                 stz SP03_Y+1
+
                 rts
                 .endproc

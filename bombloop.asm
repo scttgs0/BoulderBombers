@@ -48,7 +48,7 @@ _player2        lda P3PFaddr
                 sta SCRPTR+1
 
 _gotChr         pla
-                asl A                   ; hold score= char * 2
+                asl                     ; hold score= char * 2
                 sta HOLDIT
 
                 lda #0                  ; erase rock on screen

@@ -2,10 +2,10 @@
 mult7           .macro
                 sta zpTemp1             ; *1
 
-                asl A                   ; *2
+                asl                     ; *2
                 sta zpTemp2
 
-                asl A                   ; *4
+                asl                     ; *4
 
                 clc
                 adc zpTemp2             ; *6
