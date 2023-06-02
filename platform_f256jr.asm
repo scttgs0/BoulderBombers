@@ -247,10 +247,10 @@ InitSprites     .proc
                 stz IOPAGE_CTRL
 
 ;   setup player sprites (sprite-00 & sprint-01)
-                lda #<SPR_Ballon
+                lda #<SPR_Balloon
                 sta SP00_ADDR
                 sta SP01_ADDR
-                lda #>SPR_Ballon
+                lda #>SPR_Balloon
                 sta SP00_ADDR+1
                 sta SP01_ADDR+1
                 stz SP00_ADDR+2
@@ -308,25 +308,24 @@ CheckCollision  .proc
                 phx
                 phy
 
-                ldx #1                  ; Given: SP02_Y_POS=112
+                ldx #1                  ; Given: SP02_Y=112
 _nextBomb       lda zpBombDrop,X        ; A=112
                 beq _nextPlayer
 
                 cmp #132
                 bcs _withinRange
-
                 bra _nextPlayer
 
 _withinRange    sec
                 sbc #132                ; A=8
-                lsr A           ; /2    ; A=4
-                lsr A           ; /4    ; A=2
-                lsr A           ; /8    ; A=1
+                lsr             ; /2    ; A=4
+                lsr             ; /4    ; A=2
+                lsr             ; /8    ; A=1
                 sta zpTemp1             ; zpTemp1=1 (row)
 
                 lda PlayerPosX,X
-                lsr A           ; /2
-                lsr A           ; /4
+                lsr             ; /2
+                lsr             ; /4
                 sta zpTemp2             ; (column)
 
                 lda #<CANYON
@@ -355,18 +354,16 @@ _checkRock      ldy zpTemp2
 
                 sta P2PF,X
 
-                ;.m16
                 stz zpTemp1
                 txa
                 asl
-                rol zpTemp1     ; TODO:
+                rol zpTemp1
                 tay
                 lda zpSource
                 stz zpTemp2+1
                 clc
                 adc zpTemp2
                 sta P2PFaddr,Y
-                ;.m8
 
 _nextPlayer     dex
                 bpl _nextBomb
@@ -1273,6 +1270,112 @@ _XIT
 
 
 ;======================================
+; Render Player Scores & Bombs
+;--------------------------------------
+; preserves:
+;   X Y
+;======================================
+RenderDebug     .proc
+v_RenderLine    .var 0*CharResX
+;---
+
+                php
+                pha
+                phx
+                phy
+
+;   switch to color map
+                lda #iopPage3
+                sta IOPAGE_CTRL
+
+;   reset color for the 40-char line
+                ldx #$FF
+                ldy #$FF
+_nextColor      inx
+                iny
+                cpy #$14
+                beq _processText
+
+                lda DebugMsgColor,Y
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
+                inx
+                sta CS_COLOR_MEM_PTR+v_RenderLine,X
+                bra _nextColor
+
+;   process the text
+_processText
+
+;   switch to text map
+                lda #iopPage2
+                sta IOPAGE_CTRL
+
+                ldx #$FF
+                ldy #$FF
+_nextChar       inx
+                iny
+                cpy #$14
+                beq _XIT
+
+                lda DebugMsg,Y
+                beq _space
+                cmp #$20
+                beq _space
+
+                cmp #$9B
+                beq _bomb
+
+                cmp #$41
+                bcc _number
+                bra _letter
+
+_space          sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                inx
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+
+                bra _nextChar
+
+;   (ascii-30)*2+$A0
+_number         sec
+                sbc #$30
+                asl
+
+                clc
+                adc #$A0
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+
+                bra _nextChar
+
+_letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                inx
+                clc
+                adc #$40
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+
+                bra _nextChar
+
+_bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
+                inx
+                inc A
+                sta CS_TEXT_MEM_PTR+v_RenderLine,X
+
+                bra _nextChar
+
+_XIT
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ply
+                plx
+                pla
+                plp
+                rts
+                .endproc
+
+
+;======================================
 ;
 ;======================================
 InitSystemVectors .proc
@@ -1280,33 +1383,31 @@ InitSystemVectors .proc
                 sei
 
                 cld                     ; clear decimal
-                ldx #$FF                ; initialize the stack
-                txs
 
-                lda #<DefaultHandler
-                sta vecCOP
-                lda #>DefaultHandler
-                sta vecCOP+1
+                ; lda #<DefaultHandler
+                ; sta vecCOP
+                ; lda #>DefaultHandler
+                ; sta vecCOP+1
 
                 lda #<DefaultHandler
                 sta vecABORT
                 lda #>DefaultHandler
                 sta vecABORT+1
 
-                lda #<DefaultHandler
-                sta vecNMI
-                lda #>DefaultHandler
-                sta vecNMI+1
+                ; lda #<DefaultHandler
+                ; sta vecNMI
+                ; lda #>DefaultHandler
+                ; sta vecNMI+1
 
-                lda #<INIT
-                sta vecRESET
-                lda #>INIT
-                sta vecRESET+1
+                ; lda #<INIT
+                ; sta vecRESET
+                ; lda #>INIT
+                ; sta vecRESET+1
 
-                lda #<DefaultHandler
-                sta vecIRQ_BRK
-                lda #>DefaultHandler
-                sta vecIRQ_BRK+1
+                ; lda #<DefaultHandler
+                ; sta vecIRQ_BRK
+                ; lda #>DefaultHandler
+                ; sta vecIRQ_BRK+1
 
                 cli
                 pla
@@ -1361,17 +1462,9 @@ InitMMU         .proc
 ;======================================
 InitIRQs        .proc
                 pha
-
-;   enable vertical blank interrupt
-
-                ldx #HandleIrq.HandleIrq_END-HandleIrq
-_relocate       ;lda $024000,X       ; HandleIrq address
-                ;sta $002000,X       ; new address within Bank 00
-                ;dex
-                ;bpl _relocate
-
                 sei                     ; disable IRQ
 
+;   enable IRQ handler
                 ;lda #<vecIRQ_BRK
                 ;sta IRQ_PRIOR
                 ;lda #>vecIRQ_BRK
@@ -1382,23 +1475,26 @@ _relocate       ;lda $024000,X       ; HandleIrq address
                 lda #>HandleIrq
                 sta vecIRQ_BRK+1
 
-                lda #$07                ; reset consol
+;   initialize the console
+                lda #$07
                 sta CONSOL
 
+;   initialize joystick/keyboard
                 lda #$1F
                 sta InputFlags
-                stz InputType           ; joystick
+                stz InputType
 
+;   enable Start-of-Frame IRQ
                 lda INT_MASK_REG0
-                and #~FNX0_INT00_SOF    ; enable Start-of-Frame IRQ
+                and #~FNX0_INT00_SOF    
                 sta INT_MASK_REG0
 
+;   enable Keyboard IRQ
                 lda INT_MASK_REG1
-                and #~FNX1_INT00_KBD    ; enable Keyboard IRQ
+                and #~FNX1_INT00_KBD    
                 sta INT_MASK_REG1
 
                 cli                     ; enable IRQ
-
                 pla
                 rts
                 .endproc
