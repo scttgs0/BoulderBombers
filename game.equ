@@ -8,3 +8,9 @@
 ; PL1             = PL0+256
 ; PL2             = PL1+256
 ; PL3             = PL2+256
+
+CharResX        = 40
+CharResY        = 30
+
+TRUE            = 1
+FALSE           = 0

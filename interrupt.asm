@@ -8,24 +8,25 @@ HandleIrq       .proc
                 pha
                 phx
                 phy
+                cld
 
-                lda INT_PENDING_REG1
-                bit #FNX1_INT00_KBD
-                beq _1
+                ; lda INT_PENDING_REG1
+                ; bit #INT01_VIA1
+                ; beq _1
 
-                jsr KeyboardHandler
+                ; lda INT_PENDING_REG1
+                ; sta INT_PENDING_REG1
 
-                lda INT_PENDING_REG1
-                sta INT_PENDING_REG1
+                ; jsr KeyboardHandler
 
 _1              lda INT_PENDING_REG0
-                bit #FNX0_INT00_SOF
+                bit #INT00_SOF
                 beq _XIT
-
-                jsr VbiHandler
 
                 lda INT_PENDING_REG0
                 sta INT_PENDING_REG0
+
+                jsr VbiHandler
 
 _XIT            ply
                 plx
@@ -298,9 +299,7 @@ VbiHandler      .proc
                 phx
                 phy
 
-                lda JIFFYCLOCK          ; increment the jiffy clock each VBI
-                inc A
-                sta JIFFYCLOCK
+                inc JIFFYCLOCK          ; increment the jiffy clock each VBI
 
                 lda JOYSTICK0           ; read joystick0
                 and #$1F
