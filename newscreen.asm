@@ -9,10 +9,10 @@ NewScreen       .proc
                 sta zpShipType
                 sta CLOCK               ; and begin clock
 
-                stz SP00_ADDR
-                stz SP00_ADDR+1
-                stz SP01_ADDR
-                stz SP01_ADDR+1
+                stz SPRITE(sprite_t.ADDR, 0)
+                stz SPRITE(sprite_t.ADDR+1, 0)
+                stz SPRITE(sprite_t.ADDR, 1)
+                stz SPRITE(sprite_t.ADDR+1, 1)
 
                 lda #dirRight
                 sta DIR

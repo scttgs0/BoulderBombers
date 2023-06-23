@@ -32,29 +32,16 @@ INIT            .proc
                 jsr InitSprites
 
 ;   DEBUG:
-                ; lda #40
-                ; sta SP00_X
-                ; stz SP00_X+1
-                ; lda #80
-                ; sta SP01_X
-                ; stz SP01_X+1
-                ; lda #120
-                ; sta SP02_X
-                ; stz SP02_X+1
-                ; lda #160
-                ; sta SP03_X
-                ; stz SP03_X+1
+                .frsSpriteSetX 40, 0
+                .frsSpriteSetX 80, 1
+                .frsSpriteSetX 120, 2
+                .frsSpriteSetX 160, 3
 
 ;   DEBUG:
-                ; lda #40
-                ; sta SP00_Y
-                ; stz SP00_Y+1
-                ; sta SP01_Y
-                ; stz SP01_Y+1
-                ; sta SP02_Y
-                ; stz SP02_Y+1
-                ; sta SP03_Y
-                ; stz SP03_Y+1
+                .frsSpriteSetY 40, 0
+                .frsSpriteSetY 40, 1
+                .frsSpriteSetY 40, 2
+                .frsSpriteSetY 40, 3
 
 ;   zero out all variables (37 bytes)
                 lda #0
@@ -92,10 +79,10 @@ RESTART         .proc
                 ldy #90
                 sty PlayerPosY+1
 
-                stx SP00_Y
-                stz SP00_Y+1
-                sty SP01_Y
-                stz SP01_Y+1
+                stx SPRITE(sprite_t.Y, 0)
+                stz SPRITE(sprite_t.Y+1, 0)
+                sty SPRITE(sprite_t.Y, 1)
+                stz SPRITE(sprite_t.Y+1, 1)
 
                 lda #0                  ; turn off explosions, and bkg sound
                 sta SID1_CTRL3
@@ -120,7 +107,7 @@ RESTART         .proc
                 lda #0                  ; players not on screen
                 sta onScreen
 
-                ; jsr InitIRQs
+                jsr InitIRQs
 
                 lda #3                  ; init clock
                 sta CLOCK
@@ -145,12 +132,13 @@ _wait1          lda CONSOL              ;   yes, wait for key release
                 bra _moveT              ; (move players)
 
 _chkSTART       cmp #2                  ; if START <F4> then start game
+                ;--lda #0
                 beq START
 
 _moveT          lda onScreen            ; if on screen, then move
                 bne _moveIt
 
-                .randomByte             ; else, pick out new ship type
+                .frsRandomByte          ; else, pick out new ship type
                 and #1
                 tax
                 lda ShipTypeTbl,X
@@ -161,11 +149,11 @@ _moveT          lda onScreen            ; if on screen, then move
                 asl                     ; *2
                 tax
                 lda ShipSprOffset,X
-                sta SP00_ADDR
-                sta SP01_ADDR
+                sta SPRITE(sprite_t.ADDR, 0)
+                sta SPRITE(sprite_t.ADDR, 1)
                 lda ShipSprOffset+1,X
-                sta SP00_ADDR+1
-                sta SP01_ADDR+1
+                sta SPRITE(sprite_t.ADDR+1, 0)
+                sta SPRITE(sprite_t.ADDR+1, 1)
 
 _moveIt         phx
                 jsr MovePlayer          ; move players
@@ -183,7 +171,7 @@ START           .proc
 ;   wait for key release
 _wait1          lda CONSOL
                 and #1
-                beq _wait1
+                ; beq _wait1
 
                 lda #3                  ; set game speed to $ff+$04
                 sta DELYVAL

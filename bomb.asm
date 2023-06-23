@@ -9,12 +9,10 @@ HideBomb        .proc
                 cpx #1
                 beq _player2
 
-                stz SP02_Y
-                stz SP02_Y+1
+                .frsSpriteClearY 2
                 bra _killbomb
 
-_player2        stz SP03_Y
-                stz SP03_Y+1
+_player2        .frsSpriteClearY 3
 
 _killbomb       txa                     ; turn off sound for this bomb
                 .mult7
@@ -61,12 +59,12 @@ LowerBomb       .proc
                 cpx #1
                 beq _player2
 
-                sta SP02_Y
-                stz SP02_Y+1
+                sta SPRITE(sprite_t.Y, 2)
+                stz SPRITE(sprite_t.Y+1, 2)
                 bra _cont
 
-_player2        sta SP03_Y
-                stz SP03_Y+1
+_player2        sta SPRITE(sprite_t.Y, 3)
+                stz SPRITE(sprite_t.Y+1, 3)
 
 _cont           txa                     ; set y to index the sound regs
                 .mult7
@@ -132,7 +130,7 @@ _going_right    lda PlayerPosX,X        ; get computer x
                 cmp #152                ; too far right?
                 bcs DoNextBomb          ;   yes!
 
-_tryDrop        .randomByte             ; computer drops a bomb if random says to
+_tryDrop        .frsRandomByte          ; computer drops a bomb if random says to
                 and #15
                 beq _dropIt
                 bne DoNextBomb          ; else do next

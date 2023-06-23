@@ -1,4 +1,9 @@
 
+; SPDX-FileName: platform_f256jr.asm
+; SPDX-FileCopyrightText: Copyright 2023, Scott Giese
+; SPDX-License-Identifier: GPL-3.0-or-later
+
+
 ;======================================
 ; seed = quick and dirty
 ;======================================
@@ -246,52 +251,12 @@ InitSprites     .proc
                 stz IOPAGE_CTRL
 
 ;   setup player sprites (sprite-00 & sprint-01)
-                lda #<SPR_Balloon
-                sta SP00_ADDR
-                sta SP01_ADDR
-                lda #>SPR_Balloon
-                sta SP00_ADDR+1
-                sta SP01_ADDR+1
-                stz SP00_ADDR+2
-                stz SP01_ADDR+2
-
-                stz SP00_X
-                stz SP00_X+1
-                stz SP00_Y
-                stz SP00_Y+1
-
-                stz SP01_X
-                stz SP01_X+1
-                stz SP01_Y
-                stz SP01_Y+1
+                .frsSpriteInit SPR_Balloon, scEnable|scLUT0|scDEPTH0|scSIZE_16, 0
+                .frsSpriteInit SPR_Balloon, scEnable|scLUT1|scDEPTH0|scSIZE_16, 1
 
 ;   setup bomb sprites (sprite-02 & sprint-03)
-                lda #<SPR_Bomb
-                sta SP02_ADDR
-                sta SP03_ADDR
-                lda #>SPR_Bomb
-                sta SP02_ADDR+1
-                sta SP03_ADDR+1
-                stz SP02_ADDR+2
-                stz SP03_ADDR+2
-
-                stz SP02_X
-                stz SP02_X+1
-                stz SP02_Y
-                stz SP02_Y+1
-
-                stz SP03_X
-                stz SP03_X+1
-                stz SP03_Y
-                stz SP03_Y+1
-
-                lda #scEnable|scLUT0|scDEPTH0|scSIZE_16
-                sta SP00_CTRL
-                sta SP02_CTRL
-                sta SP03_CTRL
-
-                lda #scEnable|scLUT1|scDEPTH0|scSIZE_16
-                sta SP01_CTRL
+                .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 2
+                .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 3
 
                 pla
                 rts
@@ -1392,15 +1357,15 @@ InitSystemVectors .proc
                 lda #>DefaultHandler
                 sta vecABORT+1
 
-                ; lda #<DefaultHandler
-                ; sta vecNMI
-                ; lda #>DefaultHandler
-                ; sta vecNMI+1
+                lda #<DefaultHandler
+                sta vecNMI
+                lda #>DefaultHandler
+                sta vecNMI+1
 
-                ; lda #<INIT
-                ; sta vecRESET
-                ; lda #>INIT
-                ; sta vecRESET+1
+                lda #<INIT
+                sta vecRESET
+                lda #>INIT
+                sta vecRESET+1
 
                 lda #<DefaultHandler
                 sta vecIRQ_BRK
@@ -1426,27 +1391,29 @@ InitMMU         .proc
                 pha
                 sei
 
-                lda #mmuEditMode|mmuEditPage0|mmuPage0
+;   enable page0; modify page1
+                lda #mmuEditMode|mmuEditPage1|mmuPage0
                 sta MMU_CTRL
 
                 lda #$00                ; [0000:1FFF]
                 sta MMU_Block0
-                lda #$20                ; [2000:3FFF]
+                inc A                   ; [2000:3FFF]
                 sta MMU_Block1
-                lda #$40                ; [4000:5FFF]
+                inc A                   ; [4000:5FFF]
                 sta MMU_Block2
-                lda #$60                ; [6000:7FFF]
+                inc A                   ; [6000:7FFF]
                 sta MMU_Block3
-                lda #$80                ; [8000:9FFF]
+                inc A                   ; [8000:9FFF]
                 sta MMU_Block4
-                lda #$A0                ; [A000:BFFF]
+                inc A                   ; [A000:BFFF]
                 sta MMU_Block5
-                lda #$C0                ; [C000:DFFF]
+                inc A                   ; [C000:DFFF]
                 sta MMU_Block6
-                lda #$E0                ; [E000:FFFF]
+                inc A                   ; [E000:FFFF]
                 sta MMU_Block7
 
-                lda #mmuPage0
+;   enable page1
+                lda #mmuPage1
                 sta MMU_CTRL
 
                 cli
@@ -1460,6 +1427,9 @@ InitMMU         .proc
 ;======================================
 InitIRQs        .proc
                 pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
                 sei                     ; disable IRQ
 
@@ -1483,15 +1453,32 @@ InitIRQs        .proc
                 sta InputFlags
                 stz InputType
 
+;   disable all IRQ
+                lda #$FF
+                sta INT_EDGE_REG0
+                sta INT_EDGE_REG1
+                sta INT_EDGE_REG2
+                sta INT_MASK_REG0
+                sta INT_MASK_REG1
+                sta INT_MASK_REG2
+
+;   clear pending interrupts
+                lda INT_PENDING_REG0
+                sta INT_PENDING_REG0
+                lda INT_PENDING_REG1
+                sta INT_PENDING_REG1
+                lda INT_PENDING_REG2
+                sta INT_PENDING_REG2
+
 ;   enable Start-of-Frame IRQ
                 lda INT_MASK_REG0
-                and #~FNX0_INT00_SOF
+                and #~INT00_SOF
                 sta INT_MASK_REG0
 
 ;   enable Keyboard IRQ
-                lda INT_MASK_REG1
-                and #~FNX1_INT00_KBD
-                sta INT_MASK_REG1
+                ; lda INT_MASK_REG1
+                ; and #~INT01_VIA1
+                ; sta INT_MASK_REG1
 
                 cli                     ; enable IRQ
                 pla
@@ -1511,14 +1498,16 @@ SetFont         .proc
 ;   DEBUG: helpful if you need to see the trace
                 ; bra _XIT
 
-                lda #<GameFont
-                sta zpSource
-                lda #>GameFont
-                sta zpSource+1
-
 ;   switch to charset map
                 lda #iopPage1
                 sta IOPAGE_CTRL
+
+;   Font #0
+FONT0           lda #<GameFont
+                sta zpSource
+                lda #>GameFont
+                sta zpSource+1
+                stz zpSource+2
 
                 lda #<FONT_MEMORY_BANK0
                 sta zpDest

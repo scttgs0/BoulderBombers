@@ -27,19 +27,20 @@
                 .include "frs_jr_graphic.mac"
                 .include "frs_jr_mouse.mac"
                 .include "frs_jr_random.mac"
+                .include "frs_jr_sprite.mac"
                 .include "game.mac"
 
 
 ;--------------------------------------
 ;--------------------------------------
-                * = $8000
+                * = $6000
 ;--------------------------------------
 
 ;   Boot from RAM data block
 
                 .byte $F2,$56           ; signature
                 .byte $02               ; block count
-                .byte $04               ; start at block1
+                .byte $03               ; first block
                 .addr BOOT              ; execute address
                 .word $0000             ; version
                 .word $0000             ; kernel

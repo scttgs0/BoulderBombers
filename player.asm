@@ -46,11 +46,11 @@ _cont1          lda PlayerPosX          ; first player 1
 
                 inc zpTemp1
 
-_1              sta SP00_X
-                sta SP02_X
+_1              sta SPRITE(sprite_t.X, 0)
+                sta SPRITE(sprite_t.X, 2)
                 lda zpTemp1
-                sta SP00_X+1
-                sta SP02_X+1
+                sta SPRITE(sprite_t.X+1, 0)
+                sta SPRITE(sprite_t.X+1, 2)
 
                 lda #152                ; then player 2
                 sec
@@ -66,11 +66,11 @@ _1              sta SP00_X
 
                 inc zpTemp1
 
-_2              sta SP01_X
-                sta SP03_X
+_2              sta SPRITE(sprite_t.X, 1)
+                sta SPRITE(sprite_t.X, 3)
                 lda zpTemp1
-                sta SP01_X+1
-                sta SP03_X+1
+                sta SPRITE(sprite_t.X+1, 1)
+                sta SPRITE(sprite_t.X+1, 3)
 
 ;   player animation
                 lda zpShipType          ; if on planes then check if time to animate
@@ -120,15 +120,15 @@ _3              dey
                 beq _plyr00
 
                 lda zpTemp1
-                sta SP01_ADDR
+                sta SPRITE(sprite_t.ADDR, 1)
                 lda zpTemp2
-                sta SP01_ADDR+1
+                sta SPRITE(sprite_t.ADDR+1, 1)
                 bra _cont2
 
 _plyr00         lda zpTemp1
-                sta SP00_ADDR
+                sta SPRITE(sprite_t.ADDR, 0)
                 lda zpTemp2
-                sta SP00_ADDR+1
+                sta SPRITE(sprite_t.ADDR+1, 0)
 
 _cont2          lda tmpDIR              ; reverse tdir
                 eor #$FE
@@ -196,9 +196,9 @@ _CKNBR          dex
                 ldx PlayerPosY          ; change player lanes
                 ldy PlayerPosY+1
                 stx PlayerPosY+1
-                stx SP01_Y
+                stx SPRITE(sprite_t.Y, 1)
                 sty PlayerPosY
-                sty SP00_Y
+                sty SPRITE(sprite_t.Y, 0)
 
                 lda #3                  ; reset clock
                 sta CLOCK
@@ -232,10 +232,10 @@ ClearPlayer     .proc
                 stz SID1_CTRL1          ; turn off bomb fall sounds
                 stz SID1_CTRL2
 
-                stz SP02_Y              ; clear bombs
-                stz SP02_Y+1
-                stz SP03_Y
-                stz SP03_Y+1
+                stz SPRITE(sprite_t.Y, 2) ; clear bombs
+                stz SPRITE(sprite_t.Y+1, 2)
+                stz SPRITE(sprite_t.Y, 3)
+                stz SPRITE(sprite_t.Y+1, 3)
 
                 rts
                 .endproc
