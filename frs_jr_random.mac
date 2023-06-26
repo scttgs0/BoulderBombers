@@ -1,5 +1,5 @@
 
-frsRandomREG    = RNG_DAT_LO
+frsRandomREG    = RNG_DAT
 
 frsRandomByte   .macro
                 lda frsRandomREG

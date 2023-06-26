@@ -5,7 +5,7 @@
 
 
 ;--------------------------------------
-; System Equates for Foenix F256jr
+; System Equates for Foenix F256jr/K
 ;--------------------------------------
 
 MMU_CTRL                = $0000
@@ -304,27 +304,17 @@ SID2_ENV3               = $D51C
 
 ;--------------------------------------
 
-PSG1_BASE               = $D600     ; TODO:
-;PSG1_T1_FREQ            = $D600
-;PSG1_T1_ATTN            = $D601
-;PSG1_T2_FREQ            = $D602
-;PSG1_T2_ATTN            = $D603
-;PSG1_T3_FREQ            = $D604
-;PSG1_T3_ATTN            = $D605
-;PSG1_NOISE_CTRL         = $D606
-;PSG1_NOISE_ATTN         = $D607
-
-PSG_DUAL_BASE           = $D608
-
+PSG1_BASE               = $D600
 PSG2_BASE               = $D610
-;PSG2_T1_FREQ            = $D610
-;PSG2_T1_ATTN            = $D611
-;PSG2_T2_FREQ            = $D612
-;PSG2_T2_ATTN            = $D613
-;PSG2_T3_FREQ            = $D614
-;PSG2_T3_ATTN            = $D615
-;PSG2_NOISE_CTRL         = $D616
-;PSG2_NOISE_ATTN         = $D617
+PSG_DUAL_BASE           = $D608
+psgT1_FREQ          = $00
+psgT1_ATTN          = $01
+psgT2_FREQ          = $02
+psgT2_ATTN          = $03
+psgT3_FREQ          = $04
+psgT3_ATTN          = $05
+psgNOISE_CTRL       = $06
+psgNOISE_ATTN       = $07
 
 ;--------------------------------------
 
@@ -469,18 +459,11 @@ RTC_CENT                = $D69F
 
 ;--------------------------------------
 
-; READ
-RNG_DAT_LO              = $D6A4         ; Low-byte of 16Bit RNG Generator
-RNG_DAT_HI              = $D6A5         ; Hi-byte of 16Bit RNG Generator
-
-; WRITE
-RNG_SEED_LO             = $D6A4         ; Low-byte of 16Bit RNG Generator
-RNG_SEED_HI             = $D6A5         ; Hi-byte of 16Bit RNG Generator
-
-; WRITE
-RNG_CTRL                = $D6A6
+RNG_DAT                 = $D6A4         ; [word] [read-only]    16Bit RNG Generator
+RNG_SEED                = $D6A4         ; [word] [write-only]   16Bit RNG Generator
+RNG_CTRL                = $D6A6         ; [write-only]
 rcEnable        = $01                   ; Enable the LFSR BLOCK_LEN
-rcDV            = $02                   ; After Setting the Seed Value, Toggle that Bit for it be registered
+rcDV            = $02                   ; After setting the Seed value, Toggle this bit for it be registered
 
 ;--------------------------------------
 
@@ -519,7 +502,7 @@ mcLegacyMode        = $02
 
 MOUSE_X                 = $D6E2         ; [word]
 MOUSE_Y                 = $D6E4         ; [word]
-MOUSE_PACKET            = $D6E6         ; [3-byte] [legacy mode only]
+MOUSE_PACKET            = $D6E6         ; [long] [legacy mode only]
 
 ;--------------------------------------
 
@@ -607,7 +590,7 @@ VIA1_IO_PORTA           = $DB01
 VIA1_DD_PORTB           = $DB02
 VIA1_DD_PORTA           = $DB03
 vddInput            = $00
-vddOuput            = $01
+vddOuput            = $FF
 VIA1_COUNT_TIMER1       = $DB04         ; [word]
 VIA1_LATCH_TIMER1       = $DB06         ; [word]
 VIA1_COUNT_TIMER2       = $DB08         ; [word]
@@ -674,25 +657,28 @@ ADD_RESULT              = $DE18         ; [dword]
 
 DMA_CTRL                = $DF00         ; DMA Control Register
 dmaDisable      = $00
-dmaEnable       = $01                   ; DMA engine is enabled
-dma2D           = $02                   ; DMA is 2D operation (otherwise it is 1D)
-dmaFill         = $04                   ; DMA is a fill operation (otherwise DMA is a copy)
+dmaEnable       = $01                   ; DMA Engine is enabled
+dma2D           = $02                   ; DMA 2D operation (otherwise it is 1D)
+dmaFill         = $04                   ; DMA Fill operation (otherwise DMA Copy)
 dmaIntEnable    = $08                   ; Enable DMA interrupts
 dmaStart        = $80                   ; Start the DMA operation
 
-DMA_STATUS              = $DF01         ; DMA status register (Read Only)
-dmaBusy         = $80                   ; DMA engine is busy with an operation
+DMA_STATUS              = $DF01         ; [read-only]   DMA status
+dmaBusy         = $80                   ; DMA Engine is busy with an operation
 
-DMA_FILL_VAL            = $DF01         ; Byte value to use for fill operations
+DMA_FILL_VAL            = $DF01         ; Byte value to use for Fill operations
 
-DMA_SRC_ADDR            = $DF04         ; Source address (system bus) for copy operations
-DMA_DST_ADDR            = $DF08         ; Destination address (system bus) for fill and copy operations
+DMA_SRC_ADDR            = $DF04         ; Source address (system bus) for Copy operations
+DMA_DST_ADDR            = $DF08         ; Destination address (system bus) for Fill/Copy operations
 
-DMA_COUNT               = $DF0C         ; Number of bytes to fill or copy (1D operations, 24 bit value)
-DMA_WIDTH               = $DF0C         ; Width of rectangle to fill or copy (2D operations, 16 bit value)
-DMA_HEIGHT              = $DF0E         ; Height of rectangle to fill or copy (2D operations, 16 bit value)
-DMA_STRIDE_SRC          = $DF10         ; Width of the source bitmap image in bytes (2D operations, 16 bit value)
-DMA_STRIDE_DST          = $DF12         ; Width of the destination bitmap image in bytes (2D operations, 16 bit value)
+;   1D operations
+DMA_COUNT               = $DF0C         ; [long]    Number of bytes to fill or copy
+
+;   2D operations
+DMA_WIDTH               = $DF0C         ; [word]    Width of rectangle to fill or copy
+DMA_HEIGHT              = $DF0E         ; [word]    Height of rectangle to fill or copy
+DMA_STRIDE_SRC          = $DF10         ; [word]    Width of the source bitmap image (bytes)
+DMA_STRIDE_DST          = $DF12         ; [word]    Width of the destination bitmap image (bytes)
 
 ;--------------------------------------
 
