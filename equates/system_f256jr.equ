@@ -5,7 +5,7 @@
 
 
 ;--------------------------------------
-; System Equates for Foenix F256jr/K
+; System Equates for Foenix F256 JR/K
 ;--------------------------------------
 
 MMU_CTRL                = $0000
