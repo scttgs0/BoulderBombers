@@ -10,6 +10,9 @@ HandleIrq       .proc
                 phy
                 cld
 
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 ; lda INT_PENDING_REG1
                 ; bit #INT01_VIA1
                 ; beq _1
