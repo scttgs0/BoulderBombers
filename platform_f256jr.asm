@@ -9,10 +9,10 @@
 ;======================================
 RandomSeedQuick .proc
                 lda RTC_MIN
-                sta RNG_SEED_HI
+                sta RNG_SEED+1
 
                 lda RTC_SEC
-                sta RNG_SEED_LO
+                sta RNG_SEED
 
                 lda #rcEnable|rcDV      ; cycle the DV bit
                 sta RNG_CTRL
@@ -1343,6 +1343,10 @@ _XIT
 ;======================================
 InitSystemVectors .proc
                 pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 sei
 
                 cld                     ; clear decimal
@@ -1357,14 +1361,14 @@ InitSystemVectors .proc
                 lda #>DefaultHandler
                 sta vecABORT+1
 
-                lda #<DefaultHandler
-                sta vecNMI
-                lda #>DefaultHandler
-                sta vecNMI+1
+                ; lda #<DefaultHandler
+                ; sta vecNMI
+                ; lda #>DefaultHandler
+                ; sta vecNMI+1
 
-                lda #<INIT
+                lda #<BOOT
                 sta vecRESET
-                lda #>INIT
+                lda #>BOOT
                 sta vecRESET+1
 
                 lda #<DefaultHandler
@@ -1389,6 +1393,10 @@ DefaultHandler  rti
 ;======================================
 InitMMU         .proc
                 pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 sei
 
 ;   enable page0; modify page1
@@ -1434,10 +1442,10 @@ InitIRQs        .proc
                 sei                     ; disable IRQ
 
 ;   enable IRQ handler
-                ;lda #<vecIRQ_BRK
-                ;sta IRQ_PRIOR
-                ;lda #>vecIRQ_BRK
-                ;sta IRQ_PRIOR+1
+                ; lda #<vecIRQ_BRK
+                ; sta IRQ_PRIOR
+                ; lda #>vecIRQ_BRK
+                ; sta IRQ_PRIOR+1
 
                 lda #<HandleIrq
                 sta vecIRQ_BRK
@@ -1490,7 +1498,6 @@ InitIRQs        .proc
 ;
 ;======================================
 SetFont         .proc
-                php
                 pha
                 phx
                 phy
@@ -1535,6 +1542,5 @@ _next1          lda (zpSource),Y
 _XIT            ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
