@@ -291,8 +291,8 @@ _withinRange    sec
                 sta zpTemp1             ; zpTemp1=1 (row)
 
                 lda PlayerPosX,X
-                lsr             ; /2
                 lsr             ; /4
+                lsr
                 sta zpTemp2             ; (column)
 
                 lda #<CANYON
