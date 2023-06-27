@@ -18,6 +18,8 @@ RandomSeedQuick .proc
                 sta RNG_CTRL
                 lda #rcEnable
                 sta RNG_CTRL
+
+                rts
                 .endproc
 
 
@@ -72,6 +74,8 @@ RandomSeed      .proc
                 sta RNG_CTRL
                 lda #rcEnable
                 sta RNG_CTRL
+
+                rts
                 .endproc
 
 
