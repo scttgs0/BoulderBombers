@@ -37,16 +37,9 @@ _cont1          lda PlayerPosX          ; first player 1
                 adc DIR
                 sta PlayerPosX
 
-                stz zpTemp1
-                asl
-                rol zpTemp1
-                clc
-                adc #32
-                bcc _1
+                .mult2p32 zpTemp1       ; Accum*2+32, result in zpTemp1:Accum
 
-                inc zpTemp1
-
-_1              sta SPRITE(sprite_t.X, 0)
+                sta SPRITE(sprite_t.X, 0) ; player 1 x-coordinate (aircraft & bomb)
                 sta SPRITE(sprite_t.X, 2)
                 lda zpTemp1
                 sta SPRITE(sprite_t.X+1, 0)
@@ -57,16 +50,9 @@ _1              sta SPRITE(sprite_t.X, 0)
                 sbc PlayerPosX
                 sta PlayerPosX+1
 
-                stz zpTemp1
-                asl
-                rol zpTemp1
-                clc
-                adc #32
-                bcc _2
+                .mult2p32 zpTemp1       ; Accum*2+32, result in zpTemp1:Accum
 
-                inc zpTemp1
-
-_2              sta SPRITE(sprite_t.X, 1)
+                sta SPRITE(sprite_t.X, 1) ; player 2 x-coordinate (aircraft & bomb)
                 sta SPRITE(sprite_t.X, 3)
                 lda zpTemp1
                 sta SPRITE(sprite_t.X+1, 1)
@@ -119,16 +105,17 @@ _3              dey
                 cpx #0
                 beq _plyr00
 
-                lda zpTemp1
-                sta SPRITE(sprite_t.ADDR, 1)
-                lda zpTemp2
-                sta SPRITE(sprite_t.ADDR+1, 1)
+                ;-- HACK:
+                ;lda zpTemp1
+                ;sta SPRITE(sprite_t.ADDR, 1)
+                ;lda zpTemp2
+                ;sta SPRITE(sprite_t.ADDR+1, 1)
                 bra _cont2
 
-_plyr00         lda zpTemp1
-                sta SPRITE(sprite_t.ADDR, 0)
-                lda zpTemp2
-                sta SPRITE(sprite_t.ADDR+1, 0)
+_plyr00         ;--lda zpTemp1
+                ;sta SPRITE(sprite_t.ADDR, 0)
+                ;lda zpTemp2
+                ;sta SPRITE(sprite_t.ADDR+1, 0)
 
 _cont2          lda tmpDIR              ; reverse tdir
                 eor #$FE
@@ -139,10 +126,18 @@ _cont2          lda tmpDIR              ; reverse tdir
                 bpl _next3
 
 ;   wait for a while to make game playable
-_DODELAY        lda JIFFYCLOCK
-                inc A
-_wait1          cmp JIFFYCLOCK
+_DODELAY        ;--lda JIFFYCLOCK
+                ;--inc A
+;--_wait1          cmp JIFFYCLOCK
+                ;--bne _wait1
+                ldy #80
+                ldx #0
+_wait1          dex
                 bne _wait1
+
+                dey
+                bne _wait1
+
 
 ;   players should now be on screen, but check to see if they aren't
                 lda #TRUE
@@ -229,10 +224,12 @@ ClearPlayer     .proc
                 stz zpBombRunDrops
                 stz zpBombRunDrops+1
 
-                stz SID1_CTRL1          ; turn off bomb fall sounds
+;   turn off bomb fall sounds
+                stz SID1_CTRL1
                 stz SID1_CTRL2
 
-                stz SPRITE(sprite_t.Y, 2) ; clear bombs
+;   clear bombs
+                stz SPRITE(sprite_t.Y, 2)
                 stz SPRITE(sprite_t.Y+1, 2)
                 stz SPRITE(sprite_t.Y, 3)
                 stz SPRITE(sprite_t.Y+1, 3)

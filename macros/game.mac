@@ -13,3 +13,69 @@ mult7           .macro
                 clc
                 adc zpTemp1             ; *7
                 .endmacro
+
+
+mult2p32        .macro highByte
+                stz \highByte
+                asl                     ; *2
+                rol \highByte
+                clc
+                adc #32                 ; min on-screen x
+                bcc +
+                inc \highByte
++
+.endmacro
+
+
+;======================================
+; Delay
+;--------------------------------------
+; on entry:
+;   X           # of 60ms to delay
+;======================================
+Delay           .proc
+                php
+                phx
+
+                ; .m16
+_next1          jsr Delay60Ms
+
+                dex
+                bne _next1
+
+                ; .m8
+
+                plx
+                plp
+
+                rts
+                .endproc
+
+
+;======================================
+; @ 6.3 MHz = 6,300,000 cycles/sec
+;
+; setup/teardown + process =
+;      17 cycles + 851968 cycles =
+;      851985 total cycles =
+;      1/16.549587141 of a second =
+;      60ms
+;======================================
+Delay60Ms       .proc
+                pha                     ; 3
+
+                stz _storage            ; 4
+
+_next1          lda _storage            ; 4
+                inc A                   ; 2
+                sta _storage            ; 4
+                bne _next1              ; 3
+
+                pla                     ; 4
+                rts                     ; 6
+
+;--------------------------------------
+
+_storage        .word 0
+
+                .endproc

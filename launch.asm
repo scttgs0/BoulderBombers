@@ -69,10 +69,24 @@ _next2          sta CANYON,Y
 ;
 ;--------------------------------------
 RESTART         .proc
-                lda #1                  ; set player start positions
-                sta PlayerPosX
-                lda #151
-                sta PlayerPosX+1
+                ldx #1                  ; set player start positions
+                stx PlayerPosX
+                txa
+                .mult2p32 zpTemp1       ; Accum*2+32, result in zpTemp1:Accum
+                tax
+
+                ldy #151
+                sty PlayerPosX+1
+                tya
+                .mult2p32 zpTemp2       ; Accum*2+32, result in zpTemp2:Accum
+                tay
+
+                stx SPRITE(sprite_t.X, 0)
+                lda zpTemp1
+                sta SPRITE(sprite_t.X+1, 0)
+                sty SPRITE(sprite_t.X, 1)
+                lda zpTemp2
+                sta SPRITE(sprite_t.X+1, 1)
 
                 ldx #70                 ; set player lanes
                 stx PlayerPosY
@@ -131,9 +145,9 @@ _wait1          lda CONSOL              ;   yes, wait for key release
 
                 bra _moveT              ; (move players)
 
-_chkSTART       cmp #2                  ; if START <F4> then start game
+_chkSTART       ;--cmp #2                  ; if START <F4> then start game
                 ;--lda #0
-                beq START
+                ;--beq START
 
 _moveT          lda onScreen            ; if on screen, then move
                 bne _moveIt
