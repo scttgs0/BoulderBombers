@@ -71,51 +71,46 @@ _cont1          lda PlayerPosX          ; first player 1
                 sta tmpDIR              ; (will be killed)
 
                 ldx #1
-_next3          lda CLOCK               ; get image index from clock
-                and #4
-                asl
-                sta HOLDIT              ; and hold it
 
-                lda tmpDIR              ; get direction index from dir
-                and #$10
-                clc
-                adc HOLDIT              ; & add 'em to get index.
+_next3          stx HOLDIT              ; save player #
 
-                stx HOLDIT              ; save player #
-
-;   calculate stamp address
-                sta zpTemp1
+                stz zpTemp1
                 stz zpTemp2
 
-                ldy #6
-_nextMult       asl zpTemp1             ; *128
-                bcc _3
+                lda tmpDIR              ; get direction index from dir
+                and #$10                ; moving left?
+                beq _1                  ;   yes
 
-                inc zpTemp2
+                lda #2                  ;   no, moving right
+                sta zpTemp2             ; move ahead by 2 stamps
 
-_3              dey
-                bpl _nextMult
+_1              lda CLOCK               ; get image index from clock
+                and #4                  ; switch the propeller frame?
+                beq _2                  ;   no
 
-                lda zpTemp2
+                inc zpTemp2             ;   yes
+
+_2              lda zpTemp2
                 clc
-                adc #$4
+                adc #$7B
                 sta zpTemp2
 
                 ldx HOLDIT
                 cpx #0
                 beq _plyr00
 
-                ;-- HACK:
-                ;lda zpTemp1
-                ;sta SPRITE(sprite_t.ADDR, 1)
-                ;lda zpTemp2
-                ;sta SPRITE(sprite_t.ADDR+1, 1)
+                ; valid values: {7b00|7c00|7d00|7e00}
+
+                lda zpTemp1
+                sta SPRITE(sprite_t.ADDR, 1)
+                lda zpTemp2
+                sta SPRITE(sprite_t.ADDR+1, 1)
                 bra _cont2
 
-_plyr00         ;--lda zpTemp1
-                ;sta SPRITE(sprite_t.ADDR, 0)
-                ;lda zpTemp2
-                ;sta SPRITE(sprite_t.ADDR+1, 0)
+_plyr00         lda zpTemp1
+                sta SPRITE(sprite_t.ADDR, 0)
+                lda zpTemp2
+                sta SPRITE(sprite_t.ADDR+1, 0)
 
 _cont2          lda tmpDIR              ; reverse tdir
                 eor #$FE
@@ -130,7 +125,7 @@ _DODELAY        ;--lda JIFFYCLOCK
                 ;--inc A
 ;--_wait1          cmp JIFFYCLOCK
                 ;--bne _wait1
-                ldy #80
+                ldy #60     ; HACK:
                 ldx #0
 _wait1          dex
                 bne _wait1
