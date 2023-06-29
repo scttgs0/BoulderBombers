@@ -1343,32 +1343,24 @@ _XIT
 
 
 ;======================================
-;
+; Reset the CPU IRQ vectors
+;--------------------------------------
+; prior to calling this:
+;   ensure MMU slot 7 is configured
+;   ensure SEI is active
+;--------------------------------------
+; preserve      A
 ;======================================
-InitSystemVectors .proc
+InitCPUVectors  .proc
                 pha
 
 ;   switch to system map
                 stz IOPAGE_CTRL
 
-                sei
-
-                cld                     ; clear decimal
-
-                ; lda #<DefaultHandler
-                ; sta vecCOP
-                ; lda #>DefaultHandler
-                ; sta vecCOP+1
-
                 lda #<DefaultHandler
                 sta vecABORT
                 lda #>DefaultHandler
                 sta vecABORT+1
-
-                ; lda #<DefaultHandler
-                ; sta vecNMI
-                ; lda #>DefaultHandler
-                ; sta vecNMI+1
 
                 lda #<BOOT
                 sta vecRESET
@@ -1380,7 +1372,6 @@ InitSystemVectors .proc
                 lda #>DefaultHandler
                 sta vecIRQ_BRK+1
 
-                cli
                 pla
                 rts
                 .endproc
@@ -1393,18 +1384,27 @@ DefaultHandler  rti
 
 
 ;======================================
-;
+; Reset the MMU slots
+;--------------------------------------
+; prior to calling this:
+;   ensure SEI is active
+;--------------------------------------
+; preserve      A
+;               IOPAGE_CTRL
+;               MMU_CTRL
 ;======================================
 InitMMU         .proc
                 pha
 
 ;   switch to system map
+                lda IOPAGE_CTRL
+                pha                     ; preserve
                 stz IOPAGE_CTRL
 
-                sei
-
-;   enable page0; modify page1
-                lda #mmuEditMode|mmuEditPage1|mmuPage0
+;   ensure edit mode
+                lda MMU_CTRL
+                pha                     ; preserve
+                ora #mmuEditMode
                 sta MMU_CTRL
 
                 lda #$00                ; [0000:1FFF]
@@ -1424,26 +1424,32 @@ InitMMU         .proc
                 inc A                   ; [E000:FFFF]
                 sta MMU_Block7
 
-;   enable page1
-                lda #mmuPage1
+;   restore MMU control
+                pla                     ; restore
                 sta MMU_CTRL
 
-                cli
+;   restore IOPAGE control
+                pla                     ; restore
+                sta IOPAGE_CTRL
+
                 pla
                 rts
                 .endproc
 
 
 ;======================================
-;
+; Configure IRQ Handlers
+;--------------------------------------
+; prior to calling this:
+;   ensure SEI is active
+;--------------------------------------
+; preserve      A
 ;======================================
 InitIRQs        .proc
                 pha
 
 ;   switch to system map
                 stz IOPAGE_CTRL
-
-                sei                     ; disable IRQ
 
 ;   enable IRQ handler
                 ; lda #<vecIRQ_BRK
@@ -1463,7 +1469,7 @@ InitIRQs        .proc
 ;   initialize joystick/keyboard
                 lda #$1F
                 sta InputFlags
-                stz InputType
+                stz InputType           ; =joystick
 
 ;   disable all IRQ
                 lda #$FF
@@ -1492,7 +1498,6 @@ InitIRQs        .proc
                 ; and #~INT01_VIA1
                 ; sta INT_MASK_REG1
 
-                cli                     ; enable IRQ
                 pla
                 rts
                 .endproc
