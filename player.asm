@@ -121,18 +121,10 @@ _cont2          lda tmpDIR              ; reverse tdir
                 bpl _next3
 
 ;   wait for a while to make game playable
-_DODELAY        ;--lda JIFFYCLOCK
-                ;--inc A
-;--_wait1          cmp JIFFYCLOCK
-                ;--bne _wait1
-                ldy #60     ; HACK:
-                ldx #0
-_wait1          dex
+_DODELAY        lda JIFFYCLOCK
+                inc A
+_wait1          cmp JIFFYCLOCK
                 bne _wait1
-
-                dey
-                bne _wait1
-
 
 ;   players should now be on screen, but check to see if they aren't
                 lda #TRUE
