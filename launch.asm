@@ -3,8 +3,11 @@
 ; Initialize the hardware
 ;--------------------------------------
 INIT            .proc
-                jsr InitSystemVectors
-                ; jsr InitMMU
+                sei
+                jsr InitMMU
+                jsr InitCPUVectors
+                jsr InitIRQs
+                cli
 
                 jsr RandomSeedQuick
 
@@ -121,8 +124,6 @@ RESTART         .proc
                 lda #0                  ; players not on screen
                 sta onScreen
 
-                jsr InitIRQs
-
                 lda #3                  ; init clock
                 sta CLOCK
 
@@ -145,9 +146,12 @@ _wait1          lda CONSOL              ;   yes, wait for key release
 
                 bra _moveT              ; (move players)
 
-_chkSTART       ;--cmp #2                  ; if START <F4> then start game
-                ;--lda #0
-                ;--beq START
+_chkSTART       cmp #2                  ; if START <F4> then start game
+                beq START
+
+                lda InputFlags
+                and #joyButton0
+                beq START
 
 _moveT          lda onScreen            ; if on screen, then move
                 bne _moveIt
