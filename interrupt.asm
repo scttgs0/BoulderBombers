@@ -8,7 +8,6 @@ HandleIrq       .proc
                 pha
                 phx
                 phy
-                cld
 
 ;   switch to system map
                 stz IOPAGE_CTRL

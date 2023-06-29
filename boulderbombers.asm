@@ -49,7 +49,7 @@
 
 ;--------------------------------------
 
-BOOT            cld                     ; clear decimal
+BOOT            clc
                 ldx #$FF                ; initialize the stack
                 txs
                 jmp INIT
