@@ -92,14 +92,14 @@ _1              lda CLOCK               ; get image index from clock
 
 _2              lda zpTemp2
                 clc
-                adc #$7B
+                adc #$7C
                 sta zpTemp2
 
                 ldx HOLDIT
                 cpx #0
                 beq _plyr00
 
-                ; valid values: {7b00|7c00|7d00|7e00}
+                ; valid values: {7c00|7d00|7e00|7f00}
 
                 lda zpTemp1
                 sta SPR(sprite_t.ADDR, 1)
