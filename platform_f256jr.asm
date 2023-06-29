@@ -6,8 +6,12 @@
 
 ;======================================
 ; seed = quick and dirty
+;--------------------------------------
+; preserve      A
 ;======================================
 RandomSeedQuick .proc
+                pha
+
                 lda RTC_MIN
                 sta RNG_SEED+1
 
@@ -19,14 +23,19 @@ RandomSeedQuick .proc
                 lda #rcEnable
                 sta RNG_CTRL
 
+                pla
                 rts
                 .endproc
 
 
 ;======================================
 ; seed = elapsed seconds this hour
+;--------------------------------------
+; preserve      A
 ;======================================
 RandomSeed      .proc
+                pha
+
                 lda RTC_MIN
                 jsr Bcd2Bin
                 sta RND_MIN
@@ -75,6 +84,7 @@ RandomSeed      .proc
                 lda #rcEnable
                 sta RNG_CTRL
 
+                pla
                 rts
                 .endproc
 
@@ -86,15 +96,15 @@ Bcd2Bin         .proc
                 pha
 
 ;   upper-nibble * 10
+                lsr
+                pha                     ; n*2
+                lsr
                 lsr                     ; n*8
-                pha
-                lsr
-                lsr
-                sta zpTemp1             ; n*2
+                sta zpTemp1
 
-                pla
+                pla                     ; A=n*2
                 clc
-                adc zpTemp1
+                adc zpTemp1             ; A=n*8+n*2 := n*10
                 sta zpTemp1
 
 ;   add the lower-nibble
@@ -108,6 +118,8 @@ Bcd2Bin         .proc
 
 ;======================================
 ; Initialize SID
+;--------------------------------------
+; preserve      A, X
 ;======================================
 InitSID         .proc
                 pha
@@ -150,6 +162,8 @@ _next1          sta SID1_BASE,X
 
 ;======================================
 ; Initialize PSG
+;--------------------------------------
+; preserve      A, X
 ;======================================
 InitPSG         .proc
                 pha
@@ -171,6 +185,8 @@ _next1          sta PSG1_BASE,X
 
 ;======================================
 ; Initialize the text-color LUT
+;--------------------------------------
+; preserve      A, Y
 ;======================================
 InitTextPalette .proc
                 pha
@@ -215,6 +231,8 @@ _Text_CLUT      .dword $00282828        ; 0: Dark Jungle Green
 
 ;======================================
 ; Initialize the graphic-color LUT
+;--------------------------------------
+; preserve      A, Y
 ;======================================
 InitGfxPalette  .proc
                 pha
@@ -247,6 +265,8 @@ _next1          lda Palette,Y
 ; Initialize the Sprite layer
 ;--------------------------------------
 ; sprites dimensions are 32x32 (1024)
+;--------------------------------------
+; preserve      A
 ;======================================
 InitSprites     .proc
                 pha
@@ -254,11 +274,11 @@ InitSprites     .proc
 ;   switch to system map
                 stz IOPAGE_CTRL
 
-;   setup player sprites (sprite-00 & sprint-01)
+;   set player sprites (sprite-00 & sprint-01)
                 .frsSpriteInit SPR_Balloon, scEnable|scLUT0|scDEPTH0|scSIZE_16, 0
                 .frsSpriteInit SPR_Balloon, scEnable|scLUT1|scDEPTH0|scSIZE_16, 1
 
-;   setup bomb sprites (sprite-02 & sprint-03)
+;   set bomb sprites (sprite-02 & sprint-03)
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 2
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 3
 
@@ -269,6 +289,8 @@ InitSprites     .proc
 
 ;======================================
 ;
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 CheckCollision  .proc
                 pha
@@ -344,6 +366,8 @@ _nextPlayer     dex
 
 ;======================================
 ; Clear the play area of the screen
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 ClearScreen     .proc
 v_QtyPages      .var $04                ; 40x30 = $4B0... 4 pages + 176 bytes
@@ -353,7 +377,6 @@ v_EmptyText     .var $00
 v_TextColor     .var $40
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -411,13 +434,14 @@ _nextByteT      sta (zpDest),Y
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Clear the bottom of the screen
+;--------------------------------------
+; preserve      A, Y
 ;======================================
 ClearGamePanel  .proc
 v_EmptyText     .var $00
@@ -425,9 +449,7 @@ v_TextColor     .var $40
 v_RenderLine    .var 24*CharResX
 ;---
 
-                php
                 pha
-                phx
                 phy
 
 ;   switch to color map
@@ -471,21 +493,20 @@ _next2          sta (zpDest),Y
                 stz IOPAGE_CTRL
 
                 ply
-                plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render High Score
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderHiScore   .proc
 v_RenderLine    .var 2*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -566,19 +587,19 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render High Score
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderHiScore2  .proc
 v_RenderLine    .var 24*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -659,19 +680,19 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render Title
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderTitle     .proc
 v_RenderLine    .var 24*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -718,19 +739,22 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render Author
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderAuthor    .proc
 v_RenderLine    .var 26*CharResX
 ;---
 
-                php
+                pha
+                phx
+                phy
 
 ;   switch to color map
                 lda #iopPage3
@@ -789,19 +813,22 @@ _XIT
 ;   switch to system map
                 stz IOPAGE_CTRL
 
-                plp
+                ply
+                plx
+                pla
                 rts
                 .endproc
 
 
 ;======================================
 ; Render SELECT (Qty of Players)
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderSelect    .proc
 v_RenderLine    .var 27*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -875,26 +902,24 @@ _letter         sta CS_TEXT_MEM_PTR+v_RenderLine,X
 
                 bra _nextChar
 
-_XIT
-;   switch to system map
-                stz IOPAGE_CTRL
+_XIT            stz IOPAGE_CTRL
 
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
 
 ;======================================
 ; Render Title
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 RenderPlayers   .proc
 v_RenderLine    .var 26*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -975,7 +1000,6 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
@@ -983,14 +1007,12 @@ _XIT
 ;======================================
 ; Render Player Scores & Bombs
 ;--------------------------------------
-; preserves:
-;   X Y
+; preserve      A, X, Y
 ;======================================
 RenderScore     .proc
 v_RenderLine    .var 27*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -1085,7 +1107,6 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
@@ -1095,13 +1116,14 @@ _XIT
 ;--------------------------------------
 ; codes $01-$03 are boulders (destructible)
 ; codes $84-$85 are canyon (not destructible)
+;--------------------------------------
+; preserve      A, Y
 ;======================================
 RenderCanyon    .proc
 v_RenderLine    .var 13*CharResX    ; skip 13 lines
 v_QtyLines      = zpTemp1
 ;---
 
-                php
                 pha
                 phy
 
@@ -1231,7 +1253,6 @@ _XIT
 
                 ply
                 pla
-                plp
                 rts
                 .endproc
 
@@ -1239,14 +1260,12 @@ _XIT
 ;======================================
 ; Render Player Scores & Bombs
 ;--------------------------------------
-; preserves:
-;   X Y
+; preserve      A, X, Y
 ;======================================
 RenderDebug     .proc
 v_RenderLine    .var 0*CharResX
 ;---
 
-                php
                 pha
                 phx
                 phy
@@ -1337,7 +1356,6 @@ _XIT
                 ply
                 plx
                 pla
-                plp
                 rts
                 .endproc
 
@@ -1505,6 +1523,8 @@ InitIRQs        .proc
 
 ;======================================
 ;
+;--------------------------------------
+; preserve      A, X, Y
 ;======================================
 SetFont         .proc
                 pha
