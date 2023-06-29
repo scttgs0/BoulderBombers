@@ -34,7 +34,6 @@ mult2p32        .macro highByte
 ;   X           # of 60ms to delay
 ;======================================
 Delay           .proc
-                php
                 phx
 
                 ; .m16
@@ -46,8 +45,6 @@ _next1          jsr Delay60Ms
                 ; .m8
 
                 plx
-                plp
-
                 rts
                 .endproc
 
