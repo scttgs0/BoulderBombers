@@ -59,12 +59,12 @@ LowerBomb       .proc
                 cpx #1
                 beq _player2
 
-                sta SPRITE(sprite_t.Y, 2)
-                stz SPRITE(sprite_t.Y+1, 2)
+                sta SPR(sprite_t.Y, 2)
+                stz SPR(sprite_t.Y+1, 2)
                 bra _cont
 
-_player2        sta SPRITE(sprite_t.Y, 3)
-                stz SPRITE(sprite_t.Y+1, 3)
+_player2        sta SPR(sprite_t.Y, 3)
+                stz SPR(sprite_t.Y+1, 3)
 
 _cont           txa                     ; set y to index the sound regs
                 .mult7

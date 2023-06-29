@@ -39,11 +39,11 @@ _cont1          lda PlayerPosX          ; first player 1
 
                 .mult2p32 zpTemp1       ; Accum*2+32, result in zpTemp1:Accum
 
-                sta SPRITE(sprite_t.X, 0) ; player 1 x-coordinate (aircraft & bomb)
-                sta SPRITE(sprite_t.X, 2)
+                sta SPR(sprite_t.X, 0)  ; player 1 x-coordinate (aircraft & bomb)
+                sta SPR(sprite_t.X, 2)
                 lda zpTemp1
-                sta SPRITE(sprite_t.X+1, 0)
-                sta SPRITE(sprite_t.X+1, 2)
+                sta SPR(sprite_t.X+1, 0)
+                sta SPR(sprite_t.X+1, 2)
 
                 lda #152                ; then player 2
                 sec
@@ -52,11 +52,11 @@ _cont1          lda PlayerPosX          ; first player 1
 
                 .mult2p32 zpTemp1       ; Accum*2+32, result in zpTemp1:Accum
 
-                sta SPRITE(sprite_t.X, 1) ; player 2 x-coordinate (aircraft & bomb)
-                sta SPRITE(sprite_t.X, 3)
+                sta SPR(sprite_t.X, 1)  ; player 2 x-coordinate (aircraft & bomb)
+                sta SPR(sprite_t.X, 3)
                 lda zpTemp1
-                sta SPRITE(sprite_t.X+1, 1)
-                sta SPRITE(sprite_t.X+1, 3)
+                sta SPR(sprite_t.X+1, 1)
+                sta SPR(sprite_t.X+1, 3)
 
 ;   player animation
                 lda zpShipType          ; if on planes then check if time to animate
@@ -102,15 +102,15 @@ _2              lda zpTemp2
                 ; valid values: {7b00|7c00|7d00|7e00}
 
                 lda zpTemp1
-                sta SPRITE(sprite_t.ADDR, 1)
+                sta SPR(sprite_t.ADDR, 1)
                 lda zpTemp2
-                sta SPRITE(sprite_t.ADDR+1, 1)
+                sta SPR(sprite_t.ADDR+1, 1)
                 bra _cont2
 
 _plyr00         lda zpTemp1
-                sta SPRITE(sprite_t.ADDR, 0)
+                sta SPR(sprite_t.ADDR, 0)
                 lda zpTemp2
-                sta SPRITE(sprite_t.ADDR+1, 0)
+                sta SPR(sprite_t.ADDR+1, 0)
 
 _cont2          lda tmpDIR              ; reverse tdir
                 eor #$FE
@@ -186,9 +186,9 @@ _CKNBR          dex
                 ldx PlayerPosY          ; change player lanes
                 ldy PlayerPosY+1
                 stx PlayerPosY+1
-                stx SPRITE(sprite_t.Y, 1)
+                stx SPR(sprite_t.Y, 1)
                 sty PlayerPosY
-                sty SPRITE(sprite_t.Y, 0)
+                sty SPR(sprite_t.Y, 0)
 
                 lda #3                  ; reset clock
                 sta CLOCK
@@ -224,10 +224,10 @@ ClearPlayer     .proc
                 stz SID1_CTRL2
 
 ;   clear bombs
-                stz SPRITE(sprite_t.Y, 2)
-                stz SPRITE(sprite_t.Y+1, 2)
-                stz SPRITE(sprite_t.Y, 3)
-                stz SPRITE(sprite_t.Y+1, 3)
+                stz SPR(sprite_t.Y, 2)
+                stz SPR(sprite_t.Y+1, 2)
+                stz SPR(sprite_t.Y, 3)
+                stz SPR(sprite_t.Y+1, 3)
 
                 rts
                 .endproc

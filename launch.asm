@@ -81,22 +81,22 @@ RESTART         .proc
                 .mult2p32 zpTemp2       ; Accum*2+32, result in zpTemp2:Accum
                 tay
 
-                stx SPRITE(sprite_t.X, 0)
+                stx SPR(sprite_t.X, 0)
                 lda zpTemp1
-                sta SPRITE(sprite_t.X+1, 0)
-                sty SPRITE(sprite_t.X, 1)
+                sta SPR(sprite_t.X+1, 0)
+                sty SPR(sprite_t.X, 1)
                 lda zpTemp2
-                sta SPRITE(sprite_t.X+1, 1)
+                sta SPR(sprite_t.X+1, 1)
 
                 ldx #70                 ; set player lanes
                 stx PlayerPosY
                 ldy #90
                 sty PlayerPosY+1
 
-                stx SPRITE(sprite_t.Y, 0)
-                stz SPRITE(sprite_t.Y+1, 0)
-                sty SPRITE(sprite_t.Y, 1)
-                stz SPRITE(sprite_t.Y+1, 1)
+                stx SPR(sprite_t.Y, 0)
+                stz SPR(sprite_t.Y+1, 0)
+                sty SPR(sprite_t.Y, 1)
+                stz SPR(sprite_t.Y+1, 1)
 
                 lda #0                  ; turn off explosions, and bkg sound
                 sta SID1_CTRL3
@@ -163,11 +163,11 @@ _moveT          lda onScreen            ; if on screen, then move
                 asl                     ; *2
                 tax
                 lda ShipSprOffset,X
-                sta SPRITE(sprite_t.ADDR, 0)
-                sta SPRITE(sprite_t.ADDR, 1)
+                sta SPR(sprite_t.ADDR, 0)
+                sta SPR(sprite_t.ADDR, 1)
                 lda ShipSprOffset+1,X
-                sta SPRITE(sprite_t.ADDR+1, 0)
-                sta SPRITE(sprite_t.ADDR+1, 1)
+                sta SPR(sprite_t.ADDR+1, 0)
+                sta SPR(sprite_t.ADDR+1, 1)
 
 _moveIt         phx
                 jsr MovePlayer          ; move players
