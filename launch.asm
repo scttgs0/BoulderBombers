@@ -34,18 +34,6 @@ INIT            .proc
 ;   initialize sprites
                 jsr InitSprites
 
-;   DEBUG:
-                .frsSpriteSetX 40, 0
-                .frsSpriteSetX 80, 1
-                .frsSpriteSetX 120, 2
-                .frsSpriteSetX 160, 3
-
-;   DEBUG:
-                .frsSpriteSetY 40, 0
-                .frsSpriteSetY 40, 1
-                .frsSpriteSetY 40, 2
-                .frsSpriteSetY 40, 3
-
 ;   zero out all variables (37 bytes)
                 lda #0
                 ldy #P3PF+1-CLOCK
@@ -190,6 +178,17 @@ START           .proc
 _wait1          lda CONSOL
                 and #1
                 ; beq _wait1
+
+;   wait for button release
+_wait2          lda JOYSTICK0
+                and #$1F
+                cmp #$1F
+                bne _wait2
+
+;   reset input
+                lda #$1F
+                sta InputFlags
+                sta InputFlags+1
 
                 lda #3                  ; set game speed to $ff+$04
                 sta DELYVAL

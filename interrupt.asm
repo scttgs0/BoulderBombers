@@ -10,6 +10,8 @@ HandleIrq       .proc
                 phy
 
 ;   switch to system map
+                lda IOPAGE_CTRL
+                pha                     ; preserve
                 stz IOPAGE_CTRL
 
                 ; lda INT_PENDING_REG1
@@ -30,7 +32,10 @@ _1              lda INT_PENDING_REG0
 
                 jsr VbiHandler
 
-_XIT            ply
+_XIT            pla                     ; restore
+                sta IOPAGE_CTRL
+
+                ply
                 plx
                 pla
 
@@ -303,16 +308,30 @@ VbiHandler      .proc
 
                 inc JIFFYCLOCK          ; increment the jiffy clock each VBI
 
+;   when already in joystick mode, bypass the override logic
+                lda InputType
+                cmp #itJoystick
+                beq _joyModeP1
+
                 lda JOYSTICK0           ; read joystick0
                 and #$1F
                 cmp #$1F
-                beq _1                  ; when no activity, keyboard is alternative
+                beq _chkPlayer2         ; when no activity, keyboard is alternative
 
                 sta InputFlags          ; joystick activity -- override keyboard input
                 lda #itJoystick
                 sta InputType
 
-_1              lda JOYSTICK1           ; read joystick1
+                bra _chkPlayer2
+
+_joyModeP1      lda JOYSTICK0           ; read joystick0
+                sta InputFlags
+
+_chkPlayer2     lda InputType+1
+                cmp #itJoystick
+                beq _joyModeP2
+
+                lda JOYSTICK1           ; read joystick1
                 and #$1F
                 cmp #$1F
                 beq _XIT                ; when no activity, keyboard is alternative
@@ -321,7 +340,12 @@ _1              lda JOYSTICK1           ; read joystick1
                 lda #itJoystick
                 sta InputType+1
 
-_XIT            jsr RenderCanyon
+                bra _XIT
+
+_joyModeP2      lda JOYSTICK1           ; read joystick0
+                sta InputFlags+1
+
+_XIT            ;jsr RenderCanyon
                 jsr RenderScore
 
                 ply
