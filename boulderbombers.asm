@@ -97,3 +97,4 @@ StampSprites    .include "SPRITES.inc"
 StampSprites_end
 
                 .include "platform_f256jr.asm"
+                .include "facade.asm"
