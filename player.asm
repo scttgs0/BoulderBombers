@@ -92,7 +92,7 @@ _1              lda CLOCK               ; get image index from clock
 
 _2              lda zpTemp2
                 clc
-                adc #$7C
+                adc #>SPR_PlaneLA
                 sta zpTemp2
 
                 ldx HOLDIT
