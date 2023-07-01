@@ -324,6 +324,7 @@ _withinRange    sec
 
                 ldy zpTemp1
 _nextRow        beq _checkRock
+
                 lda zpSource
                 clc
                 adc #40
@@ -331,6 +332,7 @@ _nextRow        beq _checkRock
                 bcc _1
 
                 inc zpSource+1
+
 _1              dey
                 bra _nextRow
 
@@ -338,21 +340,26 @@ _checkRock      ldy zpTemp2
                 lda (zpSource),Y
                 beq _nextPlayer
 
-                ;cmp #4
-                ;bcs _nextPlayer
+                cmp #4
+                bcs _nextPlayer
 
                 sta P2PF,X
 
                 stz zpTemp1
                 txa
-                asl
+                asl                     ; *2
                 rol zpTemp1
                 tay
+
                 lda zpSource
                 stz zpTemp2+1
                 clc
                 adc zpTemp2
-                sta P2PFaddr,Y
+                sta P2PFaddr,Y          ; low-byte
+
+                lda zpSource+1
+                adc #$00
+                sta P2PFaddr+1,Y        ; high-byte
 
 _nextPlayer     dex
                 bpl _nextBomb

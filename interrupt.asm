@@ -308,6 +308,9 @@ VbiHandler      .proc
 
                 inc JIFFYCLOCK          ; increment the jiffy clock each VBI
 
+;   render bottom of screen first to avoid tearing as the screen draw catches up to the screen data updates
+                jsr RenderCanyon
+
 ;   when already in joystick mode, bypass the override logic
                 lda InputType
                 cmp #itJoystick
@@ -345,8 +348,7 @@ _chkPlayer2     lda InputType+1
 _joyModeP2      lda JOYSTICK1           ; read joystick0
                 sta InputFlags+1
 
-_XIT            ;jsr RenderCanyon
-                jsr RenderScore
+_XIT            jsr RenderScore
 
                 ply
                 plx

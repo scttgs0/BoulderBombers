@@ -53,10 +53,9 @@ zpRockHit           .byte ?
 ROCKS               .word ?
 SCRPTR              .word ?
 
-P2PF                .byte ?
+P2PF                .byte ?             ; object code that was hit
 P3PF                .byte ?
-
-P2PFaddr            .word ?
+P2PFaddr            .word ?             ; screen address where the hit occurred
 P3PFaddr            .word ?
 
 ;--------------------------------------

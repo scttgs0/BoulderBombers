@@ -31,7 +31,7 @@ _chkRockOK      bpl _chkHitRock
 
                 jmp HideBomb
 
-;   set pointer into screen ram where the rock hit is
+;   set pointer into screen RAM where the rock hit occurred
 _chkHitRock     pha
                 cpx #1
                 beq _player2
