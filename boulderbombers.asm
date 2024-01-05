@@ -7,9 +7,9 @@
 ;*                     *
 ;***********************
 
-                .include "equates_system_atari8.inc"
-                .include "equates_zeropage.inc"
-                .include "equates_game.inc"
+                .include "equates/system_atari8.equ"
+                .include "equates/zeropage.equ"
+                .include "equates/game.equ"
 
 
             .enc "atari-screen"

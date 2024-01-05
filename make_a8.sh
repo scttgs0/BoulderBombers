@@ -1,7 +1,11 @@
 
+mkdir -p obj/
+
+# -------------------------------------
+
 64tass  --m65xx \
         --atari-xex \
-        -o boulderbombers.xex \
-        --list=boulderbombers.lst \
-        --labels=boulderbombers.lbl \
+        -o obj/boulderbombers.xex \
+        --list=obj/boulderbombers.lst \
+        --labels=obj/boulderbombers.lbl \
         boulderbombers.asm
