@@ -135,7 +135,6 @@ _wait1          cmp JIFFYCLOCK
 
                 cmp #152
                 beq _OFFSCR
-
                 bra _XIT                ; if on, return
 
 _OFFSCR         lda #0                  ; else, turn off explosions and bkg sound
