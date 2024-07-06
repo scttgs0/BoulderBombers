@@ -20,14 +20,15 @@
 
                 .cpu "65c02"
 
-                .include "equates/system_f256jr.equ"
+                .include "equates/system_f256.equ"
                 .include "equates/zeropage.equ"
                 .include "equates/game.equ"
 
-                .include "macros/frs_jr_graphic.mac"
-                .include "macros/frs_jr_mouse.mac"
-                .include "macros/frs_jr_random.mac"
-                .include "macros/frs_jr_sprite.mac"
+                .include "macros/f256_graphic.mac"
+                .include "macros/f256_mouse.mac"
+                .include "macros/f256_random.mac"
+                .include "macros/f256_sprite.mac"
+                .include "macros/f256_text.mac"
                 .include "macros/game.mac"
 
 
@@ -36,16 +37,21 @@
                 * = $6000
 ;--------------------------------------
 
-;   Boot from RAM data block
+;   Boot from RAM data block (KUP)
 
-                .byte $F2,$56           ; signature
-                .byte $02               ; block count
-                .byte $03               ; first block
-                .addr BOOT              ; execute address
-                .word $0000             ; version
-                .word $0000             ; kernel
-                                        ; binary name
-                .text 'Boulder Bombers',$00
+                ; .byte $F2,$56           ; signature
+                ; .byte $02               ; block count
+                ; .byte $03               ; first block
+                ; .addr BOOT              ; execute address
+                ; .word $0001             ; version
+                ; .word $0000             ; kernel
+                ; .null 'Boulder Bombers' ; binary name
+
+;--------------------------------------
+
+                .text "PGX"
+                .byte $03
+                .dword BOOT
 
 ;--------------------------------------
 
@@ -96,5 +102,5 @@ Palette_end
 StampSprites    .include "SPRITES.inc"
 StampSprites_end
 
-                .include "platform_f256jr.asm"
+                .include "platform_f256.asm"
                 .include "facade.asm"
