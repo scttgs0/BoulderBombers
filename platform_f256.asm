@@ -12,6 +12,13 @@
 RandomSeedQuick .proc
                 pha
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 lda RTC_MIN
                 sta RNG_SEED+1
 
@@ -22,6 +29,10 @@ RandomSeedQuick .proc
                 sta RNG_CTRL
                 lda #rcEnable
                 sta RNG_CTRL
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 pla
                 rts
@@ -35,6 +46,13 @@ RandomSeedQuick .proc
 ;======================================
 RandomSeed      .proc
                 pha
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
 
                 lda RTC_MIN
                 jsr Bcd2Bin
@@ -84,6 +102,10 @@ RandomSeed      .proc
                 lda #rcEnable
                 sta RNG_CTRL
 
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
                 pla
                 rts
                 .endproc
@@ -125,6 +147,13 @@ InitSID         .proc
                 pha
                 phx
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 lda #0                  ; reset the SID registers
                 ldx #$1F
 _next1          sta SID1_BASE,X
@@ -154,6 +183,10 @@ _next1          sta SID1_BASE,X
                 sta SID1_SIGVOL
                 sta SID2_SIGVOL
 
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
                 plx
                 pla
                 rts
@@ -169,6 +202,13 @@ InitPSG         .proc
                 pha
                 phx
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
                 lda #0                  ; reset the PSG registers
                 ldx #$07
 _next1          sta PSG1_BASE,X
@@ -176,6 +216,10 @@ _next1          sta PSG1_BASE,X
 
                 dex
                 bpl _next1
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 plx
                 pla
@@ -192,6 +236,10 @@ InitTextPalette .proc
                 pha
                 phy
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
 ;   switch to system map
                 stz IOPAGE_CTRL
 
@@ -202,6 +250,10 @@ _next1          lda _Text_CLUT,Y
 
                 dey
                 bpl _next1
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 ply
                 pla
@@ -238,6 +290,10 @@ InitGfxPalette  .proc
                 pha
                 phy
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
 ;   switch to graphic map
                 lda #$01
                 sta IOPAGE_CTRL
@@ -252,8 +308,9 @@ _next1          lda Palette,Y
                 dey
                 bpl _next1
 
-;   switch to system map
-                stz IOPAGE_CTRL
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 ply
                 pla
@@ -271,6 +328,10 @@ _next1          lda Palette,Y
 InitSprites     .proc
                 pha
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
 ;   switch to system map
                 stz IOPAGE_CTRL
 
@@ -281,6 +342,10 @@ InitSprites     .proc
 ;   set bomb sprites (sprite-02 & sprint-03)
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 2
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 3
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 pla
                 rts
@@ -388,6 +453,10 @@ v_TextColor     .var $40
                 phx
                 phy
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
 ;   switch to color map
                 lda #iopPage3
                 sta IOPAGE_CTRL
@@ -435,8 +504,9 @@ _nextByteT      sta (zpDest),Y
                 dex
                 bne _nextPageT
 
-;   switch to system map
-                stz IOPAGE_CTRL
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 ply
                 plx
@@ -457,6 +527,10 @@ v_RenderLine    .var 0*CharResX
                 pha
                 phx
                 phy
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
 
 ;   switch to color map
                 lda #iopPage3
@@ -538,8 +612,9 @@ _bomb           sta CS_TEXT_MEM_PTR+v_RenderLine,X
                 bra _nextChar
 
 _XIT
-;   switch to system map
-                stz IOPAGE_CTRL
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 ply
                 plx
@@ -560,6 +635,10 @@ _XIT
 InitCPUVectors  .proc
                 pha
 
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
 ;   switch to system map
                 stz IOPAGE_CTRL
 
@@ -577,6 +656,10 @@ InitCPUVectors  .proc
                 sta vecIRQ_BRK
                 lda #>DefaultHandler
                 sta vecIRQ_BRK+1
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
                 pla
                 rts
@@ -602,9 +685,11 @@ DefaultHandler  rti
 InitMMU         .proc
                 pha
 
-;   switch to system map
+;   preserve IOPAGE control
                 lda IOPAGE_CTRL
-                pha                     ; preserve
+                pha
+
+;   switch to system map
                 stz IOPAGE_CTRL
 
 ;   ensure edit mode
@@ -652,6 +737,10 @@ InitMMU         .proc
 ; preserve      A
 ;======================================
 InitIRQs        .proc
+                pha
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
                 pha
 
 ;   switch to system map
@@ -706,6 +795,10 @@ InitIRQs        .proc
                 ; and #~INT01_VIA1
                 ; sta INT_MASK_REG1
 
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
                 pla
                 rts
                 .endproc
@@ -723,6 +816,10 @@ SetFont         .proc
 
 ;   DEBUG: helpful if you need to see the trace
                 ; bra _XIT
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
 
 ;   switch to charset map
                 lda #iopPage1
@@ -755,8 +852,9 @@ _next1          lda (zpSource),Y
                 dex
                 bne _nextPage
 
-;   switch to system map
-                stz IOPAGE_CTRL
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
 
 _XIT            ply
                 plx
