@@ -18,8 +18,6 @@
 ;   SP0[0,1]_Y_POS      word [70,90]
 
 
-                .cpu "65c02"
-
                 .include "equates/system_f256.equ"
                 .include "equates/zeropage.equ"
                 .include "equates/game.equ"
@@ -37,21 +35,20 @@
                 * = $6000
 ;--------------------------------------
 
-;   Boot from RAM data block (KUP)
-
-                ; .byte $F2,$56           ; signature
-                ; .byte $02               ; block count
-                ; .byte $03               ; first block
-                ; .addr BOOT              ; execute address
-                ; .word $0001             ; version
-                ; .word $0000             ; kernel
-                ; .null 'Boulder Bombers' ; binary name
-
-;--------------------------------------
-
+.if PGX=1
                 .text "PGX"
                 .byte $03
                 .dword BOOT
+;--------------------------------------
+.else
+                .byte $F2,$56           ; signature
+                .byte $02               ; block count
+                .byte $03               ; first block
+                .addr BOOT              ; execute address
+                .word $0001             ; version
+                .word $0000             ; kernel
+                .null 'Boulder Bombers' ; binary name
+.endif
 
 ;--------------------------------------
 
