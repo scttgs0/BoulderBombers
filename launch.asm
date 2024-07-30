@@ -4,8 +4,8 @@
 ;--------------------------------------
 INIT            .proc
                 sei
-                jsr InitMMU
                 jsr InitCPUVectors
+                jsr InitMMU
                 jsr InitIRQs
                 cli
 
@@ -29,7 +29,7 @@ INIT            .proc
                 jsr ClearScreen
                 jsr ClearGamePanel
 
-                ; jsr InitSID             ; initialize SID sound
+                jsr InitSID             ; initialize SID sound
                 ; jsr InitPSG             ; initialize PSG sound
 
 ;   initialize sprites
