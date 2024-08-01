@@ -722,9 +722,9 @@ InitIRQs        .proc
                 sta INT_MASK_REG0
 
 ;   enable Keyboard IRQ
-                ; lda INT_MASK_REG1
-                ; and #~INT01_VIA1
-                ; sta INT_MASK_REG1
+                ;!! lda INT_MASK_REG1
+                ;!! and #~INT01_VIA1
+                ;!! sta INT_MASK_REG1
 
 ;   restore IOPAGE control
                 pla

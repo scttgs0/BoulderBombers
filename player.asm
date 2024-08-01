@@ -28,7 +28,6 @@ _ADDCLOK        inc CLOCK               ; add to clock
                 lda CLOCK               ; if clock and
                 and zpShipType          ; mask<>0 then don't move
                 beq _cont1
-
                 jmp _DODELAY
 
 ;   move the players
@@ -71,7 +70,6 @@ _cont1          lda PlayerPosX          ; first player 1
                 sta tmpDIR              ; (will be killed)
 
                 ldx #1
-
 _next3          stx HOLDIT              ; save player #
 
                 stz zpTemp1
@@ -192,6 +190,7 @@ _CKNBR          dex
 
                 lda #stPlane            ; set move rate mask
                 sta zpShipType
+
                 lda #4                  ; plane bombs get max of 4 rocks
                 sta RocksPerBomb
 

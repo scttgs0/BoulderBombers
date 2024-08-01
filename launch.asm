@@ -11,7 +11,7 @@ INIT            .proc
 
                 jsr RandomSeedQuick
 
-                .frsGraphics mcTextOn|mcOverlayOn|mcGraphicsOn|mcSpriteOn,mcVideoMode240|mcTextDoubleX|mcTextDoubleY
+                .frsGraphics mcSpriteOn|mcGraphicsOn|mcOverlayOn|mcTextOn,mcVideoMode240|mcTextDoubleX|mcTextDoubleY
                 .frsMouse_off
                 .frsCursor 0
                 .frsBorder_off
@@ -30,7 +30,7 @@ INIT            .proc
                 jsr ClearGamePanel
 
                 jsr InitSID             ; initialize SID sound
-                ; jsr InitPSG             ; initialize PSG sound
+                ;!! jsr InitPSG             ; initialize PSG sound
 
 ;   initialize sprites
                 jsr InitSprites
@@ -178,7 +178,7 @@ START           .proc
 ;   wait for key release
 _wait1          lda CONSOL
                 and #1
-                ; beq _wait1
+                ;!! beq _wait1
 
 ;   wait for button release
 _wait2          lda JOYSTICK0
@@ -202,6 +202,7 @@ _wait2          lda JOYSTICK0
                 ldx #2                  ; reset scores to zero
 _next1          sta SCORE1,X
                 sta SCORE2,X
+
                 dex
                 bpl _next1
 
@@ -213,6 +214,7 @@ _next1          sta SCORE1,X
                 lda #$9B
 _next2          sta BOMB1,X
                 sta BOMB2,X
+
                 dex
                 bpl _next2
 

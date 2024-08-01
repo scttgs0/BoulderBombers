@@ -17,18 +17,15 @@ BombLoop        ldx #1                  ; set player index
 BombNextLoop    .proc
                 lda zpBombDrop,X        ; if bomb not dropped
                 bne _chkHits
-
                 jmp CheckDrop           ; check trigger
 
 _chkHits        jsr CheckCollision
 
                 lda P2PF,X              ; bomb hit anything?
                 bne _chkRockOK
-
                 jmp LowerBomb           ;   no, move bomb
 
 _chkRockOK      bpl _chkHitRock
-
                 jmp HideBomb
 
 ;   set pointer into screen RAM where the rock hit occurred
@@ -59,7 +56,6 @@ _gotChr         pla
                 sec
                 sbc #1
                 sta ROCKS
-
                 bcs _got1
 
                 dec ROCKS+1
@@ -86,6 +82,7 @@ _next1          lda SCORE1,Y            ; done?
                 sec                     ; sub 10 from this digit
                 sbc #10
                 sta SCORE1,Y
+
                 dey                     ; point to next
                 dec HOLDIT
                 bmi CheckHiScore        ; rollover! leave
@@ -99,9 +96,9 @@ _scbrk          clc                     ; add 1
                 sta SCORE1,Y            ; and save it
                 bne _next1              ; check this digit
 
-_scundx         ;iny                     ; go right one digit
-                ;inc HOLDIT
-                ;bne _next1
+_scundx         ;!!iny                     ; go right one digit
+                ;!!inc HOLDIT
+                ;!!bne _next1
 
                 jmp CheckHiScore
 

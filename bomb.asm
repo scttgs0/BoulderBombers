@@ -237,9 +237,11 @@ _next2          ldy #0                  ; rock fall loop:
 
                 txa                     ; blank, move rock above down
                 sta (SCRPTR),Y
+
                 ldy #0
                 tya
                 sta (SCRPTR),Y
+
                 lda SCRPTR              ; & go up one so whole column won't fall at once
                 sec
                 sbc #$28
@@ -247,6 +249,7 @@ _next2          ldy #0                  ; rock fall loop:
                 bcs _notOver
 
                 dec SCRPTR+1
+
 _notOver        dec YCOUNT              ; last row done?
                 bmi _doNextColumn       ;   yes, do next col
 
@@ -257,6 +260,7 @@ _doNextRock     lda SCRPTR              ; go up one row
                 bcs _notOver2
 
                 dec SCRPTR+1
+
 _notOver2       dec YCOUNT              ; last row done?
                 bpl _next2              ;   yes, do next col
 

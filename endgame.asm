@@ -9,6 +9,7 @@ EndGame         .proc
 
                 lda #8
                 sta HOLDIT
+
 _wait1          ldx #$FF
 _wait2          ldy #$FF
 _wait3          lda CONSOL              ; end delay early with consol key
@@ -25,4 +26,5 @@ _wait3          lda CONSOL              ; end delay early with consol key
                 bpl _wait1
 
 _XIT            jmp RESTART             ; go title screen
+
                 .endproc

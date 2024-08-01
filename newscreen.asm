@@ -22,6 +22,7 @@ NewScreen       .proc
                 sta ROCKS+1             ; rocks in canyon=298
                 lda #42
                 sta ROCKS
+
                 jsr ClearPlayer         ; clear players
 
                 lda #FALSE              ; set players on screen=false
