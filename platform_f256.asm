@@ -643,13 +643,13 @@ InitMMU         .proc
                 sta MMU_Block7
 
 ;   restore MMU control
-                pla                     ; restore
+                pla
                 sta MMU_CTRL
 
                 cli
 
 ;   restore IOPAGE control
-                pla                     ; restore
+                pla
                 sta IOPAGE_CTRL
 
                 pla
