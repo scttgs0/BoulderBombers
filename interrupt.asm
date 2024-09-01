@@ -4,33 +4,42 @@
 ; Main IRQ Handler
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-HandleIrq       .proc
+irqMain         .proc
                 pha
                 phx
                 phy
+
+                cld
 
 ;   switch to system map
                 lda IOPAGE_CTRL
                 pha                     ; preserve
                 stz IOPAGE_CTRL
 
+                lda INT_PENDING_REG0
+                sta irq_pending
+                sta INT_PENDING_REG0
+
                 ; lda INT_PENDING_REG1
                 ; bit #INT01_VIA1
-                ; beq _1
+                ; beq _chkSOF
 
                 ; lda INT_PENDING_REG1
                 ; sta INT_PENDING_REG1
 
                 ; jsr KeyboardHandler
 
-_1              lda INT_PENDING_REG0
+_chkSOF         lda irq_pending
                 bit #INT00_SOF
-                beq _XIT
+                beq _chkSOL
 
-                lda INT_PENDING_REG0
-                sta INT_PENDING_REG0
+                jsr irqVBIHandler
 
-                jsr VbiHandler
+_chkSOL         ;!!lda irq_pending
+                ;!!bit #INT00_SOL
+                ;!!beq _XIT
+
+                ;!!jsr irqDLIHandler
 
 _XIT            pla                     ; restore
                 sta IOPAGE_CTRL
@@ -39,14 +48,13 @@ _XIT            pla                     ; restore
                 plx
                 pla
 
-HandleIrq_END   rti
-                ;jmp IRQ_PRIOR
-
+irqMain_END     ;jmp IRQ_PRIOR
+                rti
                 .endproc
 
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Handle Key notifications
+; Key Notifications
 ;--------------------------------------
 ;   ESC         $01/$81  press/release
 ;   R-Ctrl      $1D/$9D
@@ -299,9 +307,9 @@ _XIT            ply
 
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Handle Vertical Blank Interrupt (SOF)
+; Vertical Blank Interrupt (SOF)
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-VbiHandler      .proc
+irqVBIHandler   .proc
                 pha
                 phx
                 phy

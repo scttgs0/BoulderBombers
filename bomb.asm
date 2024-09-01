@@ -168,6 +168,7 @@ _doPlyrMove     stz P2PF                ; clear collisions
                 dec EXPLODE
                 eor #$F0
                 sta SID1_FREQ3
+
                 lsr                     ; /16
                 lsr
                 lsr

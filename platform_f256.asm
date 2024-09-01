@@ -162,24 +162,25 @@ _next1          sta SID1_BASE,X
                 dex
                 bpl _next1
 
-                lda #$09                ; Attack/Decay = 9
+                lda #sidAttack2ms|sidDecay750ms
                 sta SID1_ATDCY1
                 sta SID1_ATDCY2
                 sta SID1_ATDCY3
                 sta SID2_ATDCY1
 
+                ; 0%|sidDecay6ms
                 stz SID1_SUREL1         ; Susatain/Release = 0 [square wave]
                 stz SID1_SUREL2
                 stz SID1_SUREL3
                 stz SID2_SUREL1
 
-                lda #$21
+                lda #sidcSaw|sidcGate
                 sta SID1_CTRL1
                 sta SID1_CTRL2
                 sta SID1_CTRL3
                 sta SID2_CTRL1
 
-                lda #$0C                ; Volume = 12 (high-range)
+                lda #$08                ; Volume = 8 (mid-range)
                 sta SID1_SIGVOL
                 sta SID2_SIGVOL
 
@@ -319,6 +320,64 @@ _next1          lda Palette,Y
 
 
 ;======================================
+; Load the pixel data for the tiles
+; into video memory.
+; Set it up for tile set 0
+;======================================
+InitTiles       .proc
+                pha
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                lda #<tiles             ; Set the source address
+                sta TILESET0_ADDR
+                lda #>tiles
+                sta TILESET0_ADDR+1
+                lda #`tiles
+                sta TILESET0_ADDR+2
+
+;   enable the tileset, use 8x256 pixel source data layout
+                lda #tsVertical
+                sta TILESET0_ADDR_CFG
+
+                lda #<worldmap          ; Set the source address
+                sta TILE0_ADDR
+                lda #>worldmap
+                sta TILE0_ADDR+1
+                lda #`worldmap
+                sta TILE0_ADDR+2
+
+                lda #40                ; Set the size of the tile map to 256x256
+                sta TILE0_SIZE_X
+                lda #30
+                sta TILE0_SIZE_Y
+
+                stz TILE0_SCROLL_X
+                stz TILE0_SCROLL_Y
+
+;   enable the tilema, puse 8x8 pixel tiles
+                lda #tcEnable|tcSmallTiles
+                sta TILE0_CTRL
+
+;   enable tiles on layer 0
+                lda #locLayer0_TL0
+                sta LAYER_ORDER_CTRL_0
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
+                pla
+                rts
+                .endproc
+
+
+;======================================
 ; Initialize the Sprite layer
 ;--------------------------------------
 ; sprites dimensions are 32x32 (1024)
@@ -342,6 +401,41 @@ InitSprites     .proc
 ;   set bomb sprites (sprite-02 & sprint-03)
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 2
                 .frsSpriteInit SPR_Bomb, scEnable|scLUT0|scDEPTH0|scSIZE_16, 3
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
+                pla
+                rts
+                .endproc
+
+
+;======================================
+;
+;======================================
+InitBitmap      .proc
+                pha
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                ;!!lda #<ScreenRAM         ; Set the destination address
+                sta BITMAP2_ADDR
+                ;!!lda #>ScreenRAM
+                sta BITMAP2_ADDR+1
+                ;!!lda #`ScreenRAM
+                sta BITMAP2_ADDR+2
+
+                lda #bmcEnable|bmcLUT0
+                sta BITMAP2_CTRL
+
+                lda #locLayer2_BM2
+                sta LAYER_ORDER_CTRL_1
 
 ;   restore IOPAGE control
                 pla
@@ -432,7 +526,7 @@ _nextByteT      sta (zpDest),Y
 
 
 ;======================================
-; Render Player Scores & Bombs
+; Render Debug Info
 ;--------------------------------------
 ; preserve      A, X, Y
 ;======================================
@@ -683,9 +777,9 @@ InitIRQs        .proc
                 ; lda #>vecIRQ_BRK
                 ; sta IRQ_PRIOR+1
 
-                lda #<HandleIrq
+                lda #<irqMain
                 sta vecIRQ_BRK
-                lda #>HandleIrq
+                lda #>irqMain
                 sta vecIRQ_BRK+1
 
 ;   initialize the console
@@ -695,9 +789,9 @@ InitIRQs        .proc
 ;   initialize joystick/keyboard
                 lda #$1F
                 sta InputFlags
-                sta InputFlags+1
+                ; sta InputFlags+1
                 stz InputType           ; =joystick
-                stz InputType+1
+                ; stz InputType+1
 
 ;   disable all IRQ
                 lda #$FF
@@ -720,6 +814,11 @@ InitIRQs        .proc
                 lda INT_MASK_REG0
                 and #~INT00_SOF
                 sta INT_MASK_REG0
+
+;   enable Start-of-Line IRQ
+                ;!!lda INT_MASK_REG0
+                ;!!and #~INT00_SOL
+                ;!!sta INT_MASK_REG0
 
 ;   enable Keyboard IRQ
                 ;!! lda INT_MASK_REG1
