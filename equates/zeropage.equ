@@ -89,3 +89,4 @@ RND_MIN             .byte ?
 RND_SEC             .byte ?
 RND_RESULT          .word ?
 
+irq_pending         .byte ?
