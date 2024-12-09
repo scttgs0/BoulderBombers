@@ -122,18 +122,61 @@ Bcd2Bin         .proc
                 pha                     ; n*2
                 lsr
                 lsr                     ; n*8
-                sta zpTemp1
+                sta _tmp
 
                 pla                     ; A=n*2
                 clc
-                adc zpTemp1             ; A=n*8+n*2 := n*10
-                sta zpTemp1
+                adc _tmp                ; A=n*8+n*2 := n*10
+                sta _tmp
 
 ;   add the lower-nibble
                 pla
                 and #$0F
                 clc
-                adc zpTemp1
+                adc _tmp
+
+                rts
+
+;--------------------------------------
+
+_tmp            .byte $00
+
+                .endproc
+
+
+;======================================
+; Convert BCD to Binary
+;======================================
+Bin2Bcd         .proc
+                ldx #00
+                ldy #00
+_next1          cmp #10
+                bcc _done
+
+                sec
+                sbc #10
+
+                inx
+                bra _next1
+
+_done           tay
+                txa
+                asl
+                asl
+                asl
+                asl
+                and #$F0
+                sta _tmp
+
+                tya
+                clc
+                adc _tmp
+
+                rts
+
+;--------------------------------------
+
+_tmp            .byte $00
 
                 .endproc
 
@@ -343,7 +386,7 @@ InitTiles       .proc
 
 ;   enable the tileset, use 8x256 pixel source data layout
                 lda #tsVertical
-                sta TILESET0_ADDR_CFG
+                sta TILESET0_CTRL
 
                 lda #<worldmap          ; Set the source address
                 sta TILE0_ADDR
@@ -360,7 +403,7 @@ InitTiles       .proc
                 stz TILE0_SCROLL_X
                 stz TILE0_SCROLL_Y
 
-;   enable the tilema, puse 8x8 pixel tiles
+;   enable the tilemap, use 8x8 pixel tiles
                 lda #tcEnable|tcSmallTiles
                 sta TILE0_CTRL
 
@@ -452,8 +495,7 @@ InitBitmap      .proc
 ; preserve      A, X, Y
 ;======================================
 ClearScreen     .proc
-v_QtyPages      .var $04                ; 40x30 = $4B0... 4 pages + 176 bytes
-                                        ; remaining 176 bytes cleared via ClearGamePanel
+v_QtyPages      .var $05                ; 40x30 = $4B0... 4 pages + 176 bytes
 
 v_EmptyText     .var $00
 v_TextColor     .var $40

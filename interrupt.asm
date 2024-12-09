@@ -1,4 +1,9 @@
 
+; SPDX-FileName: interrupt.asm
+; SPDX-FileCopyrightText: Copyright 2024, Scott Giese
+; SPDX-License-Identifier: GPL-3.0-or-later
+
+
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Main IRQ Handler
