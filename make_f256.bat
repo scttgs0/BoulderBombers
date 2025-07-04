@@ -15,11 +15,11 @@ if not exist "obj\" md obj
             boulderbombers.asm
 
 
-64tass  --m65c02 ^
-        --flat ^
-        --nostart ^
-        -D PGX=0 ^
-        -o obj\bbombers.bin ^
-        --list=obj\bbombersB.lst ^
-        --labels=obj\bbombersB.lbl ^
-        boulderbombers.asm
+@REM 64tass  --m65c02 ^
+@REM         --flat ^
+@REM         --nostart ^
+@REM         -D PGX=0 ^
+@REM         -o obj\bbombers.bin ^
+@REM         --list=obj\bbombersB.lst ^
+@REM         --labels=obj\bbombersB.lbl ^
+@REM         boulderbombers.asm
