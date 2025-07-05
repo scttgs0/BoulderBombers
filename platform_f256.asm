@@ -212,7 +212,7 @@ _next1          sta SID1_BASE,X
                 sta SID2_ATDCY1
 
                 ; 0%|sidDecay6ms
-                stz SID1_SUREL1         ; Susatain/Release = 0 [square wave]
+                stz SID1_SUREL1         ; Sustain/Release = 0 [square wave]
                 stz SID1_SUREL2
                 stz SID1_SUREL3
                 stz SID2_SUREL1
@@ -397,10 +397,14 @@ InitTiles       .proc
 
                 lda #40                ; Set the size of the tile map to 256x256
                 sta TILE0_SIZE_X
+                stz TILE0_SIZE_X+1
                 lda #30
                 sta TILE0_SIZE_Y
+                sta TILE0_SIZE_Y+1
 
+                stz TILE0_SCROLL_X+1
                 stz TILE0_SCROLL_X
+                stz TILE0_SCROLL_Y+1
                 stz TILE0_SCROLL_Y
 
 ;   enable the tilemap, use 8x8 pixel tiles
@@ -911,7 +915,7 @@ FONT0           lda #<GameFont
                 sta zpDest+1
                 stz zpDest+2
 
-                ldx #$07                ; 7 pages
+                ldx #$08                ; 8 pages
 _nextPage       ldy #$00
 _next1          lda (zpSource),Y
                 sta (zpDest),Y
