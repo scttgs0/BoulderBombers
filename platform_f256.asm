@@ -1,6 +1,6 @@
 
 ; SPDX-FileName: platform_f256.asm
-; SPDX-FileCopyrightText: Copyright 2023, Scott Giese
+; SPDX-FileCopyrightText: Copyright 2023-2025, Scott Giese
 ; SPDX-License-Identifier: GPL-3.0-or-later
 
 
@@ -145,7 +145,7 @@ _tmp            .byte $00
 
 
 ;======================================
-; Convert BCD to Binary
+; Convert Binary to BCD
 ;======================================
 Bin2Bcd         .proc
                 ldx #00
@@ -180,6 +180,40 @@ _tmp            .byte $00
 
                 .endproc
 
+
+;======================================
+; Convert Binary to Ascii
+;--------------------------------------
+; on entry:
+;   A           byte value
+; on exit:
+;   Y,A         2-byte ascii value
+;======================================
+Bin2Ascii       .proc
+                pha
+
+;   upper-nibble to ascii
+                lsr
+                lsr
+                lsr
+                lsr
+                and #$0F
+                tax
+                ldy _hex,X
+
+;   lower-nibble to ascii
+                pla
+                and #$0F
+                tax
+                lda _hex,X
+
+                rts
+
+;--------------------------------------
+
+_hex            .text '0123456789ABCDEF'
+
+                .endproc
 
 ;======================================
 ; Initialize SID
@@ -377,6 +411,7 @@ InitTiles       .proc
 ;   switch to system map
                 stz IOPAGE_CTRL
 
+;   define the tilesets
                 lda #<tiles             ; Set the source address
                 sta TILESET0_ADDR
                 lda #>tiles
@@ -395,12 +430,12 @@ InitTiles       .proc
                 lda #`worldmap
                 sta TILE0_ADDR+2
 
-                lda #40                ; Set the size of the tile map to 256x256
+                lda #40                 ; Set the size of the tile map to 40x30
                 sta TILE0_SIZE_X
                 stz TILE0_SIZE_X+1
                 lda #30
                 sta TILE0_SIZE_Y
-                sta TILE0_SIZE_Y+1
+                stz TILE0_SIZE_Y+1
 
                 stz TILE0_SCROLL_X+1
                 stz TILE0_SCROLL_X
@@ -459,6 +494,33 @@ InitSprites     .proc
 
 
 ;======================================
+; Clear all Sprites
+;======================================
+ClearSprites    .proc
+                pha
+
+;   preserve IOPAGE control
+                lda IOPAGE_CTRL
+                pha
+
+;   switch to system map
+                stz IOPAGE_CTRL
+
+                .frsSpriteClear 0
+                .frsSpriteClear 1
+                .frsSpriteClear 2
+                .frsSpriteClear 3
+
+;   restore IOPAGE control
+                pla
+                sta IOPAGE_CTRL
+
+                pla
+                rts
+                .endproc
+
+
+;======================================
 ;
 ;======================================
 InitBitmap      .proc
@@ -471,11 +533,11 @@ InitBitmap      .proc
 ;   switch to system map
                 stz IOPAGE_CTRL
 
-                ;!!lda #<ScreenRAM         ; Set the destination address
+                lda #<ScreenRAM         ; Set the destination address
                 sta BITMAP2_ADDR
-                ;!!lda #>ScreenRAM
+                lda #>ScreenRAM
                 sta BITMAP2_ADDR+1
-                ;!!lda #`ScreenRAM
+                lda #`ScreenRAM
                 sta BITMAP2_ADDR+2
 
                 lda #bmcEnable|bmcLUT0
@@ -483,6 +545,9 @@ InitBitmap      .proc
 
                 lda #locLayer2_BM2
                 sta LAYER_ORDER_CTRL_1
+
+                stz BITMAP0_CTRL        ; disabled
+                stz BITMAP1_CTRL
 
 ;   restore IOPAGE control
                 pla
@@ -500,7 +565,6 @@ InitBitmap      .proc
 ;======================================
 ClearScreen     .proc
 v_QtyPages      .var $05                ; 40x30 = $4B0... 4 pages + 176 bytes
-
 v_EmptyText     .var $00
 v_TextColor     .var $40
 ;---
@@ -818,10 +882,10 @@ InitIRQs        .proc
                 sei                     ; disable IRQ
 
 ;   enable IRQ handler
-                ; lda #<vecIRQ_BRK
-                ; sta IRQ_PRIOR
-                ; lda #>vecIRQ_BRK
-                ; sta IRQ_PRIOR+1
+                ;lda #<vecIRQ_BRK
+                ;sta IRQ_PRIOR
+                ;lda #>vecIRQ_BRK
+                ;sta IRQ_PRIOR+1
 
                 lda #<irqMain
                 sta vecIRQ_BRK

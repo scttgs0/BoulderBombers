@@ -59,6 +59,10 @@ BOOT            clc
 
                 stz IOPAGE_CTRL
 
+                stz BACKGROUND_COLOR_R
+                stz BACKGROUND_COLOR_G
+                stz BACKGROUND_COLOR_B
+
                 jmp INIT
 
 

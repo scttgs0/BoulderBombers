@@ -22,10 +22,6 @@ INIT            .proc
                 stz LAYER_ORDER_CTRL_0
                 stz LAYER_ORDER_CTRL_1
 
-                stz BACKGROUND_COLOR_R
-                stz BACKGROUND_COLOR_G
-                stz BACKGROUND_COLOR_B
-
                 jsr InitGfxPalette
                 jsr InitTextPalette
 
